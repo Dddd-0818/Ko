@@ -2,9 +2,10 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
+    <!-- Viewport 必须是 cover -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     
-    <!-- PWA 配置 -->
+    <!-- iOS PWA 配置 -->
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="Chill OS">
@@ -21,6 +22,7 @@
 
     <style>
         :root {
+            /* 变量定义 */
             --bg-body: #f2f2f2;
             --bg-device: #fafafa;
             --bg-card: #ffffff;
@@ -66,7 +68,6 @@
 
         body {
             font-family: 'DM Sans', sans-serif;
-            /* 默认背景色，上传图片后这里会变成图片 */
             background-color: var(--bg-device); 
             height: 100%;
             width: 100%;
@@ -77,20 +78,20 @@
             align-items: center;
             transition: background-color 0.3s ease;
             color: var(--text-main);
-            
-            /* 关键：确保背景图覆盖全屏 */
-            background-position: center;
-            background-size: cover;
-            background-repeat: no-repeat;
         }
 
         .serif { font-family: 'Playfair Display', serif; }
 
+        /* PC端容器 */
         .device {
             width: 390px;
             height: 844px;
-            /* 默认有背景色，上传图片后 JS 会把这里改成透明，透出 body 的图片 */
             background: var(--bg-device);
+            /* 关键：允许背景图覆盖 */
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            
             border-radius: 44px;
             position: relative;
             box-shadow: 0 0 0 10px #222, 0 20px 50px rgba(0,0,0,0.2);
@@ -99,14 +100,16 @@
             z-index: 1;
         }
 
+        /* 滚动内容 */
         .scroll-content {
             height: 100%;
             overflow-y: auto;
             -webkit-overflow-scrolling: touch; 
-            padding: 60px 20px 140px 20px;
+            padding: 60px 20px 140px 20px; 
         }
         .scroll-content::-webkit-scrollbar { display: none; }
 
+        /* 状态栏 */
         .status-bar {
             height: 44px;
             padding: 0 24px;
@@ -121,9 +124,11 @@
             width: 100%;
             z-index: 10;
             color: var(--text-main);
+            /* 为了让文字在深色壁纸上也能看清，加个文字阴影 */
+            text-shadow: 0 1px 2px rgba(0,0,0,0.1);
         }
 
-        /* 组件样式 */
+        /* --- 组件样式 --- */
         .header { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 24px; padding: 0 4px; }
         .date-box h1 { font-size: 32px; font-weight: 400; font-style: italic; line-height: 1; margin-bottom: 4px; }
         .date-box p { font-size: 12px; color: var(--text-sub); letter-spacing: 1px; text-transform: uppercase; }
@@ -159,6 +164,7 @@
         .icon-box:active { transform: scale(0.9); background: rgba(255,255,255,0.5); }
         .icon-box i { font-size: 22px; opacity: 0.9; }
 
+        /* Dock */
         .dock-wrapper {
             position: absolute;
             bottom: 0; 
@@ -186,6 +192,7 @@
         .dock-item { font-size: 24px; color: var(--text-main); transition: transform 0.2s; display: flex; align-items: center; }
         .dock-item:active { transform: scale(0.85); }
 
+        /* --- 移动端 & PWA 适配 --- */
         @media (max-width: 768px) {
             html { background-color: var(--bg-device); }
             body {
@@ -193,19 +200,15 @@
                 width: 100%;
                 min-height: 100%;
                 height: 100%; 
-                
-                /* 确保移动端背景图也 cover */
-                background-position: center;
-                background-size: cover;
-                background-repeat: no-repeat;
             }
             
             .device {
                 width: 100%;
-                height: 100%;
+                height: 100%; 
                 border-radius: 0;
                 box-shadow: none;
                 border: none;
+                
                 padding-top: env(safe-area-inset-top);
                 padding-bottom: 0; 
             }
@@ -230,9 +233,9 @@
 <body>
 
     <!-- 隐藏的文件上传控件 -->
-    <input type="file" id="wallpaper-loader" style="display: none;" accept="image/*">
+    <input type="file" id="wallpaper-upload" accept="image/*" style="display: none;">
 
-    <div class="device" id="device-container">
+    <div class="device" id="main-device">
         <!-- 状态栏 -->
         <div class="status-bar">
             <span id="clock-mini">09:41</span>
@@ -244,6 +247,7 @@
         </div>
 
         <div class="scroll-content">
+            <!-- Header -->
             <div class="header">
                 <div class="date-box">
                     <h1 class="serif" id="day-main">Saturday.</h1>
@@ -254,6 +258,7 @@
                 </div>
             </div>
 
+            <!-- Profile -->
             <div class="profile-card">
                 <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?ixlib=rb-4.0.3&auto=format&fit=crop&w=200&q=80" alt="Avatar" class="avatar">
                 <div class="profile-info">
@@ -266,6 +271,7 @@
                 </div>
             </div>
 
+            <!-- Polaroid -->
             <div class="photo-grid">
                 <div class="polaroid">
                     <div class="tape"></div>
@@ -279,6 +285,7 @@
                 </div>
             </div>
 
+            <!-- Memo -->
             <div class="memo-widget">
                 <div class="spiral"><span></span><span></span><span></span><span></span></div>
                 <h3 style="font-size: 12px; text-transform: uppercase; color: var(--text-sub); margin-bottom: 8px; margin-left: 4px;">To Do List</h3>
@@ -289,8 +296,13 @@
                 </ul>
             </div>
 
+            <!-- Grid Icons -->
             <div class="grid-icons">
-                <div class="icon-box"><i class="ph ph-image"></i></div>
+                <!-- 1. 修改这里：增加点击事件触发上传 -->
+                <div class="icon-box" id="upload-btn">
+                    <i class="ph ph-image"></i>
+                </div>
+                
                 <div class="icon-box"><i class="ph ph-envelope-simple"></i></div>
                 <div class="icon-box"><i class="ph ph-music-note"></i></div>
                 <div class="icon-box"><i class="ph ph-calendar-blank"></i></div>
@@ -301,6 +313,7 @@
             </div>
         </div>
 
+        <!-- Dock -->
         <div class="dock-wrapper">
             <div class="dock">
                 <div class="dock-item"><i class="ph-fill ph-house"></i></div>
@@ -312,7 +325,31 @@
     </div>
 
     <script>
-        // 1. 时间逻辑
+        // 1. 壁纸上传逻辑
+        const uploadBtn = document.getElementById('upload-btn');
+        const fileInput = document.getElementById('wallpaper-upload');
+        const device = document.getElementById('main-device');
+
+        uploadBtn.addEventListener('click', () => {
+            fileInput.click();
+        });
+
+        fileInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const result = e.target.result;
+                    // 设置为背景
+                    device.style.backgroundImage = `url(${result})`;
+                    // 清除背景色，确保图片显示
+                    device.style.backgroundColor = 'transparent'; 
+                }
+                reader.readAsDataURL(file);
+            }
+        });
+
+        // 2. 时间逻辑
         function updateTime() {
             const now = new Date();
             const hours = String(now.getHours()).padStart(2, '0');
@@ -328,7 +365,7 @@
         setInterval(updateTime, 1000);
         updateTime();
 
-        // 2. 主题切换
+        // 3. 深浅色切换
         const themeBtn = document.getElementById('theme-btn');
         const themeIcon = document.getElementById('theme-icon');
         const html = document.documentElement;
@@ -336,10 +373,7 @@
         
         let isDark = false;
 
-        themeBtn.addEventListener('click', (e) => {
-            // 防止冒泡触发换壁纸
-            e.stopPropagation();
-            
+        themeBtn.addEventListener('click', () => {
             isDark = !isDark;
             if (isDark) {
                 html.setAttribute('data-theme', 'dark');
@@ -349,46 +383,6 @@
                 html.removeAttribute('data-theme');
                 themeIcon.classList.replace('ph-sun', 'ph-moon');
                 metaThemeColor.setAttribute('content', '#fafafa'); 
-            }
-        });
-
-        // 3. 【临时功能】点击空白处更换壁纸
-        const wallpaperInput = document.getElementById('wallpaper-loader');
-        const deviceContainer = document.getElementById('device-container');
-
-        // 监听全局点击
-        window.addEventListener('click', (e) => {
-            // 如果点击的是特定的交互元素，不触发换壁纸
-            if (e.target.closest('.icon-box, .dock-item, .memo-item, .polaroid, .profile-card, .theme-switch')) {
-                return;
-            }
-
-            // 触发文件选择
-            wallpaperInput.click();
-        });
-
-        // 监听文件上传
-        wallpaperInput.addEventListener('change', (e) => {
-            const file = e.target.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = (e) => {
-                    const imgUrl = e.target.result;
-                    
-                    // 1. 设置 Body 背景图（用于检测全屏覆盖）
-                    document.body.style.backgroundImage = `url(${imgUrl})`;
-                    
-                    // 2. 移除 device 容器的背景色（让 body 的图片透出来）
-                    deviceContainer.style.background = 'transparent';
-                    
-                    // 3. 将 --bg-device 变量设为透明，防止其他组件引用导致遮挡
-                    document.documentElement.style.setProperty('--bg-device', 'transparent');
-                    
-                    // 4. 为了能看清字，给文字加一点阴影（可选）
-                    document.documentElement.style.setProperty('--text-main', '#fff');
-                    document.documentElement.style.setProperty('--text-sub', '#ddd');
-                };
-                reader.readAsDataURL(file);
             }
         });
     </script>
