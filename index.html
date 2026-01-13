@@ -4,32 +4,33 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     
+    <!-- PWA 设置 -->
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="Chill OS">
-    <link rel="apple-touch-icon" href="https://i.postimg.cc/j2G1nTGH/IMG-7813.jpg">
-    <meta name="theme-color" content="#fafafa" id="meta-theme-color">
     <meta name="format-detection" content="telephone=no">
+    
+    <!-- 图标 -->
+    <link rel="apple-touch-icon" href="https://i.postimg.cc/j2G1nTGH/IMG-7813.jpg">
 
     <title>Chill Mono OS</title>
     
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Playfair+Display:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
 
     <style>
         :root {
+            --safe-top: env(safe-area-inset-top, 0px);
+            --safe-bottom: env(safe-area-inset-bottom, 0px);
+            
             --bg-body: #f2f2f2;
             --bg-device: #fafafa;
-            --bg-card: #ffffff;
             --glass-bg: rgba(255, 255, 255, 0.45);
             --glass-border: rgba(255, 255, 255, 0.6);
             --glass-blur: blur(16px);
             --text-main: #1a1a1a;
             --text-sub: #666666;
             --border-line: #e0e0e0;
-            --shadow-card: 0 4px 20px rgba(0,0,0,0.03);
             --dock-bg: rgba(255, 255, 255, 0.85);
             --tape-color: rgba(230, 230, 230, 0.5);
         }
@@ -37,13 +38,11 @@
         [data-theme="dark"] {
             --bg-body: #111111;
             --bg-device: #1a1a1a;
-            --bg-card: #222222;
             --glass-bg: rgba(60, 60, 60, 0.4);
             --glass-border: rgba(255, 255, 255, 0.1);
             --text-main: #f0f0f0;
             --text-sub: #888888;
             --border-line: #333333;
-            --shadow-card: 0 4px 20px rgba(0,0,0,0.3);
             --dock-bg: rgba(30, 30, 30, 0.8);
             --tape-color: rgba(255, 255, 255, 0.1);
         }
@@ -53,56 +52,46 @@
             margin: 0;
             padding: 0;
             -webkit-tap-highlight-color: transparent;
-            -webkit-touch-callout: none;
             user-select: none;
+            -webkit-user-select: none;
         }
 
-        /* 1. 强制根元素全屏且无边距 */
-        html {
-            height: 100%;
+        /* --- 核心修复：强制锁定根节点 --- */
+        html, body {
             width: 100%;
-            background-color: #000; /* 底色设为黑，防止白边 */
-            overflow: hidden; /* 禁止 html 滚动 */
-        }
-
-        body {
+            height: 100%;
+            position: fixed; /* 关键：固定页面，防止iOS回弹和白边 */
+            inset: 0;
+            overflow: hidden;
+            background-color: #000; /* 底色设为黑，防止极个别情况露白 */
             font-family: 'DM Sans', sans-serif;
-            background-color: var(--bg-device); 
-            height: 100%;
-            width: 100%;
-            overflow: hidden; /* 禁止 body 滚动 */
             display: flex;
             justify-content: center;
             align-items: center;
-            transition: background-color 0.3s ease;
-            color: var(--text-main);
         }
 
-        .serif { font-family: 'Playfair Display', serif; }
-
+        /* 手机容器 */
         .device {
-            width: 390px;
-            height: 844px;
-            background: var(--bg-device);
+            position: relative;
+            background-color: var(--bg-device);
             background-size: cover;
             background-position: center;
             background-repeat: no-repeat;
-            border-radius: 44px;
-            position: relative;
-            box-shadow: 0 0 0 10px #222, 0 20px 50px rgba(0,0,0,0.2);
+            
+            display: flex;
+            flex-direction: column;
             overflow: hidden;
-            transition: all 0.3s ease;
             z-index: 1;
+            
+            /* PC端默认样式 */
+            width: 390px;
+            height: 844px;
+            border-radius: 44px;
+            box-shadow: 0 0 0 10px #222, 0 20px 50px rgba(0,0,0,0.2);
+            transition: all 0.3s ease;
         }
 
-        .scroll-content {
-            height: 100%;
-            overflow-y: auto;
-            -webkit-overflow-scrolling: touch; 
-            padding: 60px 20px 140px 20px; 
-        }
-        .scroll-content::-webkit-scrollbar { display: none; }
-
+        /* 状态栏 */
         .status-bar {
             height: 44px;
             padding: 0 24px;
@@ -111,75 +100,113 @@
             align-items: center;
             font-size: 13px;
             font-weight: 600;
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
             z-index: 10;
             color: var(--text-main);
-            text-shadow: 0 1px 2px rgba(0,0,0,0.1);
-            pointer-events: none; 
+            flex-shrink: 0; /* 防止被压缩 */
+            margin-top: 5px;
         }
 
-        .header { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 24px; padding: 0 4px; }
-        .date-box h1 { font-size: 32px; font-weight: 400; font-style: italic; line-height: 1; margin-bottom: 4px; }
-        .date-box p { font-size: 12px; color: var(--text-sub); letter-spacing: 1px; text-transform: uppercase; }
-        .theme-switch { width: 40px; height: 40px; border-radius: 50%; border: 1px solid var(--border-line); background: var(--bg-card); display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 18px; color: var(--text-main); transition: all 0.3s; }
+        /* 滚动区域：占据剩余空间 */
+        .scroll-content {
+            flex: 1;
+            overflow-y: auto;
+            overflow-x: hidden;
+            -webkit-overflow-scrolling: touch;
+            padding: 20px 24px 120px 24px; /* 底部留出Dock的空间 */
+            width: 100%;
+        }
+        .scroll-content::-webkit-scrollbar { display: none; }
+
+        /* 组件样式保持不变 */
+        .serif { font-family: 'Playfair Display', serif; }
         
-        .profile-card { background: var(--bg-card); border-radius: 24px; padding: 20px; display: flex; align-items: center; gap: 16px; box-shadow: var(--shadow-card); margin-bottom: 20px; border: 1px solid var(--border-line); }
-        .avatar { width: 64px; height: 64px; border-radius: 50%; object-fit: cover; border: 2px solid var(--bg-device); outline: 1px solid var(--text-main); filter: grayscale(100%); }
-        .profile-name { font-size: 18px; font-weight: 600; margin-bottom: 4px; }
-        .profile-bio { font-size: 12px; color: var(--text-sub); font-family: 'Playfair Display', serif; font-style: italic; line-height: 1.4; }
-        .profile-tags { margin-top: 8px; display: flex; gap: 6px; }
-        .tag { font-size: 10px; padding: 2px 8px; border-radius: 100px; border: 1px solid var(--border-line); color: var(--text-sub); }
+        .header { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 24px; padding: 0 4px; }
+        .date-box h1 { font-size: 32px; font-weight: 400; font-style: italic; line-height: 1; margin-bottom: 4px; color: var(--text-main); }
+        .date-box p { font-size: 12px; color: var(--text-sub); letter-spacing: 1px; text-transform: uppercase; }
+        
+        .theme-switch {
+            width: 40px; height: 40px; border-radius: 50%; 
+            border: 1px solid var(--border-line);
+            background: rgba(255,255,255,0.2); /* 半透明，适应壁纸 */
+            backdrop-filter: blur(10px);
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer; font-size: 18px; color: var(--text-main);
+        }
+
+        .profile-card {
+            background: var(--glass-bg);
+            backdrop-filter: var(--glass-blur);
+            -webkit-backdrop-filter: var(--glass-blur);
+            border: 1px solid var(--glass-border);
+            border-radius: 24px; padding: 20px; 
+            display: flex; align-items: center; gap: 16px; 
+            margin-bottom: 20px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.03);
+        }
+        .avatar { width: 64px; height: 64px; border-radius: 50%; object-fit: cover; border: 2px solid rgba(255,255,255,0.5); }
+        .profile-name { font-size: 18px; font-weight: 600; margin-bottom: 4px; color: var(--text-main); }
+        .profile-bio { font-size: 12px; color: var(--text-sub); font-family: 'Playfair Display', serif; font-style: italic; }
+        .tag { font-size: 10px; padding: 2px 8px; border-radius: 100px; border: 1px solid var(--border-line); color: var(--text-sub); margin-right: 5px;}
 
         .photo-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px; }
-        .polaroid { background: #fff; padding: 8px 8px 30px 8px; box-shadow: var(--shadow-card); transform: rotate(-1deg); position: relative; transition: transform 0.2s; }
-        [data-theme="dark"] .polaroid { background: #2a2a2a; }
-        .polaroid:nth-child(2) { transform: rotate(2deg) translateY(10px); }
+        .polaroid { background: #fff; padding: 8px 8px 30px 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.08); transform: rotate(-1deg); position: relative; }
         .tape { position: absolute; top: -10px; left: 50%; transform: translateX(-50%); width: 60px; height: 20px; background: var(--tape-color); backdrop-filter: blur(2px); z-index: 2; }
         .polaroid-img { width: 100%; aspect-ratio: 1; background-color: #ddd; background-size: cover; background-position: center; filter: grayscale(100%) contrast(1.1); }
-        .polaroid-text { font-family: 'Playfair Display', serif; font-size: 10px; text-align: center; margin-top: 8px; color: var(--text-main); font-style: italic; }
+        .polaroid-text { font-family: 'Playfair Display', serif; font-size: 10px; text-align: center; margin-top: 8px; color: #333; font-style: italic; }
 
-        .memo-widget { background: var(--bg-card); border-radius: 20px; padding: 20px; border: 1px solid var(--border-line); margin-bottom: 32px; position: relative; }
+        .memo-widget { 
+            background: var(--glass-bg); 
+            backdrop-filter: var(--glass-blur);
+            -webkit-backdrop-filter: var(--glass-blur);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px; padding: 20px; margin-bottom: 32px; position: relative; 
+        }
         .spiral { position: absolute; top: -10px; left: 20px; display: flex; gap: 15px; }
         .spiral span { width: 6px; height: 20px; background: var(--text-sub); border-radius: 4px; }
-        .memo-list { margin-top: 10px; list-style: none; }
-        .memo-item { display: flex; align-items: center; padding: 10px 0; border-bottom: 1px dashed var(--border-line); font-size: 13px; color: var(--text-main); cursor: pointer; }
-        .memo-item:last-child { border-bottom: none; }
-        .check-circle { width: 14px; height: 14px; border: 1.5px solid var(--text-sub); border-radius: 50%; margin-right: 12px; display: flex; align-items: center; justify-content: center; }
+        .memo-item { display: flex; align-items: center; padding: 10px 0; border-bottom: 1px dashed var(--border-line); font-size: 13px; color: var(--text-main); }
+        .check-circle { width: 14px; height: 14px; border: 1.5px solid var(--text-sub); border-radius: 50%; margin-right: 12px; }
         .memo-item.done .check-circle { background: var(--text-main); border-color: var(--text-main); }
         .memo-item.done span { text-decoration: line-through; color: var(--text-sub); }
 
-        .grid-icons { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; padding: 0 24px; margin-bottom: 24px; }
+        /* Grid Icons - 核心修复：Label 触发 */
+        .grid-icons { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 24px; padding: 0 10px; }
         
         .icon-box { 
             width: 100%; max-width: 52px; aspect-ratio: 1; margin: 0 auto; 
-            background: var(--glass-bg); backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur); 
-            border: 1px solid var(--glass-border); border-radius: 18px; 
+            background: var(--glass-bg); 
+            backdrop-filter: var(--glass-blur); 
+            -webkit-backdrop-filter: var(--glass-blur); 
+            border: 1px solid var(--glass-border); 
+            border-radius: 18px; 
             display: flex; align-items: center; justify-content: center; 
-            color: var(--text-main); transition: transform 0.2s, background 0.2s; 
-            cursor: pointer; box-shadow: 0 4px 12px rgba(0,0,0,0.03); 
-            position: relative; 
+            color: var(--text-main); 
+            box-shadow: 0 4px 12px rgba(0,0,0,0.03); 
+            position: relative; /* 为了定位 input */
+            cursor: pointer;
         }
         .icon-box:active { transform: scale(0.9); background: rgba(255,255,255,0.5); }
         .icon-box i { font-size: 22px; opacity: 0.9; }
 
+        /* 隐藏的 input，必须 opacity: 0 覆盖在 label 上 */
         .hidden-upload {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            opacity: 0; cursor: pointer; z-index: 10;
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            opacity: 0;
+            z-index: 10;
+            cursor: pointer;
         }
 
+        /* Dock 栏 */
         .dock-wrapper {
             position: absolute;
-            bottom: 0; 
+            bottom: 0;
             left: 0;
             width: 100%;
             display: flex;
             justify-content: center;
-            pointer-events: none;
+            padding-bottom: 24px; /* PC端默认 */
             z-index: 50;
-            padding-bottom: 24px; 
+            pointer-events: none;
         }
 
         .dock {
@@ -189,67 +216,41 @@
             -webkit-backdrop-filter: blur(20px);
             padding: 12px 28px;
             border-radius: 100px;
-            border: 1px solid var(--border-line);
+            border: 1px solid var(--glass-border);
             display: flex;
             gap: 28px;
             box-shadow: 0 10px 40px rgba(0,0,0,0.1);
         }
-        .dock-item { font-size: 24px; color: var(--text-main); transition: transform 0.2s; display: flex; align-items: center; }
+        .dock-item { font-size: 24px; color: var(--text-main); display: flex; align-items: center; transition: transform 0.2s; }
         .dock-item:active { transform: scale(0.85); }
 
-        /* --- 移动端 & PWA 终极适配 --- */
+        /* --- 移动端真机适配 (全屏覆盖) --- */
         @media (max-width: 768px) {
-            html { background-color: #000; } /* 确保背景底色为黑，防止白边 */
-            body {
-                background: var(--bg-device);
-                /* 使用 min-height 确保 body 至少填满屏幕 */
-                min-height: 100vh;
-                min-height: 100dvh;
-                margin: 0;
-                padding: 0;
-            }
-            
             .device {
-                /* 2. 关键修改：强制全屏固定定位 */
-                position: fixed; 
-                top: 0;
-                left: 0;
-                right: 0;
-                bottom: 0;
-                
                 width: 100%;
-                /* 强制高度为视口高度，忽略内容长度 */
-                height: 100vh;
-                height: 100dvh; 
-                
+                height: 100%;
                 border-radius: 0;
                 box-shadow: none;
                 border: none;
                 
                 /* 处理刘海 */
-                padding-top: env(safe-area-inset-top);
-                /* 底部不留 padding，因为背景图要铺满，我们在 dock-wrapper 里处理边距 */
-                padding-bottom: 0; 
-                
-                z-index: 1;
+                padding-top: var(--safe-top); 
             }
 
             .status-bar {
-                top: env(safe-area-inset-top);
-                height: 44px;
+                margin-top: 0;
+                /* 状态栏高度根据需要微调 */
+                padding-top: 5px; 
             }
 
-            .scroll-content {
-                padding-top: 60px;
-                padding-bottom: 140px; 
-                /* 确保滚动区域在 device 内部能正常工作 */
-                height: 100%; 
-            }
-
+            /* Dock 栏下沉，紧贴 Home Indicator */
             .dock-wrapper {
-                bottom: 0;
-                /* 3. 使用 padding 把 Dock 顶起来，背景图不动 */
-                padding-bottom: calc(16px + env(safe-area-inset-bottom));
+                padding-bottom: calc(15px + var(--safe-bottom));
+            }
+            
+            /* 内容底部留白，防止被 Dock 遮挡 */
+            .scroll-content {
+                padding-bottom: 140px;
             }
         }
     </style>
@@ -267,7 +268,9 @@
             </div>
         </div>
 
+        <!-- 滚动内容区 -->
         <div class="scroll-content">
+            <!-- Header -->
             <div class="header">
                 <div class="date-box">
                     <h1 class="serif" id="day-main">Saturday.</h1>
@@ -278,6 +281,7 @@
                 </div>
             </div>
 
+            <!-- Profile -->
             <div class="profile-card">
                 <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?ixlib=rb-4.0.3&auto=format&fit=crop&w=200&q=80" alt="Avatar" class="avatar">
                 <div class="profile-info">
@@ -290,6 +294,7 @@
                 </div>
             </div>
 
+            <!-- Polaroid -->
             <div class="photo-grid">
                 <div class="polaroid">
                     <div class="tape"></div>
@@ -303,17 +308,18 @@
                 </div>
             </div>
 
+            <!-- Memo -->
             <div class="memo-widget">
                 <div class="spiral"><span></span><span></span><span></span><span></span></div>
                 <h3 style="font-size: 12px; text-transform: uppercase; color: var(--text-sub); margin-bottom: 8px; margin-left: 4px;">To Do List</h3>
-                <ul class="memo-list">
-                    <li class="memo-item" onclick="this.classList.toggle('done')"><div class="check-circle"></div><span>Upload vlog to channel</span></li>
-                    <li class="memo-item done" onclick="this.classList.toggle('done')"><div class="check-circle"></div><span>Buy iced americano</span></li>
-                    <li class="memo-item" onclick="this.classList.toggle('done')"><div class="check-circle"></div><span>Read 20 pages</span></li>
-                </ul>
+                <div class="memo-item" onclick="this.classList.toggle('done')"><div class="check-circle"></div><span>Upload vlog to channel</span></div>
+                <div class="memo-item done" onclick="this.classList.toggle('done')"><div class="check-circle"></div><span>Buy iced americano</span></div>
+                <div class="memo-item" onclick="this.classList.toggle('done')"><div class="check-circle"></div><span>Read 20 pages</span></div>
             </div>
 
+            <!-- Grid Icons -->
             <div class="grid-icons">
+                <!-- 换壁纸按钮：使用 Label 包裹 Input，兼容所有 iOS -->
                 <label class="icon-box">
                     <input type="file" id="wallpaper-upload" class="hidden-upload" accept="image/*">
                     <i class="ph ph-image"></i>
@@ -329,6 +335,7 @@
             </div>
         </div>
 
+        <!-- Dock -->
         <div class="dock-wrapper">
             <div class="dock">
                 <div class="dock-item"><i class="ph-fill ph-house"></i></div>
@@ -340,6 +347,7 @@
     </div>
 
     <script>
+        // 1. 壁纸上传逻辑 (利用 change 事件，无需 click)
         const fileInput = document.getElementById('wallpaper-upload');
         const device = document.getElementById('main-device');
 
@@ -350,12 +358,13 @@
                 reader.onload = (e) => {
                     const result = e.target.result;
                     device.style.backgroundImage = `url(${result})`;
-                    device.style.backgroundColor = 'transparent'; 
+                    device.style.backgroundColor = 'transparent'; // 清除背景色
                 }
                 reader.readAsDataURL(file);
             }
         });
 
+        // 2. 时间逻辑
         function updateTime() {
             const now = new Date();
             const hours = String(now.getHours()).padStart(2, '0');
@@ -371,10 +380,10 @@
         setInterval(updateTime, 1000);
         updateTime();
 
+        // 3. 深浅色切换
         const themeBtn = document.getElementById('theme-btn');
         const themeIcon = document.getElementById('theme-icon');
         const html = document.documentElement;
-        const metaThemeColor = document.getElementById('meta-theme-color');
         
         let isDark = false;
 
@@ -383,11 +392,9 @@
             if (isDark) {
                 html.setAttribute('data-theme', 'dark');
                 themeIcon.classList.replace('ph-moon', 'ph-sun');
-                metaThemeColor.setAttribute('content', '#1a1a1a'); 
             } else {
                 html.removeAttribute('data-theme');
                 themeIcon.classList.replace('ph-sun', 'ph-moon');
-                metaThemeColor.setAttribute('content', '#fafafa'); 
             }
         });
     </script>
