@@ -2,10 +2,8 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <!-- Viewport 必须是 cover -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     
-    <!-- iOS PWA 配置 -->
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="Chill OS">
@@ -22,7 +20,6 @@
 
     <style>
         :root {
-            /* 变量定义 */
             --bg-body: #f2f2f2;
             --bg-device: #fafafa;
             --bg-card: #ffffff;
@@ -82,16 +79,13 @@
 
         .serif { font-family: 'Playfair Display', serif; }
 
-        /* PC端容器 */
         .device {
             width: 390px;
             height: 844px;
             background: var(--bg-device);
-            /* 关键：允许背景图覆盖 */
             background-size: cover;
             background-position: center;
             background-repeat: no-repeat;
-            
             border-radius: 44px;
             position: relative;
             box-shadow: 0 0 0 10px #222, 0 20px 50px rgba(0,0,0,0.2);
@@ -100,7 +94,6 @@
             z-index: 1;
         }
 
-        /* 滚动内容 */
         .scroll-content {
             height: 100%;
             overflow-y: auto;
@@ -109,7 +102,6 @@
         }
         .scroll-content::-webkit-scrollbar { display: none; }
 
-        /* 状态栏 */
         .status-bar {
             height: 44px;
             padding: 0 24px;
@@ -124,11 +116,10 @@
             width: 100%;
             z-index: 10;
             color: var(--text-main);
-            /* 为了让文字在深色壁纸上也能看清，加个文字阴影 */
             text-shadow: 0 1px 2px rgba(0,0,0,0.1);
+            pointer-events: none; /* 防止遮挡 */
         }
 
-        /* --- 组件样式 --- */
         .header { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 24px; padding: 0 4px; }
         .date-box h1 { font-size: 32px; font-weight: 400; font-style: italic; line-height: 1; margin-bottom: 4px; }
         .date-box p { font-size: 12px; color: var(--text-sub); letter-spacing: 1px; text-transform: uppercase; }
@@ -160,11 +151,32 @@
         .memo-item.done span { text-decoration: line-through; color: var(--text-sub); }
 
         .grid-icons { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; padding: 0 24px; margin-bottom: 24px; }
-        .icon-box { width: 100%; max-width: 52px; aspect-ratio: 1; margin: 0 auto; background: var(--glass-bg); backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur); border: 1px solid var(--glass-border); border-radius: 18px; display: flex; align-items: center; justify-content: center; color: var(--text-main); transition: transform 0.2s, background 0.2s; cursor: pointer; box-shadow: 0 4px 12px rgba(0,0,0,0.03); }
+        
+        /* 这里的定义可以同时作用于 div 和 label */
+        .icon-box { 
+            width: 100%; max-width: 52px; aspect-ratio: 1; margin: 0 auto; 
+            background: var(--glass-bg); backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur); 
+            border: 1px solid var(--glass-border); border-radius: 18px; 
+            display: flex; align-items: center; justify-content: center; 
+            color: var(--text-main); transition: transform 0.2s, background 0.2s; 
+            cursor: pointer; box-shadow: 0 4px 12px rgba(0,0,0,0.03); 
+            position: relative; /* 为了定位内部的input */
+        }
         .icon-box:active { transform: scale(0.9); background: rgba(255,255,255,0.5); }
         .icon-box i { font-size: 22px; opacity: 0.9; }
 
-        /* Dock */
+        /* 隐藏的上传控件样式修正 */
+        .hidden-upload {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0; /* 只要不是 display:none，iOS就可以点击 */
+            cursor: pointer;
+            z-index: 10;
+        }
+
         .dock-wrapper {
             position: absolute;
             bottom: 0; 
@@ -192,7 +204,6 @@
         .dock-item { font-size: 24px; color: var(--text-main); transition: transform 0.2s; display: flex; align-items: center; }
         .dock-item:active { transform: scale(0.85); }
 
-        /* --- 移动端 & PWA 适配 --- */
         @media (max-width: 768px) {
             html { background-color: var(--bg-device); }
             body {
@@ -208,7 +219,6 @@
                 border-radius: 0;
                 box-shadow: none;
                 border: none;
-                
                 padding-top: env(safe-area-inset-top);
                 padding-bottom: 0; 
             }
@@ -231,9 +241,6 @@
     </style>
 </head>
 <body>
-
-    <!-- 隐藏的文件上传控件 -->
-    <input type="file" id="wallpaper-upload" accept="image/*" style="display: none;">
 
     <div class="device" id="main-device">
         <!-- 状态栏 -->
@@ -298,10 +305,12 @@
 
             <!-- Grid Icons -->
             <div class="grid-icons">
-                <!-- 1. 修改这里：增加点击事件触发上传 -->
-                <div class="icon-box" id="upload-btn">
+                <!-- 1. 修正：使用 label 包裹 input，完美解决iOS点击无效问题 -->
+                <label class="icon-box">
+                    <!-- opacity: 0 是关键，display: none 会导致 iOS 不工作 -->
+                    <input type="file" id="wallpaper-upload" class="hidden-upload" accept="image/*">
                     <i class="ph ph-image"></i>
-                </div>
+                </label>
                 
                 <div class="icon-box"><i class="ph ph-envelope-simple"></i></div>
                 <div class="icon-box"><i class="ph ph-music-note"></i></div>
@@ -325,14 +334,9 @@
     </div>
 
     <script>
-        // 1. 壁纸上传逻辑
-        const uploadBtn = document.getElementById('upload-btn');
+        // 1. 壁纸上传逻辑 (不需要监听点击，input在label里会自动触发)
         const fileInput = document.getElementById('wallpaper-upload');
         const device = document.getElementById('main-device');
-
-        uploadBtn.addEventListener('click', () => {
-            fileInput.click();
-        });
 
         fileInput.addEventListener('change', (e) => {
             const file = e.target.files[0];
@@ -340,9 +344,7 @@
                 const reader = new FileReader();
                 reader.onload = (e) => {
                     const result = e.target.result;
-                    // 设置为背景
                     device.style.backgroundImage = `url(${result})`;
-                    // 清除背景色，确保图片显示
                     device.style.backgroundColor = 'transparent'; 
                 }
                 reader.readAsDataURL(file);
