@@ -2,19 +2,15 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <!-- 关键1: viewport-fit=cover 允许页面利用刘海区域 -->
+    <!-- Viewport 必须是 cover -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     
-    <!-- 关键2: iOS PWA 核心配置 (无需 manifest.json) -->
+    <!-- iOS PWA 配置 -->
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="Chill OS">
-    
-    <!-- 你的图标 -->
     <link rel="apple-touch-icon" href="https://i.postimg.cc/j2G1nTGH/IMG-7813.jpg">
-    
-    <!-- 浏览器顶栏颜色适配 -->
-    <meta name="theme-color" content="#f2f2f2" id="meta-theme-color">
+    <meta name="theme-color" content="#fafafa" id="meta-theme-color">
     <meta name="format-detection" content="telephone=no">
 
     <title>Chill Mono OS</title>
@@ -26,6 +22,7 @@
 
     <style>
         :root {
+            /* 变量定义 */
             --bg-body: #f2f2f2;
             --bg-device: #fafafa;
             --bg-card: #ffffff;
@@ -63,16 +60,22 @@
             user-select: none;
         }
 
-        html, body {
-            width: 100%;
+        /* --- 核心修复：确保 HTML/BODY 占满且背景色正确 --- */
+        html {
             height: 100%;
-            overflow: hidden; 
-            overscroll-behavior-y: none;
+            width: 100%;
+            /* 1. 确保背景色延伸到安全区域 */
+            background-color: var(--bg-device); 
         }
 
         body {
             font-family: 'DM Sans', sans-serif;
-            background-color: var(--bg-body);
+            /* 2. 背景色必须挂在 body 上，否则下拉会有白边 */
+            background-color: var(--bg-device); 
+            height: 100%;
+            width: 100%;
+            overflow: hidden; 
+            overscroll-behavior-y: none;
             display: flex;
             justify-content: center;
             align-items: center;
@@ -82,7 +85,7 @@
 
         .serif { font-family: 'Playfair Display', serif; }
 
-        /* PC端保持模型外观 */
+        /* PC端容器 */
         .device {
             width: 390px;
             height: 844px;
@@ -95,15 +98,13 @@
             z-index: 1;
         }
 
-        /* 滚动区域 */
+        /* 滚动内容 */
         .scroll-content {
             height: 100%;
             overflow-y: auto;
             -webkit-overflow-scrolling: touch; 
-            /* 桌面端默认内边距 */
-            padding: 60px 20px 120px 20px;
+            padding: 60px 20px 140px 20px; /* 底部留多一点给 Dock */
         }
-        
         .scroll-content::-webkit-scrollbar { display: none; }
 
         /* 状态栏 */
@@ -123,17 +124,19 @@
             color: var(--text-main);
         }
 
-        /* 组件样式 (保持不变) */
+        /* --- 组件样式 --- */
         .header { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 24px; padding: 0 4px; }
         .date-box h1 { font-size: 32px; font-weight: 400; font-style: italic; line-height: 1; margin-bottom: 4px; }
         .date-box p { font-size: 12px; color: var(--text-sub); letter-spacing: 1px; text-transform: uppercase; }
         .theme-switch { width: 40px; height: 40px; border-radius: 50%; border: 1px solid var(--border-line); background: var(--bg-card); display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 18px; color: var(--text-main); transition: all 0.3s; }
+        
         .profile-card { background: var(--bg-card); border-radius: 24px; padding: 20px; display: flex; align-items: center; gap: 16px; box-shadow: var(--shadow-card); margin-bottom: 20px; border: 1px solid var(--border-line); }
         .avatar { width: 64px; height: 64px; border-radius: 50%; object-fit: cover; border: 2px solid var(--bg-device); outline: 1px solid var(--text-main); filter: grayscale(100%); }
         .profile-name { font-size: 18px; font-weight: 600; margin-bottom: 4px; }
         .profile-bio { font-size: 12px; color: var(--text-sub); font-family: 'Playfair Display', serif; font-style: italic; line-height: 1.4; }
         .profile-tags { margin-top: 8px; display: flex; gap: 6px; }
         .tag { font-size: 10px; padding: 2px 8px; border-radius: 100px; border: 1px solid var(--border-line); color: var(--text-sub); }
+
         .photo-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px; }
         .polaroid { background: #fff; padding: 8px 8px 30px 8px; box-shadow: var(--shadow-card); transform: rotate(-1deg); position: relative; transition: transform 0.2s; }
         [data-theme="dark"] .polaroid { background: #2a2a2a; }
@@ -141,6 +144,7 @@
         .tape { position: absolute; top: -10px; left: 50%; transform: translateX(-50%); width: 60px; height: 20px; background: var(--tape-color); backdrop-filter: blur(2px); z-index: 2; }
         .polaroid-img { width: 100%; aspect-ratio: 1; background-color: #ddd; background-size: cover; background-position: center; filter: grayscale(100%) contrast(1.1); }
         .polaroid-text { font-family: 'Playfair Display', serif; font-size: 10px; text-align: center; margin-top: 8px; color: var(--text-main); font-style: italic; }
+
         .memo-widget { background: var(--bg-card); border-radius: 20px; padding: 20px; border: 1px solid var(--border-line); margin-bottom: 32px; position: relative; }
         .spiral { position: absolute; top: -10px; left: 20px; display: flex; gap: 15px; }
         .spiral span { width: 6px; height: 20px; background: var(--text-sub); border-radius: 4px; }
@@ -151,23 +155,28 @@
         .memo-item.done .check-circle { background: var(--text-main); border-color: var(--text-main); }
         .memo-item.done span { text-decoration: line-through; color: var(--text-sub); }
 
-        /* Grid Icons (精致小尺寸版) */
         .grid-icons { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; padding: 0 24px; margin-bottom: 24px; }
         .icon-box { width: 100%; max-width: 52px; aspect-ratio: 1; margin: 0 auto; background: var(--glass-bg); backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur); border: 1px solid var(--glass-border); border-radius: 18px; display: flex; align-items: center; justify-content: center; color: var(--text-main); transition: transform 0.2s, background 0.2s; cursor: pointer; box-shadow: 0 4px 12px rgba(0,0,0,0.03); }
         .icon-box:active { transform: scale(0.9); background: rgba(255,255,255,0.5); }
         .icon-box i { font-size: 22px; opacity: 0.9; }
 
-        /* Dock */
+        /* --- 修正后的 Dock --- */
         .dock-wrapper {
             position: absolute;
-            /* 默认PC端底部距离 */
-            bottom: 24px; 
+            /* 1. 紧贴底部，不留悬空 */
+            bottom: 0; 
             left: 0;
             width: 100%;
             display: flex;
             justify-content: center;
             pointer-events: none;
             z-index: 50;
+            
+            /* 2. 关键：在 PC 端默认给点距离 */
+            padding-bottom: 24px; 
+            
+            /* 如果想让它不那么生硬，可以加一个从底部向上的渐变遮罩，可选 */
+            /* background: linear-gradient(to top, rgba(255,255,255,0.1) 0%, transparent 100%); */
         }
 
         .dock {
@@ -185,47 +194,52 @@
         .dock-item { font-size: 24px; color: var(--text-main); transition: transform 0.2s; display: flex; align-items: center; }
         .dock-item:active { transform: scale(0.85); }
 
-        /* --- 核心：移动端 & PWA 适配逻辑 --- */
+        /* --- 移动端 & PWA 适配 --- */
         @media (max-width: 768px) {
+            html {
+                /* 防止PC端的背景设置影响移动端滚动 */
+                background-color: var(--bg-device);
+            }
             body {
                 background: var(--bg-device);
-                /* 使用 100dvh (Dynamic Viewport Height) 确保浏览器模式下地址栏伸缩不影响高度 */
-                height: 100dvh; 
-                width: 100vw;
+                width: 100%;
+                /* 确保高度填满，不留白 */
+                min-height: 100%;
+                height: 100%; 
             }
             
             .device {
                 width: 100%;
-                height: 100dvh; /* 填满屏幕 */
+                height: 100%; /* 填满父容器 */
                 border-radius: 0;
                 box-shadow: none;
                 border: none;
                 
-                /* 关键：利用 padding-top 避开刘海 (PWA全屏模式生效) */
+                /* 顶部避开刘海 */
                 padding-top: env(safe-area-inset-top);
-                /* 关键：底部留出安全距离，防止背景内容被切断 */
-                padding-bottom: env(safe-area-inset-bottom);
+                /* 底部留给 Dock */
+                padding-bottom: 0; 
             }
 
             .status-bar {
-                /* 状态栏也要往下挪，避开刘海 */
                 top: env(safe-area-inset-top);
                 height: 44px;
-                /* PWA模式下，我们希望原本的 09:41 隐藏（因为有真系统时间），或者你可以选择留着 */
-                /* 这里为了不和真系统时间重叠，可以加一点 padding 或者隐藏 */
             }
 
             .scroll-content {
-                /* 调整内边距 */
-                /* Top: 给 status bar 留空间 */
                 padding-top: 60px;
-                /* Bottom: 确保最后一个元素能滚到 Dock 上方 */
-                padding-bottom: 120px; 
+                /* 底部 padding 加大，因为 dock 下沉了，但高度还是有的 */
+                padding-bottom: 140px; 
             }
 
+            /* --- 关键：Dock 下沉逻辑 --- */
             .dock-wrapper {
-                /* 关键：Dock 悬浮在安全区域之上 */
-                bottom: calc(24px + env(safe-area-inset-bottom));
+                /* 重置 bottom，紧贴屏幕最下方 */
+                bottom: 0;
+                
+                /* 利用 padding 把 Dock 顶在黑条上方一点点 */
+                /* 16px 是给黑条留的呼吸空间，env 确保黑条本身不遮挡 */
+                padding-bottom: calc(16px + env(safe-area-inset-bottom));
             }
         }
     </style>
@@ -235,7 +249,6 @@
     <div class="device">
         <!-- 状态栏 -->
         <div class="status-bar">
-            <!-- 在真机PWA上，这个假的09:41会和系统时间重叠，可以选择留着当装饰，或者隐藏 -->
             <span id="clock-mini">09:41</span>
             <div style="display: flex; gap: 8px;">
                 <i class="ph-bold ph-signal-high"></i>
@@ -245,7 +258,7 @@
         </div>
 
         <div class="scroll-content">
-            <!-- 1. Header -->
+            <!-- Header -->
             <div class="header">
                 <div class="date-box">
                     <h1 class="serif" id="day-main">Saturday.</h1>
@@ -256,7 +269,7 @@
                 </div>
             </div>
 
-            <!-- 2. Profile -->
+            <!-- Profile -->
             <div class="profile-card">
                 <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?ixlib=rb-4.0.3&auto=format&fit=crop&w=200&q=80" alt="Avatar" class="avatar">
                 <div class="profile-info">
@@ -269,7 +282,7 @@
                 </div>
             </div>
 
-            <!-- 3. Polaroid -->
+            <!-- Polaroid -->
             <div class="photo-grid">
                 <div class="polaroid">
                     <div class="tape"></div>
@@ -283,7 +296,7 @@
                 </div>
             </div>
 
-            <!-- 4. Memo -->
+            <!-- Memo -->
             <div class="memo-widget">
                 <div class="spiral"><span></span><span></span><span></span><span></span></div>
                 <h3 style="font-size: 12px; text-transform: uppercase; color: var(--text-sub); margin-bottom: 8px; margin-left: 4px;">To Do List</h3>
@@ -294,7 +307,7 @@
                 </ul>
             </div>
 
-            <!-- 5. Grid Icons -->
+            <!-- Grid Icons -->
             <div class="grid-icons">
                 <div class="icon-box"><i class="ph ph-image"></i></div>
                 <div class="icon-box"><i class="ph ph-envelope-simple"></i></div>
@@ -307,7 +320,7 @@
             </div>
         </div>
 
-        <!-- 6. Dock -->
+        <!-- Dock -->
         <div class="dock-wrapper">
             <div class="dock">
                 <div class="dock-item"><i class="ph-fill ph-house"></i></div>
@@ -350,7 +363,7 @@
             } else {
                 html.removeAttribute('data-theme');
                 themeIcon.classList.replace('ph-sun', 'ph-moon');
-                metaThemeColor.setAttribute('content', '#f2f2f2'); 
+                metaThemeColor.setAttribute('content', '#fafafa'); 
             }
         });
     </script>
