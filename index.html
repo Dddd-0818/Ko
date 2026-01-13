@@ -57,10 +57,12 @@
             user-select: none;
         }
 
+        /* 1. 强制根元素全屏且无边距 */
         html {
             height: 100%;
             width: 100%;
-            background-color: var(--bg-device); 
+            background-color: #000; /* 底色设为黑，防止白边 */
+            overflow: hidden; /* 禁止 html 滚动 */
         }
 
         body {
@@ -68,8 +70,7 @@
             background-color: var(--bg-device); 
             height: 100%;
             width: 100%;
-            overflow: hidden; 
-            overscroll-behavior-y: none;
+            overflow: hidden; /* 禁止 body 滚动 */
             display: flex;
             justify-content: center;
             align-items: center;
@@ -117,7 +118,7 @@
             z-index: 10;
             color: var(--text-main);
             text-shadow: 0 1px 2px rgba(0,0,0,0.1);
-            pointer-events: none; /* 防止遮挡 */
+            pointer-events: none; 
         }
 
         .header { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 24px; padding: 0 4px; }
@@ -152,7 +153,6 @@
 
         .grid-icons { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; padding: 0 24px; margin-bottom: 24px; }
         
-        /* 这里的定义可以同时作用于 div 和 label */
         .icon-box { 
             width: 100%; max-width: 52px; aspect-ratio: 1; margin: 0 auto; 
             background: var(--glass-bg); backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur); 
@@ -160,21 +160,14 @@
             display: flex; align-items: center; justify-content: center; 
             color: var(--text-main); transition: transform 0.2s, background 0.2s; 
             cursor: pointer; box-shadow: 0 4px 12px rgba(0,0,0,0.03); 
-            position: relative; /* 为了定位内部的input */
+            position: relative; 
         }
         .icon-box:active { transform: scale(0.9); background: rgba(255,255,255,0.5); }
         .icon-box i { font-size: 22px; opacity: 0.9; }
 
-        /* 隐藏的上传控件样式修正 */
         .hidden-upload {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            opacity: 0; /* 只要不是 display:none，iOS就可以点击 */
-            cursor: pointer;
-            z-index: 10;
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            opacity: 0; cursor: pointer; z-index: 10;
         }
 
         .dock-wrapper {
@@ -204,23 +197,41 @@
         .dock-item { font-size: 24px; color: var(--text-main); transition: transform 0.2s; display: flex; align-items: center; }
         .dock-item:active { transform: scale(0.85); }
 
+        /* --- 移动端 & PWA 终极适配 --- */
         @media (max-width: 768px) {
-            html { background-color: var(--bg-device); }
+            html { background-color: #000; } /* 确保背景底色为黑，防止白边 */
             body {
                 background: var(--bg-device);
-                width: 100%;
-                min-height: 100%;
-                height: 100%; 
+                /* 使用 min-height 确保 body 至少填满屏幕 */
+                min-height: 100vh;
+                min-height: 100dvh;
+                margin: 0;
+                padding: 0;
             }
             
             .device {
+                /* 2. 关键修改：强制全屏固定定位 */
+                position: fixed; 
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                
                 width: 100%;
-                height: 100%; 
+                /* 强制高度为视口高度，忽略内容长度 */
+                height: 100vh;
+                height: 100dvh; 
+                
                 border-radius: 0;
                 box-shadow: none;
                 border: none;
+                
+                /* 处理刘海 */
                 padding-top: env(safe-area-inset-top);
+                /* 底部不留 padding，因为背景图要铺满，我们在 dock-wrapper 里处理边距 */
                 padding-bottom: 0; 
+                
+                z-index: 1;
             }
 
             .status-bar {
@@ -231,10 +242,13 @@
             .scroll-content {
                 padding-top: 60px;
                 padding-bottom: 140px; 
+                /* 确保滚动区域在 device 内部能正常工作 */
+                height: 100%; 
             }
 
             .dock-wrapper {
                 bottom: 0;
+                /* 3. 使用 padding 把 Dock 顶起来，背景图不动 */
                 padding-bottom: calc(16px + env(safe-area-inset-bottom));
             }
         }
@@ -254,7 +268,6 @@
         </div>
 
         <div class="scroll-content">
-            <!-- Header -->
             <div class="header">
                 <div class="date-box">
                     <h1 class="serif" id="day-main">Saturday.</h1>
@@ -265,7 +278,6 @@
                 </div>
             </div>
 
-            <!-- Profile -->
             <div class="profile-card">
                 <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?ixlib=rb-4.0.3&auto=format&fit=crop&w=200&q=80" alt="Avatar" class="avatar">
                 <div class="profile-info">
@@ -278,7 +290,6 @@
                 </div>
             </div>
 
-            <!-- Polaroid -->
             <div class="photo-grid">
                 <div class="polaroid">
                     <div class="tape"></div>
@@ -292,7 +303,6 @@
                 </div>
             </div>
 
-            <!-- Memo -->
             <div class="memo-widget">
                 <div class="spiral"><span></span><span></span><span></span><span></span></div>
                 <h3 style="font-size: 12px; text-transform: uppercase; color: var(--text-sub); margin-bottom: 8px; margin-left: 4px;">To Do List</h3>
@@ -303,11 +313,8 @@
                 </ul>
             </div>
 
-            <!-- Grid Icons -->
             <div class="grid-icons">
-                <!-- 1. 修正：使用 label 包裹 input，完美解决iOS点击无效问题 -->
                 <label class="icon-box">
-                    <!-- opacity: 0 是关键，display: none 会导致 iOS 不工作 -->
                     <input type="file" id="wallpaper-upload" class="hidden-upload" accept="image/*">
                     <i class="ph ph-image"></i>
                 </label>
@@ -322,7 +329,6 @@
             </div>
         </div>
 
-        <!-- Dock -->
         <div class="dock-wrapper">
             <div class="dock">
                 <div class="dock-item"><i class="ph-fill ph-house"></i></div>
@@ -334,7 +340,6 @@
     </div>
 
     <script>
-        // 1. 壁纸上传逻辑 (不需要监听点击，input在label里会自动触发)
         const fileInput = document.getElementById('wallpaper-upload');
         const device = document.getElementById('main-device');
 
@@ -351,7 +356,6 @@
             }
         });
 
-        // 2. 时间逻辑
         function updateTime() {
             const now = new Date();
             const hours = String(now.getHours()).padStart(2, '0');
@@ -367,7 +371,6 @@
         setInterval(updateTime, 1000);
         updateTime();
 
-        // 3. 深浅色切换
         const themeBtn = document.getElementById('theme-btn');
         const themeIcon = document.getElementById('theme-icon');
         const html = document.documentElement;
