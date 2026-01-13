@@ -2,53 +2,39 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    
-    <!-- ★★★ 核心配置：PWA 全屏与视口适配 ★★★ -->
+    <!-- 核心：viewport-fit=cover 让页面充满刘海和底部黑条区域 -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     
-    <!-- iOS PWA 配置 -->
+    <!-- iOS PWA 沉浸式设置 -->
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <!-- 设置状态栏为沉浸式 (内容可以顶到最上面) -->
+    <!-- 设置为 black-translucent 可以让内容背景延伸到状态栏下面 -->
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="format-detection" content="telephone=no">
     
     <title>Chill Mono OS</title>
-    
-    <!-- 引入 Phosphor Icons 图标库 -->
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
-    
-    <!-- 引入字体 -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Playfair+Display:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
 
     <style>
         :root {
-            /* --- 安全区域变量 (核心) --- */
+            /* 安全区域变量，如果浏览器不支持则回退到 20px */
             --safe-top: env(safe-area-inset-top, 20px);
             --safe-bottom: env(safe-area-inset-bottom, 20px);
             
-            /* --- 颜色变量 --- */
             --bg-body: #f2f2f2;
             --bg-device: #fafafa;
             --bg-card: #ffffff;
             
-            /* 毛玻璃变量 */
             --glass-bg: rgba(255, 255, 255, 0.45);
             --glass-border: rgba(255, 255, 255, 0.6);
             --glass-blur: blur(16px);
 
             --text-main: #1a1a1a;
             --text-sub: #666666;
-            
             --border-line: #e0e0e0;
             --shadow-card: 0 4px 20px rgba(0,0,0,0.03);
             --dock-bg: rgba(255, 255, 255, 0.85);
             --tape-color: rgba(230, 230, 230, 0.5);
-            
-            /* 层级管理 */
-            --z-content: 10;
-            --z-dock: 100;
         }
 
         [data-theme="dark"] {
@@ -65,7 +51,6 @@
             --tape-color: rgba(255, 255, 255, 0.1);
         }
 
-        /* 基础重置 */
         * {
             box-sizing: border-box;
             margin: 0;
@@ -76,41 +61,49 @@
             -webkit-user-select: none;
         }
 
+        /* 强制 Body 填满屏幕且不可滚动，滚动交给内部元素 */
         html, body {
             width: 100%;
             height: 100%;
-            overflow: hidden; /* 禁止 Body 滚动，由内部容器接管 */
+            overflow: hidden; 
             font-family: 'DM Sans', sans-serif;
-            background-color: var(--bg-body);
+            background-color: var(--bg-device);
             color: var(--text-main);
-            transition: background-color 0.3s ease;
-            /* 防止下拉刷新/回弹效果，让体验更像原生 App */
-            overscroll-behavior: none;
+            /* 禁止iOS橡皮筋回弹，防止露出浏览器底色 */
+            overscroll-behavior: none; 
+            position: fixed; /* 锁死 */
         }
 
-        /* 衬线字体工具类 */
-        .serif {
-            font-family: 'Playfair Display', serif;
-        }
-
-        /* --- 容器架构 --- */
-        
-        /* .device 是核心容器。
-           在 PC 端，它是“手机模拟器”。
-           在 移动端，它是全屏容器。 
-        */
+        /* --- 核心容器 --- */
         .device {
             position: relative;
             background: var(--bg-device);
             overflow: hidden;
             display: flex;
             flex-direction: column;
-            transition: all 0.3s ease;
+            transition: background 0.3s ease;
         }
 
-        /* PC / 平板样式 (模拟手机框) */
+        /* --- 移动端 / PWA 强制全屏逻辑 --- */
+        @media (max-width: 768px) {
+            .device {
+                /* 绝对定位铺满，无视父级 padding */
+                position: absolute;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                border-radius: 0;
+                box-shadow: none;
+                border: none;
+                /* 关键：这里不要加 padding-bottom，否则底部背景会断开 */
+            }
+        }
+
+        /* --- PC 端模拟器样式 --- */
         @media (min-width: 769px) {
             body {
+                background-color: var(--bg-body);
                 display: flex;
                 justify-content: center;
                 align-items: center;
@@ -120,240 +113,107 @@
                 height: 844px;
                 border-radius: 44px;
                 box-shadow: 
-                    0 0 0 10px #222, /* 物理边框 */
+                    0 0 0 10px #222,
                     0 20px 50px rgba(0,0,0,0.2);
-            }
-            /* PC端状态栏位置微调 */
-            .status-bar {
-                height: 44px;
-                padding-top: 0; 
-            }
-        }
-
-        /* ★★★ 移动端 / PWA 核心样式 ★★★ */
-        @media (max-width: 768px) {
-            body {
-                margin: 0;
-                background-color: var(--bg-device); /* 确保背景色一致 */
-            }
-            .device {
-                width: 100vw;
-                height: 100vh;
-                /* 使用 dvh 解决移动浏览器地址栏遮挡问题 */
-                height: 100dvh; 
-                border-radius: 0;
-                box-shadow: none;
-                border: none;
             }
         }
 
         /* --- 顶部状态栏 --- */
         .status-bar {
+            /* 绝对定位在顶部 */
             position: absolute;
             top: 0;
             left: 0;
             width: 100%;
-            z-index: var(--z-dock);
+            z-index: 50;
             display: flex;
             justify-content: space-between;
-            align-items: flex-end; /* 底部对齐内容 */
+            align-items: flex-end; /* 内容底部对齐 */
             padding: 0 24px;
-            /* 适配刘海屏：高度 = 44px + 顶部安全距离 */
+            
+            /* 高度 = 固定高度 + 顶部刘海高度 */
             height: calc(44px + var(--safe-top)); 
-            padding-bottom: 10px; /* 文字离底部的距离 */
+            padding-bottom: 12px; /* 调整文字位置 */
+            
             font-size: 13px;
             font-weight: 600;
             color: var(--text-main);
-            /* 可选：加一点渐变背景防止看不清 */
-            background: linear-gradient(to bottom, var(--bg-device), transparent);
-            pointer-events: none; /* 让点击穿透 */
+            pointer-events: none;
+            
+            /* 加一个渐变遮罩，防止内容滚到下面时看不清状态栏 */
+            background: linear-gradient(to bottom, var(--bg-device) 20%, rgba(255,255,255,0) 100%);
         }
 
-        /* --- 主滚动区域 --- */
+        /* --- 滚动内容区 --- */
         .scroll-content {
-            flex: 1; /* 占满剩余空间 */
+            flex: 1;
+            height: 100%; /* 占满高度 */
             overflow-y: auto;
             overflow-x: hidden;
-            -webkit-overflow-scrolling: touch; /* iOS 丝滑滚动 */
+            -webkit-overflow-scrolling: touch;
             
-            /* 内边距策略：
-               顶部 = 状态栏高度 + 额外留白
-               底部 = Dock高度 + 底部安全距离 + 额外留白 
-            */
+            /* 关键：内边距在这里处理，确保内容不被遮挡，但背景是通铺的 */
             padding-top: calc(50px + var(--safe-top));
+            
+            /* 底部留白 = Dock高度 + 底部黑条高度 + 额外间距 */
             padding-bottom: calc(100px + var(--safe-bottom)); 
+            
             padding-left: 20px;
             padding-right: 20px;
         }
         
-        .scroll-content::-webkit-scrollbar {
-            display: none;
-        }
+        .scroll-content::-webkit-scrollbar { display: none; }
 
-        /* --- 具体组件样式 --- */
-
-        /* 1. Header */
-        .header {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-end;
-            margin-bottom: 24px;
-            padding: 0 4px;
-        }
-
-        .date-box h1 {
-            font-size: 32px;
-            font-weight: 400;
-            font-style: italic;
-            line-height: 1;
-            margin-bottom: 4px;
-        }
-
-        .date-box p {
-            font-size: 12px;
-            color: var(--text-sub);
-            letter-spacing: 1px;
-            text-transform: uppercase;
-        }
-
-        /* 主题切换按钮 */
-        .theme-switch {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            border: 1px solid var(--border-line);
-            background: var(--bg-card);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            font-size: 18px;
-            color: var(--text-main);
-            transition: all 0.3s;
-        }
-
-        /* 2. Profile Card */
-        .profile-card {
-            background: var(--bg-card);
-            border-radius: 24px;
-            padding: 20px;
-            display: flex;
-            align-items: center;
-            gap: 16px;
-            box-shadow: var(--shadow-card);
-            margin-bottom: 20px;
-            border: 1px solid var(--border-line);
-        }
-
-        .avatar {
-            width: 64px;
-            height: 64px;
-            border-radius: 50%;
-            object-fit: cover;
-            border: 2px solid var(--bg-device);
-            outline: 1px solid var(--text-main);
-            filter: grayscale(100%);
-        }
-
+        /* 组件样式保持不变 */
+        .header { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 24px; padding: 0 4px; }
+        .date-box h1 { font-size: 32px; font-weight: 400; font-style: italic; line-height: 1; margin-bottom: 4px; }
+        .date-box p { font-size: 12px; color: var(--text-sub); letter-spacing: 1px; text-transform: uppercase; }
+        .theme-switch { width: 40px; height: 40px; border-radius: 50%; border: 1px solid var(--border-line); background: var(--bg-card); display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 18px; color: var(--text-main); transition: all 0.3s; }
+        
+        .profile-card { background: var(--bg-card); border-radius: 24px; padding: 20px; display: flex; align-items: center; gap: 16px; box-shadow: var(--shadow-card); margin-bottom: 20px; border: 1px solid var(--border-line); }
+        .avatar { width: 64px; height: 64px; border-radius: 50%; object-fit: cover; border: 2px solid var(--bg-device); outline: 1px solid var(--text-main); filter: grayscale(100%); }
         .profile-info { flex: 1; }
         .profile-name { font-size: 18px; font-weight: 600; margin-bottom: 4px; }
         .profile-bio { font-size: 12px; color: var(--text-sub); font-family: 'Playfair Display', serif; font-style: italic; line-height: 1.4; }
         .profile-tags { margin-top: 8px; display: flex; gap: 6px; }
         .tag { font-size: 10px; padding: 2px 8px; border-radius: 100px; border: 1px solid var(--border-line); color: var(--text-sub); }
 
-        /* 3. Polaroid Grid */
-        .photo-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 12px;
-            margin-bottom: 20px;
-        }
-        .polaroid {
-            background: #fff; padding: 8px 8px 30px 8px;
-            box-shadow: var(--shadow-card);
-            transform: rotate(-1deg); position: relative; transition: transform 0.2s;
-        }
+        .photo-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px; }
+        .polaroid { background: #fff; padding: 8px 8px 30px 8px; box-shadow: var(--shadow-card); transform: rotate(-1deg); position: relative; transition: transform 0.2s; }
         [data-theme="dark"] .polaroid { background: #2a2a2a; }
         .polaroid:nth-child(2) { transform: rotate(2deg) translateY(10px); }
-        .tape {
-            position: absolute; top: -10px; left: 50%; transform: translateX(-50%);
-            width: 60px; height: 20px; background: var(--tape-color);
-            backdrop-filter: blur(2px); z-index: 2;
-        }
-        .polaroid-img {
-            width: 100%; aspect-ratio: 1; background-color: #ddd;
-            background-size: cover; background-position: center;
-            filter: grayscale(100%) contrast(1.1);
-        }
-        .polaroid-text {
-            font-family: 'Playfair Display', serif; font-size: 10px;
-            text-align: center; margin-top: 8px; color: var(--text-main); font-style: italic;
-        }
+        .tape { position: absolute; top: -10px; left: 50%; transform: translateX(-50%); width: 60px; height: 20px; background: var(--tape-color); backdrop-filter: blur(2px); z-index: 2; }
+        .polaroid-img { width: 100%; aspect-ratio: 1; background-color: #ddd; background-size: cover; background-position: center; filter: grayscale(100%) contrast(1.1); }
+        .polaroid-text { font-family: 'Playfair Display', serif; font-size: 10px; text-align: center; margin-top: 8px; color: var(--text-main); font-style: italic; }
 
-        /* 4. Memo Widget */
-        .memo-widget {
-            background: var(--bg-card); border-radius: 20px; padding: 20px;
-            border: 1px solid var(--border-line); margin-bottom: 32px; position: relative;
-        }
-        .spiral {
-            position: absolute; top: -10px; left: 20px; display: flex; gap: 15px;
-        }
+        .memo-widget { background: var(--bg-card); border-radius: 20px; padding: 20px; border: 1px solid var(--border-line); margin-bottom: 32px; position: relative; }
+        .spiral { position: absolute; top: -10px; left: 20px; display: flex; gap: 15px; }
         .spiral span { width: 6px; height: 20px; background: var(--text-sub); border-radius: 4px; }
         .memo-list { margin-top: 10px; list-style: none; }
-        .memo-item {
-            display: flex; align-items: center; padding: 10px 0;
-            border-bottom: 1px dashed var(--border-line); font-size: 13px; color: var(--text-main); cursor: pointer;
-        }
+        .memo-item { display: flex; align-items: center; padding: 10px 0; border-bottom: 1px dashed var(--border-line); font-size: 13px; color: var(--text-main); cursor: pointer; }
         .memo-item:last-child { border-bottom: none; }
-        .check-circle {
-            width: 14px; height: 14px; border: 1.5px solid var(--text-sub);
-            border-radius: 50%; margin-right: 12px; display: flex; align-items: center; justify-content: center;
-        }
+        .check-circle { width: 14px; height: 14px; border: 1.5px solid var(--text-sub); border-radius: 50%; margin-right: 12px; display: flex; align-items: center; justify-content: center; }
         .memo-item.done .check-circle { background: var(--text-main); border-color: var(--text-main); }
         .memo-item.done span { text-decoration: line-through; color: var(--text-sub); }
 
-        /* 5. Grid Icons (PC大屏限制大小 + 移动端自适应) */
-        .grid-icons {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 16px;
-            padding: 0 24px;
-            margin-bottom: 24px;
-        }
-
-        .icon-box {
-            width: 100%;
-            max-width: 52px; /* 限制最大宽度，PC上不傻大 */
-            aspect-ratio: 1;
-            margin: 0 auto;  /* 居中 */
-            
-            /* 毛玻璃 */
-            background: var(--glass-bg);
-            backdrop-filter: var(--glass-blur);
-            -webkit-backdrop-filter: var(--glass-blur);
-            border: 1px solid var(--glass-border);
-            
-            border-radius: 18px;
-            display: flex; align-items: center; justify-content: center;
-            color: var(--text-main);
-            transition: transform 0.2s, background 0.2s;
-            cursor: pointer;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.03);
-        }
+        /* Icons: PC限制宽度，移动端自适应 */
+        .grid-icons { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; padding: 0 24px; margin-bottom: 24px; }
+        .icon-box { width: 100%; max-width: 52px; aspect-ratio: 1; margin: 0 auto; background: var(--glass-bg); backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur); border: 1px solid var(--glass-border); border-radius: 18px; display: flex; align-items: center; justify-content: center; color: var(--text-main); transition: transform 0.2s, background 0.2s; cursor: pointer; box-shadow: 0 4px 12px rgba(0,0,0,0.03); }
         .icon-box:active { transform: scale(0.9); background: rgba(255,255,255,0.5); }
         .icon-box i { font-size: 22px; opacity: 0.9; }
 
-        /* --- 6. Dock (底部悬浮栏) --- */
+        /* --- 6. Dock (修复底部对齐) --- */
         .dock-wrapper {
             position: absolute;
             left: 0;
             width: 100%;
-            /* 关键：距离底部 = 底部安全距离 + 额外留白 */
-            bottom: calc(var(--safe-bottom) + 15px); 
             display: flex;
             justify-content: center;
-            pointer-events: none; /* 让 Wrapper 不挡点击 */
-            z-index: var(--z-dock);
+            pointer-events: none; 
+            z-index: 100;
+            
+            /* 关键：Dock 距离底部的距离 = 安全距离 + 20px 悬浮间距 */
+            bottom: calc(var(--safe-bottom) + 20px);
         }
 
         .dock {
@@ -369,14 +229,7 @@
             box-shadow: 0 10px 40px rgba(0,0,0,0.1);
         }
 
-        .dock-item {
-            font-size: 24px;
-            color: var(--text-main);
-            transition: transform 0.2s;
-            display: flex;
-            align-items: center;
-            cursor: pointer;
-        }
+        .dock-item { font-size: 24px; color: var(--text-main); transition: transform 0.2s; display: flex; align-items: center; cursor: pointer; }
         .dock-item:active { transform: scale(0.85); }
 
     </style>
@@ -386,7 +239,6 @@
     <div class="device">
         <!-- 状态栏 -->
         <div class="status-bar">
-            <!-- 增加左侧占位，让时间居中或靠左 -->
             <span id="clock-mini">09:41</span>
             <div style="display: flex; gap: 8px;">
                 <i class="ph-bold ph-signal-high"></i>
@@ -395,22 +247,21 @@
             </div>
         </div>
 
-        <!-- 滚动内容区 -->
+        <!-- 滚动区域 -->
         <div class="scroll-content">
             
-            <!-- 1. Header -->
+            <!-- Header -->
             <div class="header">
                 <div class="date-box">
                     <h1 class="serif" id="day-main">Saturday.</h1>
                     <p id="date-main">OCTOBER 24</p>
                 </div>
-                <!-- 主题切换 -->
                 <div class="theme-switch" id="theme-btn">
                     <i class="ph ph-moon" id="theme-icon"></i>
                 </div>
             </div>
 
-            <!-- 2. Chill Profile Card -->
+            <!-- Profile -->
             <div class="profile-card">
                 <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?ixlib=rb-4.0.3&auto=format&fit=crop&w=200&q=80" alt="Avatar" class="avatar">
                 <div class="profile-info">
@@ -423,7 +274,7 @@
                 </div>
             </div>
 
-            <!-- 3. Polaroid Grid -->
+            <!-- Photos -->
             <div class="photo-grid">
                 <div class="polaroid">
                     <div class="tape"></div>
@@ -437,7 +288,7 @@
                 </div>
             </div>
 
-            <!-- 4. Memo Widget -->
+            <!-- Memo -->
             <div class="memo-widget">
                 <div class="spiral">
                     <span></span><span></span><span></span><span></span>
@@ -459,7 +310,7 @@
                 </ul>
             </div>
 
-            <!-- 5. Grid Icons -->
+            <!-- Grid Icons -->
             <div class="grid-icons">
                 <div class="icon-box"><i class="ph ph-image"></i></div>
                 <div class="icon-box"><i class="ph ph-envelope-simple"></i></div>
@@ -471,13 +322,13 @@
                 <div class="icon-box"><i class="ph ph-instagram-logo"></i></div>
                 <div class="icon-box"><i class="ph ph-wallet"></i></div>
             </div>
-
-            <!-- 为了防止 Dock 遮挡最底部内容，可以加个垫片 -->
+            
+            <!-- 垫片，防止内容被 Dock 遮挡 -->
             <div style="height: 20px;"></div>
 
         </div>
 
-        <!-- 6. Dock -->
+        <!-- Dock -->
         <div class="dock-wrapper">
             <div class="dock">
                 <div class="dock-item"><i class="ph-fill ph-house"></i></div>
@@ -489,7 +340,6 @@
     </div>
 
     <script>
-        // 1. 时间逻辑
         function updateTime() {
             const now = new Date();
             const hours = String(now.getHours()).padStart(2, '0');
@@ -505,7 +355,6 @@
         setInterval(updateTime, 1000);
         updateTime();
 
-        // 2. 深浅色切换
         const themeBtn = document.getElementById('theme-btn');
         const themeIcon = document.getElementById('theme-icon');
         const html = document.documentElement;
