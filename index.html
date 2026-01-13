@@ -2,211 +2,358 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
+    
+    <!-- ★★★ 核心配置：PWA 全屏与视口适配 ★★★ -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     
-    <!-- PWA 设置 -->
+    <!-- iOS PWA 配置 -->
     <meta name="apple-mobile-web-app-capable" content="yes">
+    <!-- 设置状态栏为沉浸式 (内容可以顶到最上面) -->
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="Chill OS">
     <meta name="format-detection" content="telephone=no">
     
-    <!-- 图标 -->
-    <link rel="apple-touch-icon" href="https://i.postimg.cc/j2G1nTGH/IMG-7813.jpg">
-
     <title>Chill Mono OS</title>
     
+    <!-- 引入 Phosphor Icons 图标库 -->
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    
+    <!-- 引入字体 -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Playfair+Display:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
 
     <style>
         :root {
-            --safe-top: env(safe-area-inset-top, 0px);
-            --safe-bottom: env(safe-area-inset-bottom, 0px);
+            /* --- 安全区域变量 (核心) --- */
+            --safe-top: env(safe-area-inset-top, 20px);
+            --safe-bottom: env(safe-area-inset-bottom, 20px);
             
+            /* --- 颜色变量 --- */
             --bg-body: #f2f2f2;
             --bg-device: #fafafa;
+            --bg-card: #ffffff;
+            
+            /* 毛玻璃变量 */
             --glass-bg: rgba(255, 255, 255, 0.45);
             --glass-border: rgba(255, 255, 255, 0.6);
             --glass-blur: blur(16px);
+
             --text-main: #1a1a1a;
             --text-sub: #666666;
+            
             --border-line: #e0e0e0;
+            --shadow-card: 0 4px 20px rgba(0,0,0,0.03);
             --dock-bg: rgba(255, 255, 255, 0.85);
             --tape-color: rgba(230, 230, 230, 0.5);
+            
+            /* 层级管理 */
+            --z-content: 10;
+            --z-dock: 100;
         }
 
         [data-theme="dark"] {
             --bg-body: #111111;
             --bg-device: #1a1a1a;
+            --bg-card: #222222;
             --glass-bg: rgba(60, 60, 60, 0.4);
             --glass-border: rgba(255, 255, 255, 0.1);
             --text-main: #f0f0f0;
             --text-sub: #888888;
             --border-line: #333333;
+            --shadow-card: 0 4px 20px rgba(0,0,0,0.3);
             --dock-bg: rgba(30, 30, 30, 0.8);
             --tape-color: rgba(255, 255, 255, 0.1);
         }
 
+        /* 基础重置 */
         * {
             box-sizing: border-box;
             margin: 0;
             padding: 0;
             -webkit-tap-highlight-color: transparent;
+            outline: none;
             user-select: none;
             -webkit-user-select: none;
         }
 
-        /* --- 核心修复：强制锁定根节点 --- */
         html, body {
             width: 100%;
             height: 100%;
-            position: fixed; /* 关键：固定页面，防止iOS回弹和白边 */
-            inset: 0;
-            overflow: hidden;
-            background-color: #000; /* 底色设为黑，防止极个别情况露白 */
+            overflow: hidden; /* 禁止 Body 滚动，由内部容器接管 */
             font-family: 'DM Sans', sans-serif;
-            display: flex;
-            justify-content: center;
-            align-items: center;
+            background-color: var(--bg-body);
+            color: var(--text-main);
+            transition: background-color 0.3s ease;
+            /* 防止下拉刷新/回弹效果，让体验更像原生 App */
+            overscroll-behavior: none;
         }
 
-        /* 手机容器 */
+        /* 衬线字体工具类 */
+        .serif {
+            font-family: 'Playfair Display', serif;
+        }
+
+        /* --- 容器架构 --- */
+        
+        /* .device 是核心容器。
+           在 PC 端，它是“手机模拟器”。
+           在 移动端，它是全屏容器。 
+        */
         .device {
             position: relative;
-            background-color: var(--bg-device);
-            background-size: cover;
-            background-position: center;
-            background-repeat: no-repeat;
-            
+            background: var(--bg-device);
+            overflow: hidden;
             display: flex;
             flex-direction: column;
-            overflow: hidden;
-            z-index: 1;
-            
-            /* PC端默认样式 */
-            width: 390px;
-            height: 844px;
-            border-radius: 44px;
-            box-shadow: 0 0 0 10px #222, 0 20px 50px rgba(0,0,0,0.2);
             transition: all 0.3s ease;
         }
 
-        /* 状态栏 */
+        /* PC / 平板样式 (模拟手机框) */
+        @media (min-width: 769px) {
+            body {
+                display: flex;
+                justify-content: center;
+                align-items: center;
+            }
+            .device {
+                width: 390px;
+                height: 844px;
+                border-radius: 44px;
+                box-shadow: 
+                    0 0 0 10px #222, /* 物理边框 */
+                    0 20px 50px rgba(0,0,0,0.2);
+            }
+            /* PC端状态栏位置微调 */
+            .status-bar {
+                height: 44px;
+                padding-top: 0; 
+            }
+        }
+
+        /* ★★★ 移动端 / PWA 核心样式 ★★★ */
+        @media (max-width: 768px) {
+            body {
+                margin: 0;
+                background-color: var(--bg-device); /* 确保背景色一致 */
+            }
+            .device {
+                width: 100vw;
+                height: 100vh;
+                /* 使用 dvh 解决移动浏览器地址栏遮挡问题 */
+                height: 100dvh; 
+                border-radius: 0;
+                box-shadow: none;
+                border: none;
+            }
+        }
+
+        /* --- 顶部状态栏 --- */
         .status-bar {
-            height: 44px;
-            padding: 0 24px;
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            z-index: var(--z-dock);
             display: flex;
             justify-content: space-between;
-            align-items: center;
+            align-items: flex-end; /* 底部对齐内容 */
+            padding: 0 24px;
+            /* 适配刘海屏：高度 = 44px + 顶部安全距离 */
+            height: calc(44px + var(--safe-top)); 
+            padding-bottom: 10px; /* 文字离底部的距离 */
             font-size: 13px;
             font-weight: 600;
-            z-index: 10;
             color: var(--text-main);
-            flex-shrink: 0; /* 防止被压缩 */
-            margin-top: 5px;
+            /* 可选：加一点渐变背景防止看不清 */
+            background: linear-gradient(to bottom, var(--bg-device), transparent);
+            pointer-events: none; /* 让点击穿透 */
         }
 
-        /* 滚动区域：占据剩余空间 */
+        /* --- 主滚动区域 --- */
         .scroll-content {
-            flex: 1;
+            flex: 1; /* 占满剩余空间 */
             overflow-y: auto;
             overflow-x: hidden;
-            -webkit-overflow-scrolling: touch;
-            padding: 20px 24px 120px 24px; /* 底部留出Dock的空间 */
-            width: 100%;
+            -webkit-overflow-scrolling: touch; /* iOS 丝滑滚动 */
+            
+            /* 内边距策略：
+               顶部 = 状态栏高度 + 额外留白
+               底部 = Dock高度 + 底部安全距离 + 额外留白 
+            */
+            padding-top: calc(50px + var(--safe-top));
+            padding-bottom: calc(100px + var(--safe-bottom)); 
+            padding-left: 20px;
+            padding-right: 20px;
         }
-        .scroll-content::-webkit-scrollbar { display: none; }
+        
+        .scroll-content::-webkit-scrollbar {
+            display: none;
+        }
 
-        /* 组件样式保持不变 */
-        .serif { font-family: 'Playfair Display', serif; }
-        
-        .header { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 24px; padding: 0 4px; }
-        .date-box h1 { font-size: 32px; font-weight: 400; font-style: italic; line-height: 1; margin-bottom: 4px; color: var(--text-main); }
-        .date-box p { font-size: 12px; color: var(--text-sub); letter-spacing: 1px; text-transform: uppercase; }
-        
+        /* --- 具体组件样式 --- */
+
+        /* 1. Header */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            margin-bottom: 24px;
+            padding: 0 4px;
+        }
+
+        .date-box h1 {
+            font-size: 32px;
+            font-weight: 400;
+            font-style: italic;
+            line-height: 1;
+            margin-bottom: 4px;
+        }
+
+        .date-box p {
+            font-size: 12px;
+            color: var(--text-sub);
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        /* 主题切换按钮 */
         .theme-switch {
-            width: 40px; height: 40px; border-radius: 50%; 
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
             border: 1px solid var(--border-line);
-            background: rgba(255,255,255,0.2); /* 半透明，适应壁纸 */
-            backdrop-filter: blur(10px);
-            display: flex; align-items: center; justify-content: center;
-            cursor: pointer; font-size: 18px; color: var(--text-main);
+            background: var(--bg-card);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 18px;
+            color: var(--text-main);
+            transition: all 0.3s;
         }
 
+        /* 2. Profile Card */
         .profile-card {
+            background: var(--bg-card);
+            border-radius: 24px;
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            box-shadow: var(--shadow-card);
+            margin-bottom: 20px;
+            border: 1px solid var(--border-line);
+        }
+
+        .avatar {
+            width: 64px;
+            height: 64px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid var(--bg-device);
+            outline: 1px solid var(--text-main);
+            filter: grayscale(100%);
+        }
+
+        .profile-info { flex: 1; }
+        .profile-name { font-size: 18px; font-weight: 600; margin-bottom: 4px; }
+        .profile-bio { font-size: 12px; color: var(--text-sub); font-family: 'Playfair Display', serif; font-style: italic; line-height: 1.4; }
+        .profile-tags { margin-top: 8px; display: flex; gap: 6px; }
+        .tag { font-size: 10px; padding: 2px 8px; border-radius: 100px; border: 1px solid var(--border-line); color: var(--text-sub); }
+
+        /* 3. Polaroid Grid */
+        .photo-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+        .polaroid {
+            background: #fff; padding: 8px 8px 30px 8px;
+            box-shadow: var(--shadow-card);
+            transform: rotate(-1deg); position: relative; transition: transform 0.2s;
+        }
+        [data-theme="dark"] .polaroid { background: #2a2a2a; }
+        .polaroid:nth-child(2) { transform: rotate(2deg) translateY(10px); }
+        .tape {
+            position: absolute; top: -10px; left: 50%; transform: translateX(-50%);
+            width: 60px; height: 20px; background: var(--tape-color);
+            backdrop-filter: blur(2px); z-index: 2;
+        }
+        .polaroid-img {
+            width: 100%; aspect-ratio: 1; background-color: #ddd;
+            background-size: cover; background-position: center;
+            filter: grayscale(100%) contrast(1.1);
+        }
+        .polaroid-text {
+            font-family: 'Playfair Display', serif; font-size: 10px;
+            text-align: center; margin-top: 8px; color: var(--text-main); font-style: italic;
+        }
+
+        /* 4. Memo Widget */
+        .memo-widget {
+            background: var(--bg-card); border-radius: 20px; padding: 20px;
+            border: 1px solid var(--border-line); margin-bottom: 32px; position: relative;
+        }
+        .spiral {
+            position: absolute; top: -10px; left: 20px; display: flex; gap: 15px;
+        }
+        .spiral span { width: 6px; height: 20px; background: var(--text-sub); border-radius: 4px; }
+        .memo-list { margin-top: 10px; list-style: none; }
+        .memo-item {
+            display: flex; align-items: center; padding: 10px 0;
+            border-bottom: 1px dashed var(--border-line); font-size: 13px; color: var(--text-main); cursor: pointer;
+        }
+        .memo-item:last-child { border-bottom: none; }
+        .check-circle {
+            width: 14px; height: 14px; border: 1.5px solid var(--text-sub);
+            border-radius: 50%; margin-right: 12px; display: flex; align-items: center; justify-content: center;
+        }
+        .memo-item.done .check-circle { background: var(--text-main); border-color: var(--text-main); }
+        .memo-item.done span { text-decoration: line-through; color: var(--text-sub); }
+
+        /* 5. Grid Icons (PC大屏限制大小 + 移动端自适应) */
+        .grid-icons {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+            padding: 0 24px;
+            margin-bottom: 24px;
+        }
+
+        .icon-box {
+            width: 100%;
+            max-width: 52px; /* 限制最大宽度，PC上不傻大 */
+            aspect-ratio: 1;
+            margin: 0 auto;  /* 居中 */
+            
+            /* 毛玻璃 */
             background: var(--glass-bg);
             backdrop-filter: var(--glass-blur);
             -webkit-backdrop-filter: var(--glass-blur);
             border: 1px solid var(--glass-border);
-            border-radius: 24px; padding: 20px; 
-            display: flex; align-items: center; gap: 16px; 
-            margin-bottom: 20px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.03);
-        }
-        .avatar { width: 64px; height: 64px; border-radius: 50%; object-fit: cover; border: 2px solid rgba(255,255,255,0.5); }
-        .profile-name { font-size: 18px; font-weight: 600; margin-bottom: 4px; color: var(--text-main); }
-        .profile-bio { font-size: 12px; color: var(--text-sub); font-family: 'Playfair Display', serif; font-style: italic; }
-        .tag { font-size: 10px; padding: 2px 8px; border-radius: 100px; border: 1px solid var(--border-line); color: var(--text-sub); margin-right: 5px;}
-
-        .photo-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px; }
-        .polaroid { background: #fff; padding: 8px 8px 30px 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.08); transform: rotate(-1deg); position: relative; }
-        .tape { position: absolute; top: -10px; left: 50%; transform: translateX(-50%); width: 60px; height: 20px; background: var(--tape-color); backdrop-filter: blur(2px); z-index: 2; }
-        .polaroid-img { width: 100%; aspect-ratio: 1; background-color: #ddd; background-size: cover; background-position: center; filter: grayscale(100%) contrast(1.1); }
-        .polaroid-text { font-family: 'Playfair Display', serif; font-size: 10px; text-align: center; margin-top: 8px; color: #333; font-style: italic; }
-
-        .memo-widget { 
-            background: var(--glass-bg); 
-            backdrop-filter: var(--glass-blur);
-            -webkit-backdrop-filter: var(--glass-blur);
-            border: 1px solid var(--glass-border);
-            border-radius: 20px; padding: 20px; margin-bottom: 32px; position: relative; 
-        }
-        .spiral { position: absolute; top: -10px; left: 20px; display: flex; gap: 15px; }
-        .spiral span { width: 6px; height: 20px; background: var(--text-sub); border-radius: 4px; }
-        .memo-item { display: flex; align-items: center; padding: 10px 0; border-bottom: 1px dashed var(--border-line); font-size: 13px; color: var(--text-main); }
-        .check-circle { width: 14px; height: 14px; border: 1.5px solid var(--text-sub); border-radius: 50%; margin-right: 12px; }
-        .memo-item.done .check-circle { background: var(--text-main); border-color: var(--text-main); }
-        .memo-item.done span { text-decoration: line-through; color: var(--text-sub); }
-
-        /* Grid Icons - 核心修复：Label 触发 */
-        .grid-icons { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 24px; padding: 0 10px; }
-        
-        .icon-box { 
-            width: 100%; max-width: 52px; aspect-ratio: 1; margin: 0 auto; 
-            background: var(--glass-bg); 
-            backdrop-filter: var(--glass-blur); 
-            -webkit-backdrop-filter: var(--glass-blur); 
-            border: 1px solid var(--glass-border); 
-            border-radius: 18px; 
-            display: flex; align-items: center; justify-content: center; 
-            color: var(--text-main); 
-            box-shadow: 0 4px 12px rgba(0,0,0,0.03); 
-            position: relative; /* 为了定位 input */
+            
+            border-radius: 18px;
+            display: flex; align-items: center; justify-content: center;
+            color: var(--text-main);
+            transition: transform 0.2s, background 0.2s;
             cursor: pointer;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.03);
         }
         .icon-box:active { transform: scale(0.9); background: rgba(255,255,255,0.5); }
         .icon-box i { font-size: 22px; opacity: 0.9; }
 
-        /* 隐藏的 input，必须 opacity: 0 覆盖在 label 上 */
-        .hidden-upload {
-            position: absolute;
-            top: 0; left: 0; width: 100%; height: 100%;
-            opacity: 0;
-            z-index: 10;
-            cursor: pointer;
-        }
-
-        /* Dock 栏 */
+        /* --- 6. Dock (底部悬浮栏) --- */
         .dock-wrapper {
             position: absolute;
-            bottom: 0;
             left: 0;
             width: 100%;
+            /* 关键：距离底部 = 底部安全距离 + 额外留白 */
+            bottom: calc(var(--safe-bottom) + 15px); 
             display: flex;
             justify-content: center;
-            padding-bottom: 24px; /* PC端默认 */
-            z-index: 50;
-            pointer-events: none;
+            pointer-events: none; /* 让 Wrapper 不挡点击 */
+            z-index: var(--z-dock);
         }
 
         .dock {
@@ -216,50 +363,30 @@
             -webkit-backdrop-filter: blur(20px);
             padding: 12px 28px;
             border-radius: 100px;
-            border: 1px solid var(--glass-border);
+            border: 1px solid var(--border-line);
             display: flex;
             gap: 28px;
             box-shadow: 0 10px 40px rgba(0,0,0,0.1);
         }
-        .dock-item { font-size: 24px; color: var(--text-main); display: flex; align-items: center; transition: transform 0.2s; }
+
+        .dock-item {
+            font-size: 24px;
+            color: var(--text-main);
+            transition: transform 0.2s;
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+        }
         .dock-item:active { transform: scale(0.85); }
 
-        /* --- 移动端真机适配 (全屏覆盖) --- */
-        @media (max-width: 768px) {
-            .device {
-                width: 100%;
-                height: 100%;
-                border-radius: 0;
-                box-shadow: none;
-                border: none;
-                
-                /* 处理刘海 */
-                padding-top: var(--safe-top); 
-            }
-
-            .status-bar {
-                margin-top: 0;
-                /* 状态栏高度根据需要微调 */
-                padding-top: 5px; 
-            }
-
-            /* Dock 栏下沉，紧贴 Home Indicator */
-            .dock-wrapper {
-                padding-bottom: calc(15px + var(--safe-bottom));
-            }
-            
-            /* 内容底部留白，防止被 Dock 遮挡 */
-            .scroll-content {
-                padding-bottom: 140px;
-            }
-        }
     </style>
 </head>
 <body>
 
-    <div class="device" id="main-device">
+    <div class="device">
         <!-- 状态栏 -->
         <div class="status-bar">
+            <!-- 增加左侧占位，让时间居中或靠左 -->
             <span id="clock-mini">09:41</span>
             <div style="display: flex; gap: 8px;">
                 <i class="ph-bold ph-signal-high"></i>
@@ -270,18 +397,20 @@
 
         <!-- 滚动内容区 -->
         <div class="scroll-content">
-            <!-- Header -->
+            
+            <!-- 1. Header -->
             <div class="header">
                 <div class="date-box">
                     <h1 class="serif" id="day-main">Saturday.</h1>
                     <p id="date-main">OCTOBER 24</p>
                 </div>
+                <!-- 主题切换 -->
                 <div class="theme-switch" id="theme-btn">
                     <i class="ph ph-moon" id="theme-icon"></i>
                 </div>
             </div>
 
-            <!-- Profile -->
+            <!-- 2. Chill Profile Card -->
             <div class="profile-card">
                 <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?ixlib=rb-4.0.3&auto=format&fit=crop&w=200&q=80" alt="Avatar" class="avatar">
                 <div class="profile-info">
@@ -294,7 +423,7 @@
                 </div>
             </div>
 
-            <!-- Polaroid -->
+            <!-- 3. Polaroid Grid -->
             <div class="photo-grid">
                 <div class="polaroid">
                     <div class="tape"></div>
@@ -308,34 +437,47 @@
                 </div>
             </div>
 
-            <!-- Memo -->
+            <!-- 4. Memo Widget -->
             <div class="memo-widget">
-                <div class="spiral"><span></span><span></span><span></span><span></span></div>
+                <div class="spiral">
+                    <span></span><span></span><span></span><span></span>
+                </div>
                 <h3 style="font-size: 12px; text-transform: uppercase; color: var(--text-sub); margin-bottom: 8px; margin-left: 4px;">To Do List</h3>
-                <div class="memo-item" onclick="this.classList.toggle('done')"><div class="check-circle"></div><span>Upload vlog to channel</span></div>
-                <div class="memo-item done" onclick="this.classList.toggle('done')"><div class="check-circle"></div><span>Buy iced americano</span></div>
-                <div class="memo-item" onclick="this.classList.toggle('done')"><div class="check-circle"></div><span>Read 20 pages</span></div>
+                <ul class="memo-list">
+                    <li class="memo-item" onclick="this.classList.toggle('done')">
+                        <div class="check-circle"></div>
+                        <span>Upload vlog to channel</span>
+                    </li>
+                    <li class="memo-item done" onclick="this.classList.toggle('done')">
+                        <div class="check-circle"></div>
+                        <span>Buy iced americano</span>
+                    </li>
+                    <li class="memo-item" onclick="this.classList.toggle('done')">
+                        <div class="check-circle"></div>
+                        <span>Read 20 pages</span>
+                    </li>
+                </ul>
             </div>
 
-            <!-- Grid Icons -->
+            <!-- 5. Grid Icons -->
             <div class="grid-icons">
-                <!-- 换壁纸按钮：使用 Label 包裹 Input，兼容所有 iOS -->
-                <label class="icon-box">
-                    <input type="file" id="wallpaper-upload" class="hidden-upload" accept="image/*">
-                    <i class="ph ph-image"></i>
-                </label>
-                
+                <div class="icon-box"><i class="ph ph-image"></i></div>
                 <div class="icon-box"><i class="ph ph-envelope-simple"></i></div>
                 <div class="icon-box"><i class="ph ph-music-note"></i></div>
                 <div class="icon-box"><i class="ph ph-calendar-blank"></i></div>
+                
                 <div class="icon-box"><i class="ph ph-gear"></i></div>
                 <div class="icon-box"><i class="ph ph-bell"></i></div>
                 <div class="icon-box"><i class="ph ph-instagram-logo"></i></div>
                 <div class="icon-box"><i class="ph ph-wallet"></i></div>
             </div>
+
+            <!-- 为了防止 Dock 遮挡最底部内容，可以加个垫片 -->
+            <div style="height: 20px;"></div>
+
         </div>
 
-        <!-- Dock -->
+        <!-- 6. Dock -->
         <div class="dock-wrapper">
             <div class="dock">
                 <div class="dock-item"><i class="ph-fill ph-house"></i></div>
@@ -347,24 +489,7 @@
     </div>
 
     <script>
-        // 1. 壁纸上传逻辑 (利用 change 事件，无需 click)
-        const fileInput = document.getElementById('wallpaper-upload');
-        const device = document.getElementById('main-device');
-
-        fileInput.addEventListener('change', (e) => {
-            const file = e.target.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = (e) => {
-                    const result = e.target.result;
-                    device.style.backgroundImage = `url(${result})`;
-                    device.style.backgroundColor = 'transparent'; // 清除背景色
-                }
-                reader.readAsDataURL(file);
-            }
-        });
-
-        // 2. 时间逻辑
+        // 1. 时间逻辑
         function updateTime() {
             const now = new Date();
             const hours = String(now.getHours()).padStart(2, '0');
@@ -380,11 +505,10 @@
         setInterval(updateTime, 1000);
         updateTime();
 
-        // 3. 深浅色切换
+        // 2. 深浅色切换
         const themeBtn = document.getElementById('theme-btn');
         const themeIcon = document.getElementById('theme-icon');
         const html = document.documentElement;
-        
         let isDark = false;
 
         themeBtn.addEventListener('click', () => {
