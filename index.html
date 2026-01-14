@@ -2,207 +2,153 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    
-    <!-- ★★★ 核心配置：PWA 全屏与视口适配 ★★★ -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     
-    <!-- iOS PWA 配置 -->
+    <title>Chill Mono OS</title>
+
+    <!-- PWA & iOS 主屏幕应用核心标签 -->
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="format-detection" content="telephone=no">
+    <meta name="apple-mobile-web-app-title" content="Chill OS">
     
-    <!-- ★★★ 修复核心：配置 PWA 主题色，填补上下安全区域 ★★★ -->
-    <meta id="meta-theme-color" name="theme-color" content="#fafafa">
+    <!-- 关键：指定主屏幕图标的链接。这里我们暂时注释掉它，以便看到原生的截图效果 -->
+    <!-- <link rel="apple-touch-icon" href="apple-touch-icon.png"> -->
+
+    <meta name="theme-color" content="#fafafa">
     
-    <title>Chill Mono OS</title>
-    
+    <!-- 引入 Phosphor Icons 图标库 -->
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    
+    <!-- 引入字体 -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Playfair+Display:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
 
     <style>
         :root {
-            /* 安全区域变量 */
-            --safe-top: env(safe-area-inset-top, 20px);
-            --safe-bottom: env(safe-area-inset-bottom, 20px);
-            
-            /* 颜色变量 */
-            --bg-body: #f2f2f2;
-            --bg-device: #fafafa; /* 对应 meta theme-color 浅色 */
-            --bg-card: #ffffff;
-            --glass-bg: rgba(255, 255, 255, 0.45);
-            --glass-border: rgba(255, 255, 255, 0.6);
-            --glass-blur: blur(16px);
-            --text-main: #1a1a1a;
-            --text-sub: #666666;
-            --border-line: #e0e0e0;
-            --shadow-card: 0 4px 20px rgba(0,0,0,0.03);
-            --dock-bg: rgba(255, 255, 255, 0.85);
-            --tape-color: rgba(230, 230, 230, 0.5);
+            --bg-body: #f2f2f2; --bg-device: #fafafa; --bg-card: #ffffff;
+            --glass-bg: rgba(255, 255, 255, 0.45); --glass-border: rgba(255, 255, 255, 0.6);
+            --glass-blur: blur(16px); --text-main: #1a1a1a; --text-sub: #666666;
+            --border-line: #e0e0e0; --shadow-card: 0 4px 20px rgba(0,0,0,0.03);
+            --dock-bg: rgba(255, 255, 255, 0.85); --tape-color: rgba(230, 230, 230, 0.5);
         }
-
         [data-theme="dark"] {
-            --bg-body: #111111;
-            --bg-device: #1a1a1a; /* 对应 meta theme-color 深色 */
-            --bg-card: #222222;
-            --glass-bg: rgba(60, 60, 60, 0.4);
-            --glass-border: rgba(255, 255, 255, 0.1);
-            --text-main: #f0f0f0;
-            --text-sub: #888888;
-            --border-line: #333333;
-            --shadow-card: 0 4px 20px rgba(0,0,0,0.3);
-            --dock-bg: rgba(30, 30, 30, 0.8);
+            --bg-body: #111111; --bg-device: #1a1a1a; --bg-card: #222222;
+            --glass-bg: rgba(60, 60, 60, 0.4); --glass-border: rgba(255, 255, 255, 0.1);
+            --text-main: #f0f0f0; --text-sub: #888888; --border-line: #333333;
+            --shadow-card: 0 4px 20px rgba(0,0,0,0.3); --dock-bg: rgba(30, 30, 30, 0.8);
             --tape-color: rgba(255, 255, 255, 0.1);
         }
-
-        * {
-            box-sizing: border-box; margin: 0; padding: 0;
-            -webkit-tap-highlight-color: transparent;
-            outline: none; user-select: none; -webkit-user-select: none;
-        }
-
-        .serif { font-family: 'Playfair Display', serif; }
-
-        /* --- 架构布局 (最终修复版) --- */
-
-        /* 1. 强制 html 也有背景色，防止回弹漏出白色 */
-        html {
-            width: 100%;
-            height: 100%; 
-            height: 100dvh; /* 适配 iOS 动态视口 */
-            background-color: var(--bg-device);
-            transition: background-color 0.3s ease;
-        }
-
-        /* 2. Body 填满且禁止溢出 */
+        * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
         body {
-            width: 100%;
-            height: 100%;
-            height: 100dvh;
-            margin: 0;
-            padding: 0;
-            overflow: hidden; /* 禁止根滚动 */
-            position: fixed; /* 锁死视口 */
-            font-family: 'DM Sans', sans-serif;
-            background-color: var(--bg-device);
-            color: var(--text-main);
-            transition: background-color 0.3s ease;
+            font-family: 'DM Sans', sans-serif; background-color: var(--bg-body); display: flex;
+            justify-content: center; align-items: center; min-height: 100vh;
+            transition: background-color 0.3s ease; color: var(--text-main); overscroll-behavior-y: none;
         }
-
+        .serif { font-family: 'Playfair Display', serif; }
         .device {
-            position: relative;
-            width: 100%; 
-            height: 100%;
-            background: var(--bg-device);
-            overflow: hidden;
-            display: flex;
-            flex-direction: column;
-            transition: background-color 0.3s ease;
+            width: 390px; height: 844px; background: var(--bg-device); border-radius: 44px;
+            position: relative; box-shadow: 0 0 0 10px #222, 0 20px 50px rgba(0,0,0,0.2);
+            overflow: hidden; transition: all 0.3s ease;
         }
-        
-        /* PC 端模拟器样式: 解除锁定并恢复居中 */
-        @media (min-width: 769px) {
-            html, body {
-                position: static;
-                display: flex;
-                justify-content: center;
-                align-items: center;
-                min-height: 100vh;
-                height: auto;
-                background-color: var(--bg-body);
-                overflow: visible;
-            }
-            .device {
-                width: 390px;
-                height: 844px;
-                border-radius: 44px;
-                box-shadow: 0 0 0 10px #222, 0 20px 50px rgba(0,0,0,0.2);
-                /* PC端需要在容器内裁剪 */
-                border-radius: 44px; 
-            }
-        }
-        
-        /* --- 顶部状态栏 --- */
         .status-bar {
-            position: absolute; top: 0; left: 0; width: 100%; z-index: 100;
-            display: flex; justify-content: space-between; align-items: flex-end;
-            padding: 0 24px 12px 24px;
-            /* 增加顶部安全距离 */
-            height: calc(44px + var(--safe-top)); 
-            font-size: 13px; font-weight: 600; color: var(--text-main);
-            pointer-events: none;
-            background: linear-gradient(to bottom, var(--bg-device) 20%, transparent);
+            height: 44px; padding: 0 24px; display: flex; justify-content: space-between;
+            align-items: center; font-size: 13px; font-weight: 600; position: absolute;
+            top: 0; left: 0; width: 100%; z-index: 10; color: var(--text-main);
         }
-
-        /* --- 主滚动区域 --- */
-        .scroll-content {
-            flex: 1;
-            height: 100%;
-            overflow-y: auto;
-            -webkit-overflow-scrolling: touch;
-            /* 底部 Padding 必须包含 safe-bottom，否则内容会被 Dock 挡住 */
-            padding: calc(50px + var(--safe-top)) 20px calc(100px + var(--safe-bottom)) 20px;
-        }
+        .scroll-content { height: 100%; overflow-y: auto; padding: 60px 20px 110px 20px; }
         .scroll-content::-webkit-scrollbar { display: none; }
-
-        /* --- 具体组件样式 (保持不变) --- */
         .header { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 24px; padding: 0 4px; }
         .date-box h1 { font-size: 32px; font-weight: 400; font-style: italic; line-height: 1; margin-bottom: 4px; }
         .date-box p { font-size: 12px; color: var(--text-sub); letter-spacing: 1px; text-transform: uppercase; }
-        .theme-switch { width: 40px; height: 40px; border-radius: 50%; border: 1px solid var(--border-line); background: var(--bg-card); display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 18px; color: var(--text-main); }
-        .profile-card { background: var(--bg-card); border-radius: 24px; padding: 20px; display: flex; align-items: center; gap: 16px; box-shadow: var(--shadow-card); margin-bottom: 20px; border: 1px solid var(--border-line); }
-        .avatar { width: 64px; height: 64px; border-radius: 50%; object-fit: cover; border: 2px solid var(--bg-device); outline: 1px solid var(--text-main); filter: grayscale(100%); }
+        .theme-switch {
+            width: 40px; height: 40px; border-radius: 50%; border: 1px solid var(--border-line);
+            background: var(--bg-card); display: flex; align-items: center; justify-content: center;
+            cursor: pointer; font-size: 18px; color: var(--text-main); transition: all 0.3s;
+        }
+        .profile-card {
+            background: var(--bg-card); border-radius: 24px; padding: 20px; display: flex;
+            align-items: center; gap: 16px; box-shadow: var(--shadow-card);
+            margin-bottom: 20px; border: 1px solid var(--border-line);
+        }
+        .avatar {
+            width: 64px; height: 64px; border-radius: 50%; object-fit: cover;
+            border: 2px solid var(--bg-device); outline: 1px solid var(--text-main); filter: grayscale(100%);
+        }
         .profile-info { flex: 1; }
         .profile-name { font-size: 18px; font-weight: 600; margin-bottom: 4px; }
         .profile-bio { font-size: 12px; color: var(--text-sub); font-family: 'Playfair Display', serif; font-style: italic; line-height: 1.4; }
         .profile-tags { margin-top: 8px; display: flex; gap: 6px; }
         .tag { font-size: 10px; padding: 2px 8px; border-radius: 100px; border: 1px solid var(--border-line); color: var(--text-sub); }
         .photo-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px; }
-        .polaroid { background: #fff; padding: 8px 8px 30px 8px; box-shadow: var(--shadow-card); transform: rotate(-1deg); position: relative; }
+        .polaroid {
+            background: #fff; padding: 8px 8px 30px 8px; box-shadow: var(--shadow-card);
+            transform: rotate(-1deg); position: relative; transition: transform 0.2s;
+        }
         [data-theme="dark"] .polaroid { background: #2a2a2a; }
         .polaroid:nth-child(2) { transform: rotate(2deg) translateY(10px); }
-        .tape { position: absolute; top: -10px; left: 50%; transform: translateX(-50%); width: 60px; height: 20px; background: var(--tape-color); backdrop-filter: blur(2px); z-index: 2; }
-        .polaroid-img { width: 100%; aspect-ratio: 1; background-color: #ddd; background-size: cover; background-position: center; filter: grayscale(100%) contrast(1.1); }
+        .tape {
+            position: absolute; top: -10px; left: 50%; transform: translateX(-50%);
+            width: 60px; height: 20px; background: var(--tape-color); backdrop-filter: blur(2px); z-index: 2;
+        }
+        .polaroid-img {
+            width: 100%; aspect-ratio: 1; background-color: #ddd; background-size: cover;
+            background-position: center; filter: grayscale(100%) contrast(1.1);
+        }
         .polaroid-text { font-family: 'Playfair Display', serif; font-size: 10px; text-align: center; margin-top: 8px; color: var(--text-main); font-style: italic; }
-        .memo-widget { background: var(--bg-card); border-radius: 20px; padding: 20px; border: 1px solid var(--border-line); margin-bottom: 32px; position: relative; }
+        .memo-widget {
+            background: var(--bg-card); border-radius: 20px; padding: 20px;
+            border: 1px solid var(--border-line); margin-bottom: 32px; position: relative;
+        }
         .spiral { position: absolute; top: -10px; left: 20px; display: flex; gap: 15px; }
         .spiral span { width: 6px; height: 20px; background: var(--text-sub); border-radius: 4px; }
         .memo-list { margin-top: 10px; list-style: none; }
-        .memo-item { display: flex; align-items: center; padding: 10px 0; border-bottom: 1px dashed var(--border-line); font-size: 13px; color: var(--text-main); cursor: pointer; }
+        .memo-item {
+            display: flex; align-items: center; padding: 10px 0; border-bottom: 1px dashed var(--border-line);
+            font-size: 13px; color: var(--text-main); cursor: pointer;
+        }
         .memo-item:last-child { border-bottom: none; }
-        .check-circle { width: 14px; height: 14px; border: 1.5px solid var(--text-sub); border-radius: 50%; margin-right: 12px; display: flex; align-items: center; justify-content: center; }
+        .check-circle {
+            width: 14px; height: 14px; border: 1.5px solid var(--text-sub); border-radius: 50%;
+            margin-right: 12px; display: flex; align-items: center; justify-content: center;
+        }
         .memo-item.done .check-circle { background: var(--text-main); border-color: var(--text-main); }
         .memo-item.done span { text-decoration: line-through; color: var(--text-sub); }
-        .grid-icons { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; padding: 0 24px; margin-bottom: 24px; }
-        .icon-box { width: 100%; max-width: 52px; aspect-ratio: 1; margin: 0 auto; background: var(--glass-bg); backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur); border: 1px solid var(--glass-border); border-radius: 18px; display: flex; align-items: center; justify-content: center; color: var(--text-main); cursor: pointer; box-shadow: 0 4px 12px rgba(0,0,0,0.03); }
-        .icon-box:active { transform: scale(0.9); }
+        .grid-icons {
+            display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px;
+            padding: 0 24px; margin-bottom: 24px;
+        }
+        .icon-box {
+            width: 100%; max-width: 52px; aspect-ratio: 1; margin: 0 auto;
+            background: var(--glass-bg); backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur);
+            border: 1px solid var(--glass-border); border-radius: 18px;
+            display: flex; align-items: center; justify-content: center;
+            color: var(--text-main); transition: transform 0.2s, background 0.2s;
+            cursor: pointer; box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+        }
+        .icon-box:active { transform: scale(0.9); background: rgba(255,255,255,0.5); }
         .icon-box i { font-size: 22px; opacity: 0.9; }
-
-        /* --- Dock --- */
         .dock-wrapper {
-            position: absolute; left: 0; width: 100%;
-            display: flex; justify-content: center;
-            pointer-events: none; z-index: 100;
-            /* 悬浮在底部安全区域之上 */
-            bottom: calc(var(--safe-bottom) + 15px);
+            position: absolute; bottom: 24px; left: 0; width: 100%;
+            display: flex; justify-content: center; pointer-events: none; z-index: 50;
         }
         .dock {
-            pointer-events: auto;
-            background: var(--dock-bg);
-            backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
-            padding: 12px 28px; border-radius: 100px;
-            border: 1px solid var(--border-line);
-            display: flex; gap: 28px;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+            pointer-events: auto; background: var(--dock-bg); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+            padding: 12px 28px; border-radius: 100px; border: 1px solid var(--border-line);
+            display: flex; gap: 28px; box-shadow: 0 10px 40px rgba(0,0,0,0.1);
         }
-        .dock-item { font-size: 24px; color: var(--text-main); cursor: pointer; }
+        .dock-item { font-size: 24px; color: var(--text-main); transition: transform 0.2s; display: flex; align-items: center; }
         .dock-item:active { transform: scale(0.85); }
-
+        @media (max-width: 768px) {
+            body { background: var(--bg-device); align-items: flex-start; margin: 0; }
+            .device { width: 100%; height: 100vh; border: none; border-radius: 0; box-shadow: none; }
+            .status-bar { margin-top: 4px; }
+            .scroll-content { padding-top: 50px; padding-bottom: 120px; }
+            .grid-icons { padding: 0 24px; }
+        }
     </style>
 </head>
 <body>
-
     <div class="device">
         <!-- 状态栏 -->
         <div class="status-bar">
@@ -213,10 +159,8 @@
                 <i class="ph-bold ph-battery-full"></i>
             </div>
         </div>
-
-        <!-- 滚动区域 -->
         <div class="scroll-content">
-            
+            <!-- Header -->
             <div class="header">
                 <div class="date-box">
                     <h1 class="serif" id="day-main">Saturday.</h1>
@@ -226,7 +170,7 @@
                     <i class="ph ph-moon" id="theme-icon"></i>
                 </div>
             </div>
-
+            <!-- Profile Card -->
             <div class="profile-card">
                 <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?ixlib=rb-4.0.3&auto=format&fit=crop&w=200&q=80" alt="Avatar" class="avatar">
                 <div class="profile-info">
@@ -238,7 +182,7 @@
                     </div>
                 </div>
             </div>
-
+            <!-- Polaroid Grid -->
             <div class="photo-grid">
                 <div class="polaroid">
                     <div class="tape"></div>
@@ -251,17 +195,23 @@
                     <div class="polaroid-text">Workspace</div>
                 </div>
             </div>
-
+            <!-- Memo Widget -->
             <div class="memo-widget">
                 <div class="spiral"><span></span><span></span><span></span><span></span></div>
                 <h3 style="font-size: 12px; text-transform: uppercase; color: var(--text-sub); margin-bottom: 8px; margin-left: 4px;">To Do List</h3>
                 <ul class="memo-list">
-                    <li class="memo-item" onclick="this.classList.toggle('done')"><div class="check-circle"></div><span>Upload vlog to channel</span></li>
-                    <li class="memo-item done" onclick="this.classList.toggle('done')"><div class="check-circle"></div><span>Buy iced americano</span></li>
-                    <li class="memo-item" onclick="this.classList.toggle('done')"><div class="check-circle"></div><span>Read 20 pages</span></li>
+                    <li class="memo-item" onclick="this.classList.toggle('done')">
+                        <div class="check-circle"></div><span>Upload vlog to channel</span>
+                    </li>
+                    <li class="memo-item done" onclick="this.classList.toggle('done')">
+                        <div class="check-circle"></div><span>Buy iced americano</span>
+                    </li>
+                    <li class="memo-item" onclick="this.classList.toggle('done')">
+                        <div class="check-circle"></div><span>Read 20 pages</span>
+                    </li>
                 </ul>
             </div>
-
+            <!-- Grid Icons -->
             <div class="grid-icons">
                 <div class="icon-box"><i class="ph ph-image"></i></div>
                 <div class="icon-box"><i class="ph ph-envelope-simple"></i></div>
@@ -272,9 +222,7 @@
                 <div class="icon-box"><i class="ph ph-instagram-logo"></i></div>
                 <div class="icon-box"><i class="ph ph-wallet"></i></div>
             </div>
-
         </div>
-
         <!-- Dock -->
         <div class="dock-wrapper">
             <div class="dock">
@@ -285,7 +233,6 @@
             </div>
         </div>
     </div>
-
     <script>
         function updateTime() {
             const now = new Date();
@@ -297,28 +244,13 @@
             document.getElementById('day-main').innerText = days[now.getDay()];
             document.getElementById('date-main').innerText = `${months[now.getMonth()]} ${now.getDate()}`;
         }
-        setInterval(updateTime, 1000);
-        updateTime();
-
-        const themeBtn = document.getElementById('theme-btn');
-        const themeIcon = document.getElementById('theme-icon');
-        const metaThemeColor = document.getElementById('meta-theme-color'); // 获取 meta 标签
-        const html = document.documentElement;
+        setInterval(updateTime, 1000); updateTime();
+        const themeBtn = document.getElementById('theme-btn'), themeIcon = document.getElementById('theme-icon'), html = document.documentElement;
         let isDark = false;
-
         themeBtn.addEventListener('click', () => {
             isDark = !isDark;
-            if (isDark) {
-                html.setAttribute('data-theme', 'dark');
-                themeIcon.classList.replace('ph-moon', 'ph-sun');
-                // ★★★ 核心修复：同步修改 meta theme-color 为深色背景 #1a1a1a ★★★
-                metaThemeColor.setAttribute('content', '#1a1a1a');
-            } else {
-                html.removeAttribute('data-theme');
-                themeIcon.classList.replace('ph-sun', 'ph-moon');
-                // ★★★ 核心修复：同步修改 meta theme-color 为浅色背景 #fafafa ★★★
-                metaThemeColor.setAttribute('content', '#fafafa');
-            }
+            if (isDark) { html.setAttribute('data-theme', 'dark'); themeIcon.classList.replace('ph-moon', 'ph-sun'); }
+            else { html.removeAttribute('data-theme'); themeIcon.classList.replace('ph-sun', 'ph-moon'); }
         });
     </script>
 </body>
