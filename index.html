@@ -22,7 +22,7 @@
         :root {
             /* 安全区域变量 */
             --safe-top: env(safe-area-inset-top, 20px);
-            --safe-bottom: env(safe-area-inset-bottom, 20px);
+            --safe-bottom: env(safe-area-inset-bottom, 0px); /* ★ 默认设为0，确保有黑条时才生效 */
             
             /* 颜色变量 */
             --bg-body: #f2f2f2;
@@ -35,7 +35,7 @@
             --text-sub: #666666;
             --border-line: #e0e0e0;
             --shadow-card: 0 4px 20px rgba(0,0,0,0.03);
-            --dock-bg: rgba(255, 255, 255, 0.85);
+            --dock-bg: rgba(255, 255, 255, 0.7);
             --tape-color: rgba(230, 230, 230, 0.5);
         }
 
@@ -49,7 +49,7 @@
             --text-sub: #888888;
             --border-line: #333333;
             --shadow-card: 0 4px 20px rgba(0,0,0,0.3);
-            --dock-bg: rgba(30, 30, 30, 0.8);
+            --dock-bg: rgba(30, 30, 30, 0.7);
             --tape-color: rgba(255, 255, 255, 0.1);
         }
 
@@ -63,7 +63,7 @@
 
         /* --- 架构布局 (最终修复版) --- */
 
-        /* 移动端默认样式: 锁定视口，杜绝白边 */
+        /* 移动端默认样式: 锁定视口 */
         html, body {
             width: 100%; height: 100%;
             overflow: hidden; /* ★ 核心：禁止根元素滚动 */
@@ -112,7 +112,6 @@
             height: calc(44px + var(--safe-top)); 
             font-size: 13px; font-weight: 600; color: var(--text-main);
             pointer-events: none;
-            background: linear-gradient(to bottom, var(--bg-device) 20%, transparent);
         }
 
         /* --- 主滚动区域 --- */
@@ -121,7 +120,8 @@
             height: 100%;
             overflow-y: auto;
             -webkit-overflow-scrolling: touch;
-            padding: calc(50px + var(--safe-top)) 20px calc(100px + var(--safe-bottom)) 20px;
+            /* 顶部留出状态栏位置，底部留出导航栏位置 */
+            padding: calc(44px + var(--safe-top)) 20px calc(70px + var(--safe-bottom)) 20px;
         }
         .scroll-content::-webkit-scrollbar { display: none; }
 
@@ -158,24 +158,43 @@
         .icon-box:active { transform: scale(0.9); }
         .icon-box i { font-size: 22px; opacity: 0.9; }
 
-        /* --- Dock --- */
-        .dock-wrapper {
-            position: absolute; left: 0; width: 100%;
-            display: flex; justify-content: center;
-            pointer-events: none; z-index: 100;
-            bottom: calc(var(--safe-bottom) + 15px);
-        }
-        .dock {
-            pointer-events: auto;
+        /* --- ★★★ 新的底部固定导航栏 ★★★ --- */
+        .bottom-nav {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            
+            /* 高度 = 图标区域高度 + 底部安全区高度 */
+            height: calc(60px + var(--safe-bottom));
+            /* 将安全区高度作为内边距，把图标顶上去 */
+            padding-bottom: var(--safe-bottom);
+
             background: var(--dock-bg);
-            backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
-            padding: 12px 28px; border-radius: 100px;
-            border: 1px solid var(--border-line);
-            display: flex; gap: 28px;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-top: 1px solid var(--border-line);
+            
+            display: flex;
+            align-items: center;
+            justify-content: space-around; /* 让图标均匀分布 */
+            z-index: 100;
         }
-        .dock-item { font-size: 24px; color: var(--text-main); cursor: pointer; }
-        .dock-item:active { transform: scale(0.85); }
+
+        .nav-item {
+            font-size: 24px;
+            color: var(--text-main);
+            cursor: pointer;
+            width: 60px; /* 给每个图标一个固定的点击区域 */
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: transform 0.1s;
+        }
+        .nav-item:active {
+            transform: scale(0.9);
+        }
 
     </style>
 </head>
@@ -253,15 +272,14 @@
 
         </div>
 
-        <!-- Dock -->
-        <div class="dock-wrapper">
-            <div class="dock">
-                <div class="dock-item"><i class="ph-fill ph-house"></i></div>
-                <div class="dock-item"><i class="ph-fill ph-magnifying-glass"></i></div>
-                <div class="dock-item"><i class="ph-fill ph-chat-circle-dots"></i></div>
-                <div class="dock-item"><i class="ph-fill ph-user"></i></div>
-            </div>
+        <!-- ★★★ 新的底部固定导航栏 ★★★ -->
+        <div class="bottom-nav">
+            <div class="nav-item"><i class="ph-fill ph-house"></i></div>
+            <div class="nav-item"><i class="ph-fill ph-magnifying-glass"></i></div>
+            <div class="nav-item"><i class="ph-fill ph-chat-circle-dots"></i></div>
+            <div class="nav-item"><i class="ph-fill ph-user"></i></div>
         </div>
+
     </div>
 
     <script>
