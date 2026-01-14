@@ -11,6 +11,9 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="format-detection" content="telephone=no">
     
+    <!-- ★★★ 修复核心：配置 PWA 主题色，填补上下安全区域 ★★★ -->
+    <meta id="meta-theme-color" name="theme-color" content="#fafafa">
+    
     <title>Chill Mono OS</title>
     
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
@@ -22,11 +25,11 @@
         :root {
             /* 安全区域变量 */
             --safe-top: env(safe-area-inset-top, 20px);
-            --safe-bottom: env(safe-area-inset-bottom, 0px); /* ★ 默认设为0，确保有黑条时才生效 */
+            --safe-bottom: env(safe-area-inset-bottom, 20px);
             
             /* 颜色变量 */
             --bg-body: #f2f2f2;
-            --bg-device: #fafafa;
+            --bg-device: #fafafa; /* 对应 meta theme-color 浅色 */
             --bg-card: #ffffff;
             --glass-bg: rgba(255, 255, 255, 0.45);
             --glass-border: rgba(255, 255, 255, 0.6);
@@ -35,13 +38,13 @@
             --text-sub: #666666;
             --border-line: #e0e0e0;
             --shadow-card: 0 4px 20px rgba(0,0,0,0.03);
-            --dock-bg: rgba(255, 255, 255, 0.7);
+            --dock-bg: rgba(255, 255, 255, 0.85);
             --tape-color: rgba(230, 230, 230, 0.5);
         }
 
         [data-theme="dark"] {
             --bg-body: #111111;
-            --bg-device: #1a1a1a;
+            --bg-device: #1a1a1a; /* 对应 meta theme-color 深色 */
             --bg-card: #222222;
             --glass-bg: rgba(60, 60, 60, 0.4);
             --glass-border: rgba(255, 255, 255, 0.1);
@@ -49,7 +52,7 @@
             --text-sub: #888888;
             --border-line: #333333;
             --shadow-card: 0 4px 20px rgba(0,0,0,0.3);
-            --dock-bg: rgba(30, 30, 30, 0.7);
+            --dock-bg: rgba(30, 30, 30, 0.8);
             --tape-color: rgba(255, 255, 255, 0.1);
         }
 
@@ -63,44 +66,60 @@
 
         /* --- 架构布局 (最终修复版) --- */
 
-        /* 移动端默认样式: 锁定视口 */
-        html, body {
-            width: 100%; height: 100%;
-            overflow: hidden; /* ★ 核心：禁止根元素滚动 */
-            position: fixed; /* ★ 核心：锁死视口 */
-            overscroll-behavior: none; /* ★ 核心：禁止橡皮筋效果 */
+        /* 1. 强制 html 也有背景色，防止回弹漏出白色 */
+        html {
+            width: 100%;
+            height: 100%; 
+            height: 100dvh; /* 适配 iOS 动态视口 */
+            background-color: var(--bg-device);
+            transition: background-color 0.3s ease;
+        }
+
+        /* 2. Body 填满且禁止溢出 */
+        body {
+            width: 100%;
+            height: 100%;
+            height: 100dvh;
+            margin: 0;
+            padding: 0;
+            overflow: hidden; /* 禁止根滚动 */
+            position: fixed; /* 锁死视口 */
             font-family: 'DM Sans', sans-serif;
             background-color: var(--bg-device);
             color: var(--text-main);
+            transition: background-color 0.3s ease;
         }
 
         .device {
             position: relative;
-            width: 100%; height: 100%;
+            width: 100%; 
+            height: 100%;
             background: var(--bg-device);
             overflow: hidden;
             display: flex;
             flex-direction: column;
-            border-radius: 0;
-            box-shadow: none;
+            transition: background-color 0.3s ease;
         }
         
         /* PC 端模拟器样式: 解除锁定并恢复居中 */
         @media (min-width: 769px) {
             html, body {
-                position: static; /* 解除锁定 */
+                position: static;
                 display: flex;
                 justify-content: center;
                 align-items: center;
                 min-height: 100vh;
                 height: auto;
                 background-color: var(--bg-body);
+                overflow: visible;
             }
             .device {
                 width: 390px;
                 height: 844px;
                 border-radius: 44px;
                 box-shadow: 0 0 0 10px #222, 0 20px 50px rgba(0,0,0,0.2);
+                /* PC端需要在容器内裁剪 */
+                border-radius: 44px; 
             }
         }
         
@@ -109,9 +128,11 @@
             position: absolute; top: 0; left: 0; width: 100%; z-index: 100;
             display: flex; justify-content: space-between; align-items: flex-end;
             padding: 0 24px 12px 24px;
+            /* 增加顶部安全距离 */
             height: calc(44px + var(--safe-top)); 
             font-size: 13px; font-weight: 600; color: var(--text-main);
             pointer-events: none;
+            background: linear-gradient(to bottom, var(--bg-device) 20%, transparent);
         }
 
         /* --- 主滚动区域 --- */
@@ -120,8 +141,8 @@
             height: 100%;
             overflow-y: auto;
             -webkit-overflow-scrolling: touch;
-            /* 顶部留出状态栏位置，底部留出导航栏位置 */
-            padding: calc(44px + var(--safe-top)) 20px calc(70px + var(--safe-bottom)) 20px;
+            /* 底部 Padding 必须包含 safe-bottom，否则内容会被 Dock 挡住 */
+            padding: calc(50px + var(--safe-top)) 20px calc(100px + var(--safe-bottom)) 20px;
         }
         .scroll-content::-webkit-scrollbar { display: none; }
 
@@ -158,43 +179,25 @@
         .icon-box:active { transform: scale(0.9); }
         .icon-box i { font-size: 22px; opacity: 0.9; }
 
-        /* --- ★★★ 新的底部固定导航栏 ★★★ --- */
-        .bottom-nav {
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            width: 100%;
-            
-            /* 高度 = 图标区域高度 + 底部安全区高度 */
-            height: calc(60px + var(--safe-bottom));
-            /* 将安全区高度作为内边距，把图标顶上去 */
-            padding-bottom: var(--safe-bottom);
-
+        /* --- Dock --- */
+        .dock-wrapper {
+            position: absolute; left: 0; width: 100%;
+            display: flex; justify-content: center;
+            pointer-events: none; z-index: 100;
+            /* 悬浮在底部安全区域之上 */
+            bottom: calc(var(--safe-bottom) + 15px);
+        }
+        .dock {
+            pointer-events: auto;
             background: var(--dock-bg);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            border-top: 1px solid var(--border-line);
-            
-            display: flex;
-            align-items: center;
-            justify-content: space-around; /* 让图标均匀分布 */
-            z-index: 100;
+            backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+            padding: 12px 28px; border-radius: 100px;
+            border: 1px solid var(--border-line);
+            display: flex; gap: 28px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
         }
-
-        .nav-item {
-            font-size: 24px;
-            color: var(--text-main);
-            cursor: pointer;
-            width: 60px; /* 给每个图标一个固定的点击区域 */
-            height: 100%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: transform 0.1s;
-        }
-        .nav-item:active {
-            transform: scale(0.9);
-        }
+        .dock-item { font-size: 24px; color: var(--text-main); cursor: pointer; }
+        .dock-item:active { transform: scale(0.85); }
 
     </style>
 </head>
@@ -272,14 +275,15 @@
 
         </div>
 
-        <!-- ★★★ 新的底部固定导航栏 ★★★ -->
-        <div class="bottom-nav">
-            <div class="nav-item"><i class="ph-fill ph-house"></i></div>
-            <div class="nav-item"><i class="ph-fill ph-magnifying-glass"></i></div>
-            <div class="nav-item"><i class="ph-fill ph-chat-circle-dots"></i></div>
-            <div class="nav-item"><i class="ph-fill ph-user"></i></div>
+        <!-- Dock -->
+        <div class="dock-wrapper">
+            <div class="dock">
+                <div class="dock-item"><i class="ph-fill ph-house"></i></div>
+                <div class="dock-item"><i class="ph-fill ph-magnifying-glass"></i></div>
+                <div class="dock-item"><i class="ph-fill ph-chat-circle-dots"></i></div>
+                <div class="dock-item"><i class="ph-fill ph-user"></i></div>
+            </div>
         </div>
-
     </div>
 
     <script>
@@ -298,16 +302,22 @@
 
         const themeBtn = document.getElementById('theme-btn');
         const themeIcon = document.getElementById('theme-icon');
+        const metaThemeColor = document.getElementById('meta-theme-color'); // 获取 meta 标签
         const html = document.documentElement;
         let isDark = false;
+
         themeBtn.addEventListener('click', () => {
             isDark = !isDark;
             if (isDark) {
                 html.setAttribute('data-theme', 'dark');
                 themeIcon.classList.replace('ph-moon', 'ph-sun');
+                // ★★★ 核心修复：同步修改 meta theme-color 为深色背景 #1a1a1a ★★★
+                metaThemeColor.setAttribute('content', '#1a1a1a');
             } else {
                 html.removeAttribute('data-theme');
                 themeIcon.classList.replace('ph-sun', 'ph-moon');
+                // ★★★ 核心修复：同步修改 meta theme-color 为浅色背景 #fafafa ★★★
+                metaThemeColor.setAttribute('content', '#fafafa');
             }
         });
     </script>
