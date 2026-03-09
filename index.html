@@ -193,21 +193,46 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg-body);display:flex;jus
 
 .main-view {
     position: relative; z-index: 1;
-    padding: 80px 40px 40px 40px;
+    /* 取消居中，固定顶部内边距为安全区+80px */
+    padding: calc(env(safe-area-inset-top, 40px) + 80px) 40px 40px 40px;
     height: 100%; display: flex;
-    flex-direction: column; justify-content: center;
+    flex-direction: column; 
+    justify-content: flex-start; /* 关键修改：不再强行垂直居中 */
 }
 
-.main-back-btn {
-    position: absolute; top: 40px; right: 30px;
-    width: 40px; height: 40px;
-    border: 1px solid var(--s-line);
-    border-radius: 50%; background: transparent;
-    display: flex; align-items: center; justify-content: center;
-    cursor: pointer; transition: all 0.3s ease; z-index: 20;
+.main-back-btn { 
+    position: absolute; 
+    top: calc(env(safe-area-inset-top, 40px) + 20px); 
+    right: 30px;
+    width: auto; height: auto; 
+    padding: 4px 0; /* 去掉左右内边距，方便边缘对齐 */
+    border: none; background: transparent;
+    cursor: pointer; transition: opacity 0.3s ease; z-index: 20;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 12px; 
+    font-weight: 500;
+    text-transform: uppercase; /* 字母全大写更克制 */
+    letter-spacing: 2px; /* 增加字间距 */
+    color: var(--s-text-primary);
+    text-decoration: underline; /* 开启下划线 */
+    text-underline-offset: 4px; /* 下划线优雅下沉，不和字母粘连 */
 }
-.main-back-btn svg { width: 16px; height: 16px; stroke: var(--s-accent); transition: transform 0.3s; }
-.main-back-btn:active { background-color: var(--s-line); border-color: var(--s-accent); }
+.main-back-btn:active { opacity: 0.4; } /* 点击时变为半透明，极简反馈 */
+
+/* 子页面的 Back 按钮 (下划线纯文本版) */
+.sub-close-btn {
+    background: transparent; border: none; color: var(--s-text-primary);
+    width: auto; height: auto; padding: 4px 0;
+    cursor: pointer; transition: opacity 0.3s;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 12px; 
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    text-decoration: underline;
+    text-underline-offset: 4px;
+}
+.sub-close-btn:active { opacity: 0.4; }
 
 .main-header { margin-bottom: 60px; }
 .main-title { font-family: 'Playfair Display', serif; font-size: 42px; margin: 0; font-weight: 700; font-style: italic; letter-spacing: -1px; color: var(--s-text-primary); }
@@ -235,14 +260,13 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg-body);display:flex;jus
     display: flex; flex-direction: column;
 }
 .settings-page.active { transform: translateY(0); }
-
-.nav-bar { padding: 20px 30px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--s-line); }
-.nav-title { font-size: 18px; font-weight: 600; letter-spacing: 1px; color: var(--s-text-primary); }
-.sub-close-btn {
-    background: none; border: 1px solid var(--s-accent); color: var(--s-accent);
-    width: 32px; height: 32px; border-radius: 50%;
-    display: flex; align-items: center; justify-content: center;
-    cursor: pointer; font-size: 14px; transition: all 0.3s;
+.nav-bar { 
+    /* 顶部加上安全区高度，完美避开刘海和时间 */
+    padding: calc(env(safe-area-inset-top, 40px) + 20px) 30px 20px 30px; 
+    display: flex; 
+    justify-content: space-between; 
+    align-items: center; 
+    border-bottom: 1px solid var(--s-line); 
 }
 .sub-close-btn:active { background: var(--s-accent); color: var(--s-btn-text); }
 
@@ -383,12 +407,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg-body);display:flex;jus
       <!-- 主菜单 -->
       <div class="main-view">
           <!-- 返回主页按钮 -->
-          <button class="main-back-btn" onclick="goBackMain()">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <line x1="19" y1="12" x2="5" y2="12"></line>
-                  <polyline points="12 19 5 12 12 5"></polyline>
-              </svg>
-          </button>
+         <button class="main-back-btn" onclick="goBackMain()">Back</button>
 
           <header class="main-header">
               <h1 class="main-title">Settings</h1>
@@ -416,7 +435,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg-body);display:flex;jus
           <div class="page-watermark">Api</div>
           <div class="nav-bar">
               <span class="nav-title">API 设置</span>
-              <button class="sub-close-btn" onclick="closePage()">✕</button>
+             <button class="sub-close-btn" onclick="closePage()">Back</button>
           </div>
           <div class="content-scroll">
               <div class="form-section">
