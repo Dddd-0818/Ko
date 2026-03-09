@@ -1,303 +1,753 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Chill Mono OS 3.1 (Spline 3D)</title>
+<meta charset="UTF-8">
+
+ <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     
+    <title>Chill Mono OS</title>
+
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <script src="https://unpkg.com/@phosphor-icons/web"></script>
-    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Playfair+Display:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+    <meta name="apple-mobile-web-app-title" content="Chill OS">
+    <link rel="apple-touch-icon" href="apple-touch-icon.png">
+
+    <meta name="theme-color" content="#fafafa">
     
-    <!-- 👇 引入 Spline 3D 引擎的核心文件 -->
-    <script type="module" src="https://unpkg.com/@splinetool/viewer@1.9.59/build/spline-viewer.js"></script>
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    
+    <!-- 整合引入所有所需字体：DM Sans, Playfair Display, Noto Sans SC -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Noto+Sans+SC:wght@300;400;500;700&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400;1,700&display=swap" rel="stylesheet">
 
-    <style>
-        :root {
-            --bg-body: #f2f2f2; --bg-device: #fafafa; --bg-card: #ffffff;
-            --glass-bg: rgba(255, 255, 255, 0.65); --glass-border: rgba(255, 255, 255, 0.8);
-            --glass-blur: blur(20px); --text-main: #1a1a1a; --text-sub: #666666;
-            --border-line: #e0e0e0; --shadow-card: 0 4px 20px rgba(0,0,0,0.03);
-            --dock-bg: rgba(255, 255, 255, 0.85); --panel-bg: #ffffff;
-            --photo-paper: #ffffff; --photo-caption: #1a1a1a; --clip-color: #1a1a1a;
-        }
-        [data-theme="dark"] {
-            --bg-body: #111111; --bg-device: #1a1a1a; --bg-card: #222222;
-            --glass-bg: rgba(45, 45, 45, 0.8); --glass-border: rgba(255, 255, 255, 0.1);
-            --text-main: #f0f0f0; --text-sub: #888888; --border-line: #333333;
-            --shadow-card: 0 4px 20px rgba(0,0,0,0.3); --dock-bg: rgba(30, 30, 30, 0.8);
-            --panel-bg: #1c1c1c; --photo-paper: #1c1c1e; --photo-caption: #f0f0f0; --clip-color: #f0f0f0;
-        }
-        
-        * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
-        body { font-family: 'DM Sans', sans-serif; background-color: var(--bg-body); display: flex; justify-content: center; align-items: center; min-height: 100vh; transition: background-color 0.3s ease; color: var(--text-main); overscroll-behavior-y: none; }
-        .serif { font-family: 'Playfair Display', serif; }
-        
-        .device { width: 390px; height: 844px; background: var(--bg-device); border-radius: 44px; position: relative; box-shadow: 0 0 0 10px #222, 0 20px 50px rgba(0,0,0,0.2); overflow: hidden; transition: all 0.3s ease; }
-        .scroll-content { height: 100%; overflow-y: auto; padding: calc(env(safe-area-inset-top, 0px) + 20px) 20px 120px 20px; }
-        .scroll-content::-webkit-scrollbar { display: none; }
+<!-- 引入 Three.js 核心库与控制器 -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
 
-        .header { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 24px; padding: 0 4px; }
-        .date-box h1 { font-size: 32px; font-weight: 400; font-style: italic; line-height: 1; margin-bottom: 4px; }
-        .date-time-line { display: flex; align-items: center; gap: 8px; color: var(--text-sub); font-size: 12px; letter-spacing: 1px; text-transform: uppercase; }
-        .theme-switch { width: 40px; height: 40px; border-radius: 50%; border: 1px solid var(--border-line); background: var(--bg-card); display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 18px; color: var(--text-main); transition: all 0.3s; }
-        
-        .profile-card { background: var(--bg-card); border-radius: 24px; padding: 20px; display: flex; align-items: center; gap: 16px; box-shadow: var(--shadow-card); margin-bottom: 32px; border: 1px solid var(--border-line); }
-        .avatar { width: 64px; height: 64px; border-radius: 50%; object-fit: cover; border: 2px solid var(--bg-device); outline: 1px solid var(--text-main); filter: grayscale(100%); }
-        .profile-info { flex: 1; }
-        .profile-name { font-size: 18px; font-weight: 600; margin-bottom: 4px; }
-        .profile-bio { font-size: 12px; color: var(--text-sub); font-family: 'Playfair Display', serif; font-style: italic; line-height: 1.4; }
-        .profile-tags { margin-top: 8px; display: flex; gap: 6px; }
-        .tag { font-size: 10px; padding: 2px 8px; border-radius: 100px; border: 1px solid var(--border-line); color: var(--text-sub); }
+<style>
+:root {
+  /* ================= 主页 OS 变量 ================= */
+  --bg-body: #f2f2f2; --bg-device: #fafafa; --bg-card: #fff;
+  --glass-bg: rgba(255,255,255,0.65); --glass-border: rgba(255,255,255,0.8); --glass-blur: blur(20px);
+  --text-main: #1a1a1a; --text-sub: #666; --border-line: #e0e0e0;
+  --shadow-card: 0 4px 20px rgba(0,0,0,.03); --dock-bg: rgba(255,255,255,0.85);
+  --panel-bg: #fff; --photo-paper: #fff; --photo-caption: #1a1a1a; --clip-color: #1a1a1a;
 
-        .stack-container { position: relative; height: 100px; margin-bottom: 32px; cursor: pointer; perspective: 1000px; margin-left: 8px; margin-right: 8px; }
-        .stack-label { font-size: 11px; text-transform: uppercase; color: var(--text-sub); margin-bottom: 12px; margin-left: 12px; margin-right: 12px; letter-spacing: 0.5px; display: flex; justify-content: space-between; align-items: center; }
-        .stack-label span:last-child { background: var(--text-main); color: var(--bg-device); padding: 2px 6px; border-radius: 6px; font-size: 9px; font-weight: bold; }
-        .stack-card { position: absolute; width: 100%; min-height: 76px; top: 0; left: 0; background: var(--glass-bg); backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur); border: 1px solid var(--glass-border); border-radius: 20px; padding: 16px; display: flex; align-items: center; gap: 14px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1); transform-origin: center top; }
-        [data-theme="dark"] .stack-card { border-top: 1px solid rgba(255,255,255,0.15); border-bottom: 1px solid rgba(0,0,0,0.5); background: rgba(40,40,40, 0.7); }
-        .stack-card:nth-child(1) { z-index: 3; transform: translateY(0) scale(1); }
-        .stack-card:nth-child(2) { z-index: 2; transform: translateY(14px) scale(0.92); opacity: 1; }
-        .stack-card:nth-child(3) { z-index: 1; transform: translateY(28px) scale(0.84); opacity: 0.6; }
-        .stack-container:active .stack-card:nth-child(1) { transform: translateY(4px) scale(0.98); }
-        .stack-container:active .stack-card:nth-child(2) { transform: translateY(16px) scale(0.92); }
-        .stack-container:active .stack-card:nth-child(3) { transform: translateY(30px) scale(0.84); }
-        .notify-icon { width: 40px; height: 40px; border-radius: 12px; background: var(--bg-card); border: 1px solid var(--border-line); display: flex; align-items: center; justify-content: center; font-size: 18px; color: var(--text-main); flex-shrink: 0; }
-        .notify-content { flex: 1; min-width: 0; }
-        .notify-header { display: flex; justify-content: space-between; margin-bottom: 2px; }
-        .notify-app { font-size: 10px; font-weight: 700; text-transform: uppercase; color: var(--text-sub); }
-        .notify-msg { font-size: 13px; font-weight: 500; color: var(--text-main); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  /* ================= 高定 Settings 变量 ================= */
+  --s-bg: #f9f9f9;
+  --s-text-primary: #111111;
+  --s-text-secondary: #888888;
+  --s-accent: #000000;
+  --s-line: #e0e0e0;
+  --s-watermark: rgba(0, 0, 0, 0.04);
+  --s-panel-bg: rgba(255, 255, 255, 0.9);
+  --s-btn-text: #ffffff;
+  --s-select-arrow: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+}
 
-        .bento-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 32px; padding: 0 4px; }
+[data-theme="dark"] {
+  /* ================= 主页 OS 深色变量 ================= */
+  --bg-body: #111; --bg-device: #1a1a1a; --bg-card: #222;
+  --glass-bg: rgba(45,45,45,0.8); --glass-border: rgba(255,255,255,0.1);
+  --text-main: #f0f0f0; --text-sub: #888; --border-line: #333;
+  --shadow-card: 0 4px 20px rgba(0,0,0,.3); --dock-bg: rgba(30,30,30,0.8);
+  --panel-bg: #1c1c1c; --photo-paper: #1c1c1e; --photo-caption: #f0f0f0; --clip-color: #f0f0f0;
 
-        /* --- Spline 3D Card --- */
-        .spline-card {
-            position: relative; 
-            background: #080808; /* 深色背景适配赛博风 */
-            border-radius: 24px; 
-            aspect-ratio: 1 / 1.1; 
-            overflow: hidden; 
-            box-shadow: var(--shadow-card); 
-            display: flex; align-items: center; justify-content: center;
-        }
+  /* ================= 高定 Settings 深色变量 ================= */
+  --s-bg: #111111;
+  --s-text-primary: #f0f0f0;
+  --s-text-secondary: #888888;
+  --s-accent: #ffffff;
+  --s-line: #333333;
+  --s-watermark: rgba(255, 255, 255, 0.03);
+  --s-panel-bg: rgba(20, 20, 20, 0.9);
+  --s-btn-text: #000000;
+  --s-select-arrow: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+}
 
-        /* 3D Viewer 样式 */
-        spline-viewer {
-            width: 150%; /* 放大一点填满 */
-            height: 150%;
-            margin-left: -5px; /* 微调居中 */
-        }
-        
-        /* 遮挡 Spline 免费版的 Logo (如果不介意可以去掉) */
-        .logo-mask {
-            position: absolute; bottom: 0; right: 0; width: 40px; height: 40px;
-            background: #080808; z-index: 10;
-        }
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;outline:none;}
+body{font-family:'DM Sans',sans-serif;background:var(--bg-body);display:flex;justify-content:center;align-items:center;min-height:100vh;transition:background-color .3s;color:var(--text-main);overscroll-behavior-y:none;}
+.serif{font-family:'Playfair Display',serif;}
 
-        .zen-label {
-            position: absolute; bottom: 16px; color: rgba(255, 255, 255, 0.5);
-            font-family: 'Playfair Display', serif; font-style: italic; font-size: 12px;
-            letter-spacing: 2px; z-index: 15; pointer-events: none;
-        }
+.device{width:390px;height:844px;background:var(--bg-device);border-radius:44px;position:relative;box-shadow:0 0 0 10px #222,0 20px 50px rgba(0,0,0,.2);overflow:hidden;}
 
-        /* Polaroid Widget */
-        .photo-stack-widget { position: relative; aspect-ratio: 1 / 1.1; padding: 10px; display: flex; align-items: center; justify-content: center; }
-        .paperclip-back, .paperclip-front { position: absolute; top: -8px; left: 50%; transform: translateX(-50%) rotate(-42deg); font-size: 28px; color: var(--clip-color); }
-        .paperclip-back { z-index: 1; }
-        .paperclip-front { z-index: 10; clip-path: inset(0 0 45% 0); filter: drop-shadow(0 2px 2px rgba(0,0,0,0.1)); }
-        
-        .polaroid-layer { position: absolute; width: 85%; height: 85%; background: var(--photo-paper); padding: 6px; padding-bottom: 28px; border-radius: 4px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); transition: transform 0.3s ease; }
-        .polaroid-layer img { width: 100%; height: 100%; object-fit: cover; filter: grayscale(100%); opacity: 0.95; display: block; }
-        .polaroid-caption { position: absolute; bottom: 8px; left: 0; width: 100%; text-align: center; color: var(--photo-caption); font-family: 'Playfair Display', serif; font-style: italic; font-size: 10px; z-index: 5; }
-        .polaroid-layer.back { transform: rotate(-6deg) translateX(-4px); z-index: 1; opacity: 0.8; }
-        .polaroid-layer.front { transform: rotate(3deg); z-index: 2; }
-        .photo-stack-widget:active .polaroid-layer.front { transform: rotate(0deg) scale(1.02); }
-        .photo-stack-widget:active .polaroid-layer.back { transform: rotate(-12deg) translateX(-10px); }
+/* ========== 屏幕层级管理 (Screen Management) ========== */
+.screen {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  /* 增加了 opacity 和 visibility 的过渡 */
+  transition: transform 0.5s cubic-bezier(0.19, 1, 0.22, 1), opacity 0.4s ease, visibility 0.4s;
+  background: var(--bg-device);
+  overflow: hidden;
+}
 
-        /* Grid Icons */
-        .grid-icons { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; padding: 0 24px; margin-bottom: 24px; }
-        .icon-box { width: 100%; max-width: 52px; aspect-ratio: 1; margin: 0 auto; background: var(--glass-bg); backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur); border: 1px solid var(--glass-border); border-radius: 18px; display: flex; align-items: center; justify-content: center; color: var(--text-main); transition: transform 0.2s, background 0.2s; cursor: pointer; box-shadow: 0 4px 12px rgba(0,0,0,0.03); }
-        .icon-box:active { transform: scale(0.9); background: rgba(255,255,255,0.5); }
-        .icon-box i { font-size: 22px; opacity: 0.9; }
+/* 主页屏幕 */
+#home-screen {
+  transform: translateX(0);
+  z-index: 1;
+}
+/* 设置屏幕 (初始透明且稍微缩小) */
+#settings-screen {
+  opacity: 0;
+  visibility: hidden;
+  transform: scale(0.95); /* 初始稍微小一点 */
+  z-index: 200; 
+  background: var(--s-bg);
+  font-family: 'Noto Sans SC', sans-serif;
+}
+#settings-screen.active {
+  opacity: 1;
+  visibility: visible;
+  transform: scale(1); /* 恢复正常大小 */
+}
 
-        /* Overlays & Panels */
-        .overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.2); z-index: 90; opacity: 0; pointer-events: none; transition: opacity 0.3s; backdrop-filter: blur(2px); }
-        .overlay.active { opacity: 1; pointer-events: auto; }
-        .details-panel { position: absolute; bottom: 0; left: 0; width: 100%; height: 70%; background: var(--panel-bg); border-radius: 40px 40px 0 0; z-index: 100; transform: translateY(110%); transition: transform 0.5s cubic-bezier(0.19, 1, 0.22, 1); box-shadow: 0 -10px 40px rgba(0,0,0,0.1); padding: 24px; display: flex; flex-direction: column; }
-        .details-panel.active { transform: translateY(0); }
-        .panel-handle { width: 40px; height: 5px; background: var(--border-line); border-radius: 10px; margin: 0 auto 24px auto; }
-        .panel-title { font-size: 20px; font-weight: 600; margin-bottom: 20px; font-family: 'Playfair Display', serif; }
-        .panel-list { overflow-y: auto; flex: 1; padding-bottom: 40px; }
-        .panel-item { display: flex; align-items: flex-start; gap: 14px; padding: 16px 0; border-bottom: 1px solid var(--border-line); }
-        .panel-item:last-child { border-bottom: none; }
-        
-        /* Dock */
-        .dock-wrapper { position: absolute; bottom: 0; left: 0; width: 100%; height: 100px; display: flex; justify-content: center; align-items: center; z-index: 50; padding-bottom: calc(env(safe-area-inset-bottom, 24px)); transition: transform 0.5s cubic-bezier(0.19, 1, 0.22, 1); pointer-events: none; }
-        .dock { pointer-events: auto; background: var(--dock-bg); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); padding: 12px 28px; border-radius: 100px; border: 1px solid var(--border-line); display: flex; gap: 28px; box-shadow: 0 10px 40px rgba(0,0,0,0.1); transition: all 0.3s; }
-        .dock-item { font-size: 24px; color: var(--text-main); transition: transform 0.2s; display: flex; align-items: center; cursor: pointer; }
-        .dock-item:active { transform: scale(0.85); }
-        .dock-item.active-dot { position: relative; }
-        .dock-item.active-dot::after { content: ''; position: absolute; bottom: -6px; left: 50%; transform: translateX(-50%); width: 4px; height: 4px; background: var(--text-main); border-radius: 50%; }
-        .dock-wrapper.hidden { transform: translateY(150%); pointer-events: auto; cursor: pointer; }
-        .dock-wrapper.hidden::before { content: ''; width: 40px; height: 4px; background: var(--border-line); border-radius: 4px; position: absolute; bottom: 12px; opacity: 0.5; }
+/* ========== 原主页样式 ========== */
+.scroll-content{height:100%;overflow-y:auto;padding:calc(env(safe-area-inset-top,0px) + 20px) 20px 120px;}
+.scroll-content::-webkit-scrollbar{display:none;}
+.header{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:24px;padding:0 4px;}
+.date-box h1{font-size:32px;font-weight:400;font-style:italic;line-height:1;margin-bottom:4px;}
+.date-time-line{display:flex;align-items:center;gap:8px;color:var(--text-sub);font-size:12px;letter-spacing:1px;text-transform:uppercase;}
+.theme-switch{width:40px;height:40px;border-radius:50%;border:1px solid var(--border-line);background:var(--bg-card);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:18px;color:var(--text-main);transition:all .3s;}
+.profile-card{background:var(--bg-card);border-radius:24px;padding:20px;display:flex;align-items:center;gap:16px;box-shadow:var(--shadow-card);margin-bottom:32px;border:1px solid var(--border-line);}
+.avatar{width:64px;height:64px;border-radius:50%;object-fit:cover;border:2px solid var(--bg-device);outline:1px solid var(--text-main);filter:grayscale(100%);}
+.profile-name{font-size:18px;font-weight:600;margin-bottom:4px;}
+.profile-bio{font-size:12px;color:var(--text-sub);font-family:'Playfair Display',serif;font-style:italic;line-height:1.4;}
+.profile-tags{margin-top:8px;display:flex;gap:6px;}
+.tag{font-size:10px;padding:2px 8px;border-radius:100px;border:1px solid var(--border-line);color:var(--text-sub);}
+.stack-container{position:relative;height:100px;margin-bottom:32px;cursor:pointer;perspective:1000px;margin-left:8px;margin-right:8px;}
+.stack-label{font-size:11px;text-transform:uppercase;color:var(--text-sub);margin-bottom:12px;margin-left:12px;letter-spacing:.5px;display:flex;justify-content:space-between;align-items:center;}
+.stack-label span:last-child{background:var(--text-main);color:var(--bg-device);padding:2px 6px;border-radius:6px;font-size:9px;font-weight:700;}
+.stack-card{position:absolute;width:100%;min-height:76px;top:0;left:0;background:var(--glass-bg);backdrop-filter:var(--glass-blur);-webkit-backdrop-filter:var(--glass-blur);border:1px solid var(--glass-border);border-radius:20px;padding:16px;display:flex;align-items:center;gap:14px;box-shadow:0 4px 15px rgba(0,0,0,.1);transition:all .4s cubic-bezier(.25,.8,.25,1);transform-origin:center top;}[data-theme="dark"] .stack-card{border-top:1px solid rgba(255,255,255,.15);background:rgba(40,40,40,.7);}
+.stack-card:nth-child(1){z-index:3;transform:translateY(0) scale(1);}
+.stack-card:nth-child(2){z-index:2;transform:translateY(14px) scale(.92);}
+.stack-card:nth-child(3){z-index:1;transform:translateY(28px) scale(.84);opacity:.6;}
+.notify-icon{width:40px;height:40px;border-radius:12px;background:var(--bg-card);border:1px solid var(--border-line);display:flex;align-items:center;justify-content:center;font-size:18px;color:var(--text-main);flex-shrink:0;}
+.notify-content{flex:1;min-width:0;}
+.notify-header{display:flex;justify-content:space-between;margin-bottom:2px;}
+.notify-app{font-size:10px;font-weight:700;text-transform:uppercase;color:var(--text-sub);}
+.notify-msg{font-size:13px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 
-        @media (max-width: 768px) {
-            body { background: var(--bg-device); align-items: flex-start; margin: 0; }
-            .device { width: 100%; height: 100vh; border: none; border-radius: 0; box-shadow: none; }
-            .scroll-content { padding-bottom: 120px; }
-            .dock-wrapper { position: fixed; bottom: 0; }
-            .details-panel { position: fixed; }
-            .overlay { position: fixed; }
-        }
-    </style>
+.bento-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:32px;padding:0 4px;align-items:start;}
+
+.canvas-wrap{position:relative;aspect-ratio:1/1.15; cursor: grab;}
+.canvas-wrap:active{cursor: grabbing;}
+#three-canvas{position:absolute;top:0;left:0;width:100%!important;height:100%!important;}
+.zen-label{
+  position:absolute;bottom:6px;left:50%;transform:translateX(-50%);
+  font-family:'Playfair Display',serif;font-style:italic;font-size:11px;
+  letter-spacing:2px;pointer-events:none;white-space:nowrap;z-index:2;
+  color:rgba(204, 51, 77, 0.7);
+  transition:color .3s;
+}[data-theme="dark"] .zen-label{color:rgba(255, 235, 180, 0.6);}
+.drag-hint {
+  position:absolute;top:10px;left:50%;transform:translateX(-50%);
+  font-size:9px; letter-spacing:1px; color:rgba(204,51,77,0.4);
+  pointer-events:none; z-index:2; text-transform: uppercase;
+}[data-theme="dark"] .drag-hint{color:rgba(255,255,255,0.3);}
+
+.photo-stack-widget{position:relative;aspect-ratio:1/1.1;padding:10px;display:flex;align-items:center;justify-content:center;}
+.paperclip-back,.paperclip-front{position:absolute;top:-8px;left:50%;transform:translateX(-50%) rotate(-42deg);font-size:28px;color:var(--clip-color);}
+.paperclip-back{z-index:1;}.paperclip-front{z-index:10;clip-path:inset(0 0 45% 0);filter:drop-shadow(0 2px 2px rgba(0,0,0,.1));}
+.polaroid-layer{position:absolute;width:85%;height:85%;background:var(--photo-paper);padding:6px;padding-bottom:28px;border-radius:4px;box-shadow:0 4px 12px rgba(0,0,0,.1);transition:transform .3s;}
+.polaroid-layer img{width:100%;height:100%;object-fit:cover;filter:grayscale(100%);opacity:.95;display:block;}
+.polaroid-caption{position:absolute;bottom:8px;left:0;width:100%;text-align:center;color:var(--photo-caption);font-family:'Playfair Display',serif;font-style:italic;font-size:10px;}
+.polaroid-layer.back{transform:rotate(-6deg) translateX(-4px);z-index:1;opacity:.8;}
+.polaroid-layer.front{transform:rotate(3deg);z-index:2;}
+.photo-stack-widget:active .polaroid-layer.front{transform:rotate(0) scale(1.02);}
+.photo-stack-widget:active .polaroid-layer.back{transform:rotate(-12deg) translateX(-10px);}
+
+.grid-icons{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;padding:0 24px;margin-bottom:24px;}
+.icon-box{width:100%;max-width:52px;aspect-ratio:1;margin:0 auto;background:var(--glass-bg);backdrop-filter:var(--glass-blur);-webkit-backdrop-filter:var(--glass-blur);border:1px solid var(--glass-border);border-radius:18px;display:flex;align-items:center;justify-content:center;color:var(--text-main);transition:transform .2s;cursor:pointer;}
+.icon-box:active{transform:scale(.9);}
+.icon-box i{font-size:22px;opacity:.9;}
+.overlay{position:absolute;inset:0;background:rgba(0,0,0,.2);z-index:90;opacity:0;pointer-events:none;transition:opacity .3s;backdrop-filter:blur(2px);}
+.overlay.active{opacity:1;pointer-events:auto;}
+.details-panel{position:absolute;bottom:0;left:0;width:100%;height:70%;background:var(--panel-bg);border-radius:40px 40px 0 0;z-index:100;transform:translateY(110%);transition:transform .5s cubic-bezier(.19,1,.22,1);box-shadow:0 -10px 40px rgba(0,0,0,.1);padding:24px;display:flex;flex-direction:column;}
+.details-panel.active{transform:translateY(0);}
+.panel-handle{width:40px;height:5px;background:var(--border-line);border-radius:10px;margin:0 auto 24px;}
+.panel-title{font-size:20px;font-weight:600;margin-bottom:20px;font-family:'Playfair Display',serif;}
+.panel-list{overflow-y:auto;flex:1;padding-bottom:40px;}
+.panel-item{display:flex;align-items:flex-start;gap:14px;padding:16px 0;border-bottom:1px solid var(--border-line);}
+.panel-item:last-child{border-bottom:none;}
+.dock-wrapper{position:absolute;bottom:0;left:0;width:100%;height:100px;display:flex;justify-content:center;align-items:center;z-index:50;padding-bottom:calc(env(safe-area-inset-bottom,24px));transition:transform .5s cubic-bezier(.19,1,.22,1);pointer-events:none;}
+.dock{pointer-events:auto;background:var(--dock-bg);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);padding:12px 28px;border-radius:100px;border:1px solid var(--border-line);display:flex;gap:28px;box-shadow:0 10px 40px rgba(0,0,0,.1);}
+.dock-item{font-size:24px;color:var(--text-main);transition:transform .2s;display:flex;align-items:center;cursor:pointer;}
+.dock-item:active{transform:scale(.85);}
+.dock-item.active-dot{position:relative;}
+.dock-item.active-dot::after{content:'';position:absolute;bottom:-6px;left:50%;transform:translateX(-50%);width:4px;height:4px;background:var(--text-main);border-radius:50%;}
+.dock-wrapper.hidden{transform:translateY(150%);}
+
+/* ========== 高定设置页专用 CSS ========== */
+.bg-watermark {
+    position: absolute; top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    font-family: 'Playfair Display', serif;
+    font-size: 500px; font-style: italic;
+    color: var(--s-watermark);
+    pointer-events: none; z-index: 0; line-height: 1;
+    white-space: nowrap; transition: transform 0.8s ease, opacity 0.3s ease;
+}
+
+.main-view {
+    position: relative; z-index: 1;
+    padding: 80px 40px 40px 40px;
+    height: 100%; display: flex;
+    flex-direction: column; justify-content: center;
+}
+
+.main-back-btn {
+    position: absolute; top: 40px; right: 30px;
+    width: 40px; height: 40px;
+    border: 1px solid var(--s-line);
+    border-radius: 50%; background: transparent;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; transition: all 0.3s ease; z-index: 20;
+}
+.main-back-btn svg { width: 16px; height: 16px; stroke: var(--s-accent); transition: transform 0.3s; }
+.main-back-btn:active { background-color: var(--s-line); border-color: var(--s-accent); }
+
+.main-header { margin-bottom: 60px; }
+.main-title { font-family: 'Playfair Display', serif; font-size: 42px; margin: 0; font-weight: 700; font-style: italic; letter-spacing: -1px; color: var(--s-text-primary); }
+.main-subtitle { font-size: 12px; color: var(--s-text-secondary); text-transform: uppercase; letter-spacing: 4px; margin-top: 10px; }
+
+.menu-list { display: flex; flex-direction: column; gap: 0; }
+.menu-item { cursor: pointer; padding: 30px 0; position: relative; }
+.menu-item::after {
+    content: ''; position: absolute; bottom: 0; left: 0; width: 100%; height: 1px;
+    background: linear-gradient(90deg, var(--s-line) 0%, rgba(0,0,0,0) 80%);
+}[data-theme="dark"] .menu-item::after { background: linear-gradient(90deg, var(--s-line) 0%, rgba(255,255,255,0) 80%); }
+.menu-item:last-child::after { display: none; }
+
+.menu-text-cn { font-size: 24px; font-weight: 500; color: var(--s-text-primary); display: block; margin-bottom: 4px; transition: color 0.3s; }
+.menu-text-en { font-family: 'Playfair Display', serif; font-size: 14px; font-style: italic; color: var(--s-text-secondary); }
+.menu-item:active .menu-text-cn { color: var(--s-text-secondary); }
+
+/* 设置子页面 */
+.settings-page {
+    position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+    background: var(--s-panel-bg);
+    backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+    z-index: 10; transform: translateY(100%);
+    transition: transform 0.5s cubic-bezier(0.2, 0.8, 0.2, 1);
+    display: flex; flex-direction: column;
+}
+.settings-page.active { transform: translateY(0); }
+
+.nav-bar { padding: 20px 30px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--s-line); }
+.nav-title { font-size: 18px; font-weight: 600; letter-spacing: 1px; color: var(--s-text-primary); }
+.sub-close-btn {
+    background: none; border: 1px solid var(--s-accent); color: var(--s-accent);
+    width: 32px; height: 32px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; font-size: 14px; transition: all 0.3s;
+}
+.sub-close-btn:active { background: var(--s-accent); color: var(--s-btn-text); }
+
+.content-scroll { flex: 1; overflow-y: auto; padding: 30px; }
+.form-section { margin-bottom: 40px; }
+.input-wrapper { margin-bottom: 30px; position: relative; }
+.label-text { display: block; font-size: 12px; color: var(--s-text-secondary); margin-bottom: 10px; letter-spacing: 1px; }
+
+.input-line {
+    width: 100%; border: none; border-bottom: 1px solid var(--s-line); background: transparent;
+    padding: 10px 0; font-size: 16px; font-family: 'Noto Sans SC', sans-serif;
+    color: var(--s-text-primary); border-radius: 0; transition: border-color 0.3s;
+}
+.input-line:focus { border-bottom-color: var(--s-accent); }
+
+.select-stylish {
+    width: 100%; padding: 12px 0; background: transparent; border: none; border-bottom: 1px solid var(--s-accent);
+    font-size: 16px; font-weight: 500; color: var(--s-text-primary); border-radius: 0; -webkit-appearance: none;
+    background-image: var(--s-select-arrow); background-repeat: no-repeat; background-position: right center; background-size: 16px;
+}
+
+.slider-row { display: flex; align-items: center; gap: 15px; }
+.styled-slider { flex: 1; -webkit-appearance: none; height: 2px; background: var(--s-line); }
+.styled-slider::-webkit-slider-thumb { -webkit-appearance: none; width: 16px; height: 16px; background: var(--s-accent); border-radius: 0; transform: rotate(45deg); }
+.slider-val { font-family: 'Playfair Display', serif; font-size: 18px; font-style: italic; width: 40px; text-align: right; color: var(--s-text-primary); }
+
+.btn-black {
+    width: 100%; background: var(--s-accent); color: var(--s-btn-text); border: none;
+    padding: 18px; font-size: 14px; font-weight: 500; letter-spacing: 2px; cursor: pointer; margin-bottom: 15px; transition: opacity 0.3s;
+}
+.btn-black:active { opacity: 0.8; }
+
+.btn-text { background: none; border: none; color: var(--s-text-secondary); font-size: 12px; text-decoration: underline; padding: 10px; cursor: pointer; width: 100%; }
+.fetch-link { position: absolute; right: 0; top: 0; font-size: 12px; color: var(--s-accent); text-decoration: underline; cursor: pointer; font-weight: 500; }
+.page-watermark { position: absolute; bottom: -50px; right: -20px; font-family: 'Playfair Display', serif; font-size: 200px; color: var(--s-watermark); font-style: italic; pointer-events: none; z-index: -1; }
+
+@media(max-width:768px){
+  body{background:var(--bg-device);align-items:flex-start;}
+  .device{width:100%;height:100vh;border:none;border-radius:0;box-shadow:none;}
+  .dock-wrapper{position:fixed;bottom:0;}
+  .details-panel,.overlay{position:fixed;}
+}
+</style>
 </head>
 <body>
-    <div class="device">
-        <div class="scroll-content">
-            <div class="header">
-                <div class="date-box">
-                    <h1 class="serif" id="day-main">Saturday.</h1>
-                    <div class="date-time-line"><p id="date-main">OCT 24</p><span>•</span><p id="time-main">09:41</p></div>
-                </div>
-                <div class="theme-switch" id="theme-btn"><i class="ph ph-moon" id="theme-icon"></i></div>
-            </div>
+<div class="device">
 
-            <div class="profile-card">
-                <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?ixlib=rb-4.0.3&auto=format&fit=crop&w=200&q=80" alt="Avatar" class="avatar">
-                <div class="profile-info">
-                    <div class="profile-name serif">Jennie.K</div>
-                    <div class="profile-bio">"Keeping it simple & chill."</div>
-                    <div class="profile-tags"><span class="tag">#Design</span><span class="tag">#Mood</span></div>
-                </div>
-            </div>
-
-            <div class="stack-label"><span>Updates</span><span>3</span></div>
-            <div class="stack-container" onclick="openPanel()">
-                <div class="stack-card">
-                    <div class="notify-icon"><i class="ph ph-instagram-logo"></i></div>
-                    <div class="notify-content">
-                        <div class="notify-header"><span class="notify-app">Instagram</span><span class="notify-time">2m</span></div>
-                        <div class="notify-msg">Lisa tagged you in a story.</div>
-                    </div>
-                </div>
-                <div class="stack-card"></div>
-                <div class="stack-card"></div>
-            </div>
-
-            <div class="bento-grid">
-                
-                <!-- LEFT: Spline 3D Viewer (这里是重点！) -->
-                <div class="spline-card">
-                    <!-- 
-                        👇 如何换成你想要的鱼？
-                        1. 去 spline.design 注册个账号（免费）。
-                        2. 在社区搜索 "Fish" 或 "Koi"。
-                        3. 打开一个免费模型，点击右上角 "Export" -> "Viewer"。
-                        4. 复制那个 "url" 链接，替换掉下面这个 url。
-                    -->
-                    <spline-viewer url="https://prod.spline.design/qEwBqSgQvG-qQz2Q/scene.splinecode"></spline-viewer>
-                    
-                    <div class="zen-label">cyber.</div>
-                    <!-- 遮挡 Logo 的小方块 -->
-                    <div class="logo-mask"></div>
-                </div>
-
-                <!-- RIGHT: Polaroid Stack -->
-                <div class="photo-stack-widget">
-                    <i class="ph ph-paperclip paperclip-back"></i>
-                    <i class="ph ph-paperclip paperclip-front"></i>
-                    <div class="polaroid-layer back">
-                        <img src="https://images.unsplash.com/photo-1493663284031-b7e3aefcae8e?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80" alt="bg">
-                    </div>
-                    <div class="polaroid-layer front">
-                        <img src="https://images.unsplash.com/photo-1516483638261-f4dbaf036963?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80" alt="fg">
-                        <div class="polaroid-caption">First Choice :)</div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="grid-icons">
-                <div class="icon-box"><i class="ph ph-image"></i></div>
-                <div class="icon-box"><i class="ph ph-envelope-simple"></i></div>
-                <div class="icon-box"><i class="ph ph-music-note"></i></div>
-                <div class="icon-box"><i class="ph ph-calendar-blank"></i></div>
-                <div class="icon-box"><i class="ph ph-gear"></i></div>
-                <div class="icon-box"><i class="ph ph-bell"></i></div>
-                <div class="icon-box"><i class="ph ph-spotify-logo"></i></div>
-                <div class="icon-box"><i class="ph ph-cloud"></i></div>
-            </div>
+  <!-- ==================== HOME SCREEN ==================== -->
+  <div id="home-screen" class="screen active">
+    <div class="scroll-content">
+      <div class="header">
+        <div class="date-box">
+          <h1 class="serif" id="day-main">Saturday.</h1>
+          <div class="date-time-line"><p id="date-main">OCT 24</p><span>•</span><p id="time-main">09:41</p></div>
         </div>
-
-        <div class="overlay" id="overlay" onclick="closePanel()"></div>
-        <div class="details-panel" id="panel">
-            <div class="panel-handle" onclick="closePanel()"></div>
-            <div class="panel-title">Notifications</div>
-            <div class="panel-list">
-                <div class="panel-item">
-                    <div class="notify-icon"><i class="ph ph-instagram-logo"></i></div>
-                    <div class="notify-content">
-                        <div class="notify-header"><span class="notify-app">Instagram</span><span class="notify-time">2m ago</span></div>
-                        <div class="notify-msg">Lisa tagged you in a story.</div>
-                    </div>
-                </div>
-                <div class="panel-item">
-                    <div class="notify-icon"><i class="ph ph-wallet"></i></div>
-                    <div class="notify-content">
-                        <div class="notify-header"><span class="notify-app">Wallet</span><span class="notify-time">1h ago</span></div>
-                        <div class="notify-msg">Payment received from Client A ($450.00).</div>
-                    </div>
-                </div>
-            </div>
+        <div class="theme-switch" id="theme-btn"><i class="ph ph-moon" id="theme-icon"></i></div>
+      </div>
+      <div class="profile-card">
+        <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?ixlib=rb-4.0.3&auto=format&fit=crop&w=200&q=80" alt="" class="avatar">
+        <div class="profile-info">
+          <div class="profile-name serif">Jennie.K</div>
+          <div class="profile-bio">"Keeping it simple & chill."</div>
+          <div class="profile-tags"><span class="tag">#Design</span><span class="tag">#Mood</span></div>
         </div>
-
-        <div class="dock-wrapper" id="dock-wrapper">
-            <div class="dock">
-                <div class="dock-item active-dot" id="home-btn" onclick="toggleDock(event)"><i class="ph-fill ph-house"></i></div>
-                <div class="dock-item"><i class="ph-fill ph-magnifying-glass"></i></div>
-                <div class="dock-item"><i class="ph-fill ph-chat-circle-dots"></i></div>
-                <div class="dock-item"><i class="ph-fill ph-user"></i></div>
-            </div>
+      </div>
+      <div class="stack-label"><span>Updates</span><span>3</span></div>
+      <div class="stack-container" onclick="openPanel()">
+        <div class="stack-card">
+          <div class="notify-icon"><i class="ph ph-instagram-logo"></i></div>
+          <div class="notify-content">
+            <div class="notify-header"><span class="notify-app">Instagram</span><span>2m</span></div>
+            <div class="notify-msg">Lisa tagged you in a story.</div>
+          </div>
         </div>
+        <div class="stack-card"></div><div class="stack-card"></div>
+      </div>
+      <div class="bento-grid">
+        <div class="canvas-wrap" id="canvas-wrap">
+          <div class="drag-hint">Drag to rotate</div>
+          <canvas id="three-canvas"></canvas>
+          <div class="zen-label" id="zen-label">portal.</div>
+        </div>
+        <div class="photo-stack-widget">
+          <i class="ph ph-paperclip paperclip-back"></i>
+          <i class="ph ph-paperclip paperclip-front"></i>
+          <div class="polaroid-layer back"><img src="https://images.unsplash.com/photo-1493663284031-b7e3aefcae8e?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80" alt=""></div>
+          <div class="polaroid-layer front">
+            <img src="https://images.unsplash.com/photo-1516483638261-f4dbaf036963?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80" alt="">
+            <div class="polaroid-caption">First Choice :)</div>
+          </div>
+        </div>
+      </div>
+      <div class="grid-icons">
+        <div class="icon-box"><i class="ph ph-image"></i></div><div class="icon-box"><i class="ph ph-envelope-simple"></i></div>
+        <div class="icon-box"><i class="ph ph-music-note"></i></div><div class="icon-box"><i class="ph ph-calendar-blank"></i></div>
+        <!-- 齿轮图标：点击打开设置页 -->
+        <div class="icon-box" onclick="openSettingsScreen()"><i class="ph ph-gear"></i></div>
+        <div class="icon-box"><i class="ph ph-bell"></i></div>
+        <div class="icon-box"><i class="ph ph-spotify-logo"></i></div><div class="icon-box"><i class="ph ph-cloud"></i></div>
+      </div>
     </div>
+    <div class="overlay" id="overlay" onclick="closePanel()"></div>
+    <div class="details-panel" id="panel">
+      <div class="panel-handle" onclick="closePanel()"></div>
+      <div class="panel-title">Notifications</div>
+      <div class="panel-list">
+        <div class="panel-item">
+          <div class="notify-icon"><i class="ph ph-instagram-logo"></i></div>
+          <div class="notify-content">
+            <div class="notify-header"><span class="notify-app">Instagram</span><span>2m ago</span></div>
+            <div class="notify-msg">Lisa tagged you in a story.</div>
+          </div>
+        </div>
+        <div class="panel-item">
+          <div class="notify-icon"><i class="ph ph-wallet"></i></div>
+          <div class="notify-content">
+            <div class="notify-header"><span class="notify-app">Wallet</span><span>1h ago</span></div>
+            <div class="notify-msg">Payment received ($450.00).</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="dock-wrapper" id="dock-wrapper">
+      <div class="dock">
+        <div class="dock-item active-dot" onclick="toggleDock(event)"><i class="ph-fill ph-house"></i></div>
+        <div class="dock-item"><i class="ph-fill ph-magnifying-glass"></i></div>
+        <div class="dock-item"><i class="ph-fill ph-chat-circle-dots"></i></div>
+        <div class="dock-item"><i class="ph-fill ph-user"></i></div>
+      </div>
+    </div>
+  </div>
 
-    <script>
-        function updateTime() {
-            const now = new Date();
-            const hours = String(now.getHours()).padStart(2, '0');
-            const minutes = String(now.getMinutes()).padStart(2, '0');
-            document.getElementById('time-main').innerText = `${hours}:${minutes}`;
-            const days =['Sunday.', 'Monday.', 'Tuesday.', 'Wednesday.', 'Thursday.', 'Friday.', 'Saturday.'];
-            const months =['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
-            document.getElementById('day-main').innerText = days[now.getDay()];
-            document.getElementById('date-main').innerText = `${months[now.getMonth()]} ${now.getDate()}`;
+  <!-- ==================== SETTINGS SCREEN ==================== -->
+  <div id="settings-screen" class="screen">
+      <!-- 背景巨大水印 -->
+      <div class="bg-watermark" id="bg-letter">S</div>
+
+      <!-- 主菜单 -->
+      <div class="main-view">
+          <!-- 返回主页按钮 -->
+          <button class="main-back-btn" onclick="goBackMain()">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <line x1="19" y1="12" x2="5" y2="12"></line>
+                  <polyline points="12 19 5 12 12 5"></polyline>
+              </svg>
+          </button>
+
+          <header class="main-header">
+              <h1 class="main-title">Settings</h1>
+              <div class="main-subtitle">PREFERENCES & CONFIG</div>
+          </header>
+
+          <div class="menu-list">
+              <div class="menu-item" onclick="openPage('api-page', 'A')">
+                  <span class="menu-text-cn">API 设置</span>
+                  <span class="menu-text-en">Connection & Intelligence</span>
+              </div>
+              <div class="menu-item" onclick="openPage('ui-page', 'U')">
+                  <span class="menu-text-cn">美化设置</span>
+                  <span class="menu-text-en">Appearance & Themes</span>
+              </div>
+              <div class="menu-item" onclick="openPage('data-page', 'D')">
+                  <span class="menu-text-cn">数据设置</span>
+                  <span class="menu-text-en">Storage & Backup</span>
+              </div>
+          </div>
+      </div>
+
+      <!-- 1. API 设置页 -->
+      <div id="api-page" class="settings-page">
+          <div class="page-watermark">Api</div>
+          <div class="nav-bar">
+              <span class="nav-title">API 设置</span>
+              <button class="sub-close-btn" onclick="closePage()">✕</button>
+          </div>
+          <div class="content-scroll">
+              <div class="form-section">
+                  <label class="label-text">选择配置 / SELECT PROFILE</label>
+                  <select id="api-select" class="select-stylish" onchange="switchApi()">
+                      <option value="new">+ 新建配置</option>
+                  </select>
+              </div>
+              <div class="input-wrapper">
+                  <label class="label-text">配置名称 / NAME</label>
+                  <input type="text" id="api-name" class="input-line" placeholder="给这个API起个名字">
+              </div>
+              <div class="input-wrapper">
+                  <label class="label-text">接口地址 / ENDPOINT</label>
+                  <input type="text" id="api-url" class="input-line" placeholder="https://api.example.com">
+              </div>
+              <div class="input-wrapper">
+                  <label class="label-text">密钥 / KEY</label>
+                  <input type="password" id="api-key" class="input-line" placeholder="sk-...">
+              </div>
+              <div class="input-wrapper">
+                  <label class="label-text">模型 / MODEL</label>
+                  <span class="fetch-link" onclick="fetchModels()">点击拉取列表</span>
+                  <input type="text" id="api-model" list="model-options" class="input-line" placeholder="输入或选择模型">
+                  <datalist id="model-options"></datalist>
+              </div>
+              <div class="input-wrapper">
+                  <label class="label-text">温度 / TEMPERATURE</label>
+                  <div class="slider-row">
+                      <input type="range" id="api-temp" class="styled-slider" min="0" max="2" step="0.1" value="0.7" oninput="updateTempDisplay(this.value)">
+                      <span class="slider-val" id="temp-display">0.7</span>
+                  </div>
+              </div>
+              <div style="margin-top: 40px;">
+                  <button class="btn-black" onclick="saveApi()">保存当前配置</button>
+                  <button class="btn-text" onclick="deleteApi()">删除此配置</button>
+              </div>
+          </div>
+      </div>
+
+      <!-- 2. 美化设置页 -->
+      <div id="ui-page" class="settings-page">
+          <div class="page-watermark">Ui</div>
+          <div class="nav-bar">
+              <span class="nav-title">美化设置</span>
+              <button class="sub-close-btn" onclick="closePage()">✕</button>
+          </div>
+          <div class="content-scroll">
+              <div style="padding: 40px 0; text-align: center; color: var(--s-text-secondary);">
+                  <p>主题切换功能开发中...</p>
+              </div>
+          </div>
+      </div>
+
+      <!-- 3. 数据设置页 -->
+      <div id="data-page" class="settings-page">
+          <div class="page-watermark">Data</div>
+          <div class="nav-bar">
+              <span class="nav-title">数据设置</span>
+              <button class="sub-close-btn" onclick="closePage()">✕</button>
+          </div>
+          <div class="content-scroll">
+               <div style="padding: 40px 0; text-align: center; color: var(--s-text-secondary);">
+                  <p>暂无数据记录</p>
+              </div>
+          </div>
+      </div>
+  </div>
+</div>
+
+<script>
+// ========== 基础逻辑与时间刷新 ==========
+function updateTime(){
+  const n=new Date();
+  document.getElementById('time-main').innerText=String(n.getHours()).padStart(2,'0')+':'+String(n.getMinutes()).padStart(2,'0');
+  document.getElementById('day-main').innerText=['Sunday.','Monday.','Tuesday.','Wednesday.','Thursday.','Friday.','Saturday.'][n.getDay()];
+  document.getElementById('date-main').innerText=['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'][n.getMonth()]+' '+n.getDate();
+}
+setInterval(updateTime,1000); updateTime();
+
+let isDark=false;
+document.getElementById('theme-btn').addEventListener('click',()=>{
+  isDark=!isDark;
+  document.documentElement.setAttribute('data-theme',isDark?'dark':'');
+  document.getElementById('theme-icon').className=isDark?'ph ph-sun':'ph ph-moon';
+  if(window.setNebulaTheme) window.setNebulaTheme(isDark);
+});
+
+const dockW=document.getElementById('dock-wrapper'); let dockHid=false;
+function toggleDock(e){e.stopPropagation();dockW.classList.add('hidden');dockHid=true;}
+dockW.addEventListener('click',()=>{if(dockHid){dockW.classList.remove('hidden');dockHid=false;}});
+function openPanel(){document.getElementById('overlay').classList.add('active');document.getElementById('panel').classList.add('active');}
+function closePanel(){document.getElementById('overlay').classList.remove('active');document.getElementById('panel').classList.remove('active');}
+
+// ========== 屏幕切换逻辑 ==========
+function openSettingsScreen() {
+    document.getElementById('settings-screen').classList.add('active');
+}
+function goBackMain() {
+    document.getElementById('settings-screen').classList.remove('active');
+}
+
+// ========== 设置页内部视觉逻辑 ==========
+const bgLetter = document.getElementById('bg-letter');
+function openPage(pageId, letter) {
+    bgLetter.style.opacity = '0';
+    setTimeout(() => {
+        bgLetter.innerText = letter;
+        bgLetter.style.opacity = '1';
+    }, 300);
+    document.getElementById(pageId).classList.add('active');
+}
+function closePage() {
+    document.querySelectorAll('.settings-page').forEach(p => p.classList.remove('active'));
+    bgLetter.style.opacity = '0';
+    setTimeout(() => {
+        bgLetter.innerText = 'S';
+        bgLetter.style.opacity = '1';
+    }, 300);
+}
+
+// ========== API 核心逻辑 ==========
+let apiList = JSON.parse(localStorage.getItem('my_apis')) ||[];
+let currentId = 'new';
+const dom = {
+    select: document.getElementById('api-select'),
+    name: document.getElementById('api-name'),
+    url: document.getElementById('api-url'),
+    key: document.getElementById('api-key'),
+    model: document.getElementById('api-model'),
+    modelOpts: document.getElementById('model-options'),
+    temp: document.getElementById('api-temp'),
+    tempDisplay: document.getElementById('temp-display')
+};
+renderSelect();
+
+function updateTempDisplay(val) { dom.tempDisplay.innerText = val; }
+function renderSelect() {
+    dom.select.innerHTML = '<option value="new">+ 新建配置</option>';
+    apiList.forEach(api => {
+        const opt = document.createElement('option');
+        opt.value = api.id;
+        opt.innerText = api.name;
+        dom.select.appendChild(opt);
+    });
+    dom.select.value = currentId;
+}
+function switchApi() {
+    currentId = dom.select.value;
+    if (currentId === 'new') {
+        dom.name.value = ''; dom.url.value = ''; dom.key.value = ''; dom.model.value = '';
+        dom.temp.value = 0.7; updateTempDisplay(0.7);
+    } else {
+        const data = apiList.find(a => a.id == currentId);
+        if (data) {
+            dom.name.value = data.name; dom.url.value = data.url; dom.key.value = data.key;
+            dom.model.value = data.model; dom.temp.value = data.temp; updateTempDisplay(data.temp);
+            if(data.savedModels) renderModelList(data.savedModels);
         }
-        setInterval(updateTime, 1000);
-        updateTime();
+    }
+}
+function fetchModels() {
+    if (!dom.url.value || !dom.key.value) { alert('请先填写接口地址和密钥'); return; }
+    document.querySelector('.fetch-link').innerText = '拉取中...';
+    setTimeout(() => {
+        const mockModels =['gpt-3.5-turbo', 'gpt-4-turbo', 'claude-3-opus', 'gemini-pro'];
+        renderModelList(mockModels);
+        document.querySelector('.fetch-link').innerText = '拉取成功';
+        setTimeout(() => document.querySelector('.fetch-link').innerText = '点击拉取列表', 2000);
+        if(!dom.model.value) dom.model.value = mockModels[0];
+    }, 1000);
+}
+function renderModelList(models) {
+    dom.modelOpts.innerHTML = '';
+    models.forEach(m => {
+        const opt = document.createElement('option'); opt.value = m; dom.modelOpts.appendChild(opt);
+    });
+}
+function saveApi() {
+    if (!dom.name.value) { alert('请输入配置名称'); return; }
+    const newData = {
+        id: currentId === 'new' ? Date.now() : currentId,
+        name: dom.name.value, url: dom.url.value, key: dom.key.value,
+        model: dom.model.value, temp: dom.temp.value,
+        savedModels: Array.from(dom.modelOpts.options).map(o => o.value) 
+    };
+    if (currentId === 'new') { apiList.push(newData); currentId = newData.id; }
+    else { const index = apiList.findIndex(a => a.id == currentId); if (index !== -1) apiList[index] = newData; }
+    localStorage.setItem('my_apis', JSON.stringify(apiList));
+    renderSelect(); alert('保存成功');
+}
+function deleteApi() {
+    if (currentId === 'new') return;
+    if (confirm('确定删除该配置？')) {
+        apiList = apiList.filter(a => a.id != currentId);
+        localStorage.setItem('my_apis', JSON.stringify(apiList));
+        currentId = 'new'; renderSelect(); switchApi(); 
+    }
+}
 
-        const themeBtn = document.getElementById('theme-btn');
-        const themeIcon = document.getElementById('theme-icon');
-        const html = document.documentElement;
-        let isDark = false;
-        themeBtn.addEventListener('click', () => {
-            isDark = !isDark;
-            if (isDark) {
-                html.setAttribute('data-theme', 'dark');
-                themeIcon.classList.replace('ph-moon', 'ph-sun');
-            } else {
-                html.removeAttribute('data-theme');
-                themeIcon.classList.replace('ph-sun', 'ph-moon');
-            }
-        });
+// ══════════════════════════════════════════
+//   360° PORTAL MAGIC FRAME — 全息悬浮传送门
+// ══════════════════════════════════════════
+(function(){
+  const canvas=document.getElementById('three-canvas');
+  const wrap=document.getElementById('canvas-wrap');
+  const W=wrap.clientWidth, H=wrap.clientHeight;
+  const renderer=new THREE.WebGLRenderer({canvas,alpha:true,antialias:true});
+  renderer.setPixelRatio(Math.min(devicePixelRatio,2)); renderer.setSize(W,H); renderer.setClearColor(0,0);
+  const scene=new THREE.Scene(); const cam=new THREE.PerspectiveCamera(55,W/H,0.01,100); cam.position.z=2.8; 
 
-        const dockWrapper = document.getElementById('dock-wrapper');
-        let isDockHidden = false;
-        function toggleDock(e) { e.stopPropagation(); dockWrapper.classList.add('hidden'); isDockHidden = true; }
-        dockWrapper.addEventListener('click', () => { if (isDockHidden) { dockWrapper.classList.remove('hidden'); isDockHidden = false; } });
+  const controls = new THREE.OrbitControls(cam, renderer.domElement);
+  controls.enableDamping = true; controls.dampingFactor = 0.05; controls.enablePan = false; controls.minDistance = 1.5; controls.maxDistance = 4.5;
+  const sceneGroup = new THREE.Group(); scene.add(sceneGroup);
 
-        const overlay = document.getElementById('overlay');
-        const panel = document.getElementById('panel');
-        function openPanel() { overlay.classList.add('active'); panel.classList.add('active'); }
-        function closePanel() { overlay.classList.remove('active'); panel.classList.remove('active'); }
-    </script>
+  function makeGlow(r,g,b){
+    const c=document.createElement('canvas'); c.width=c.height=64; const ctx=c.getContext('2d');
+    const gr=ctx.createRadialGradient(32,32,0,32,32,32);
+    gr.addColorStop(0,`rgba(${r},${g},${b},1)`); gr.addColorStop(0.2,`rgba(${r},${g},${b},0.8)`);
+    gr.addColorStop(0.5,`rgba(${r},${g},${b},0.2)`); gr.addColorStop(1,`rgba(${r},${g},${b},0)`); 
+    ctx.fillStyle=gr; ctx.fillRect(0,0,64,64); return new THREE.CanvasTexture(c);
+  }
+  const texMagic = makeGlow(255, 255, 255); const texMist = makeGlow(255, 255, 255);
+
+  function makePhotoMask(){
+    const c=document.createElement('canvas'); c.width=512; c.height=512; const ctx=c.getContext('2d');
+    const gr=ctx.createRadialGradient(256,256,50, 256,256,240);
+    gr.addColorStop(0,'rgba(255,255,255,1)'); gr.addColorStop(0.6,'rgba(255,255,255,0.8)'); gr.addColorStop(1,'rgba(255,255,255,0)');
+    ctx.fillStyle=gr; ctx.fillRect(0,0,512,512); return new THREE.CanvasTexture(c);
+  }
+
+  const COLORS = {
+    light: { frame:0x140f17, mist:0xc02c38, stars:0x730c1e },
+    dark: { frame: 0xffeaad, mist: 0xffeaad, stars: 0xffffff }
+  };
+
+  const photoUrl = 'https://i.postimg.cc/q7RJnTvj/IMG_9985.jpg';
+  const texLoader = new THREE.TextureLoader(); texLoader.crossOrigin = 'Anonymous'; 
+  const photoMat = new THREE.MeshBasicMaterial({
+    map: texLoader.load(photoUrl), alphaMap: makePhotoMask(), transparent: true, opacity: 0.65, 
+    color: 0xffe0e5, depthWrite: false, blending: THREE.NormalBlending, side: THREE.DoubleSide
+  });
+  const photoMesh = new THREE.Mesh(new THREE.PlaneGeometry(1.7, 2.3), photoMat);
+  photoMesh.position.set(0, 0, -0.2); sceneGroup.add(photoMesh);
+
+  const posArr =[], colArr =[]; function addPt(x, y, z) { posArr.push(x, y, z); }
+  function addMagicLine(x1, y1, z1, x2, y2, z2, density, spread=0.015) {
+    const count = Math.floor(Math.hypot(x2-x1, y2-y1, z2-z1) * density);
+    for(let i=0; i<count; i++) { let t = i / count; addPt(x1+(x2-x1)*t+(Math.random()-.5)*spread, y1+(y2-y1)*t+(Math.random()-.5)*spread, z1+(z2-z1)*t+(Math.random()-.5)*spread); }
+  }
+  function addMagicArc(cx, cy, cz, radius, startAngle, endAngle, density, spread=0.015) {
+    const count = Math.floor(radius * Math.abs(endAngle - startAngle) * density);
+    for(let i=0; i<count; i++) { let a = startAngle + (endAngle - startAngle) * (i / count); addPt(cx+Math.cos(a)*radius+(Math.random()-.5)*spread, cy+Math.sin(a)*radius+(Math.random()-.5)*spread, cz+(Math.random()-.5)*spread); }
+  }
+
+  const density = 250; const w = 1.0, h = 1.25, w2 = 0.95, h2 = 1.20, archW = 0.75, topY = 0.85;
+  addMagicLine(-w, -h, 0, w, -h, 0, density); addMagicLine(w, -h, 0, w, h, 0, density);
+  addMagicLine(w, h, 0, -w, h, 0, density); addMagicLine(-w, h, 0, -w, -h, 0, density);
+  addMagicLine(-w2, -h2, 0.05, w2, -h2, 0.05, density, 0.005); addMagicLine(w2, -h2, 0.05, w2, h2, 0.05, density, 0.005);
+  addMagicLine(w2, h2, 0.05, -w2, h2, 0.05, density, 0.005); addMagicLine(-w2, h2, 0.05, -w2, -h2, 0.05, density, 0.005);
+  addMagicLine(-archW, -1.0, 0.1, -archW, 0.2, 0.1, density); addMagicLine(archW, -1.0, 0.1, archW, 0.2, 0.1, density);
+  addMagicArc(0, 0.2, 0.1, archW, 0, Math.PI, density);
+  addMagicArc(0, topY, 0.15, 0.15, 0, Math.PI*2, density*1.5); addMagicArc(0, topY, 0.15, 0.22, 0, Math.PI*2, density*1.5);
+  for(let i=0; i<8; i++) { let a = i * (Math.PI/4), len = (i%2===0) ? 0.35 : 0.25; addMagicLine(Math.cos(a)*0.1, topY+Math.sin(a)*0.1, 0.15, Math.cos(a)*len, topY+Math.sin(a)*len, 0.15, density); }
+  addMagicLine(0, topY - 0.22, 0.15, 0, 0.0, 0.15, density*0.5, 0.002);
+
+  const frameGeo = new THREE.BufferGeometry(); frameGeo.setAttribute('position', new THREE.Float32BufferAttribute(posArr, 3));
+  const frameMat = new THREE.PointsMaterial({ size: 0.025, map: texMagic, transparent: true, opacity: 0.9, blending: THREE.NormalBlending, depthWrite: false, color: COLORS.light.frame });
+  sceneGroup.add(new THREE.Points(frameGeo, frameMat));
+
+  const sphereGroup = new THREE.Group(); sphereGroup.position.set(0, -0.65, 0.1);
+  function createRing(radius, rotX, rotY, rotZ) {
+    const rPos=[]; for(let i=0; i<180; i++) rPos.push(Math.cos((i/180)*Math.PI*2)*radius+(Math.random()-.5)*.02, Math.sin((i/180)*Math.PI*2)*radius+(Math.random()-.5)*.02, (Math.random()-.5)*.02);
+    const geo = new THREE.BufferGeometry(); geo.setAttribute('position', new THREE.Float32BufferAttribute(rPos, 3));
+    const mesh = new THREE.Points(geo, frameMat); mesh.rotation.set(rotX, rotY, rotZ); return mesh;
+  }
+  sphereGroup.add(createRing(0.4, Math.PI/2, 0, 0), createRing(0.35, 0, Math.PI/4, 0), createRing(0.35, 0, -Math.PI/4, 0), createRing(0.2, 0, 0, 0));
+  sceneGroup.add(sphereGroup);
+
+  const mistInit =[], mistPhase = [], mistSpeed =[];
+  function addMistBlob(cx, cy, cz, count, spread) {
+    for(let i=0; i<count; i++) {
+      let r = Math.pow(Math.random(), 1.5) * spread, theta = Math.random() * Math.PI * 2;
+      mistInit.push(cx + Math.cos(theta)*r, cy + Math.sin(theta)*r * 1.5, cz + (Math.random()-.5)*0.5);
+      mistPhase.push(Math.random() * Math.PI * 2); mistSpeed.push(0.5 + Math.random() * 1.0); 
+    }
+  }
+  addMistBlob(-0.8, -0.9, 0, 250, 0.5); addMistBlob( 0.8, -0.9, 0, 250, 0.5);
+  addMistBlob(-0.95, 0, 0, 150, 0.6); addMistBlob( 0.95, 0, 0, 150, 0.6);
+
+  const mistGeo = new THREE.BufferGeometry(); mistGeo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(mistInit), 3));
+  const mistMat = new THREE.PointsMaterial({ size: 0.16, map: texMist, transparent: true, opacity: 0.45, blending: THREE.NormalBlending, depthWrite: false, color: COLORS.light.mist });
+  sceneGroup.add(new THREE.Points(mistGeo, mistMat));
+
+  const starPos = [], starPhase =[];
+  for(let i=0; i<150; i++) { starPos.push((Math.random()-.5)*2.5, (Math.random()-.5)*2.8, (Math.random()-.5)*1.2); starPhase.push(Math.random()*Math.PI*2); }
+  const starGeo = new THREE.BufferGeometry(); starGeo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(starPos), 3));
+  const starMat = new THREE.PointsMaterial({ size: 0.08, map: texMist, transparent: true, blending: THREE.NormalBlending, depthWrite: false, color: COLORS.light.stars });
+  sceneGroup.add(new THREE.Points(starGeo, starMat));
+
+  window.setNebulaTheme = function(dark){
+    const c = dark ? COLORS.dark : COLORS.light;
+    frameMat.color.setHex(c.frame); mistMat.color.setHex(c.mist); starMat.color.setHex(c.stars);
+    const blendMode = dark ? THREE.AdditiveBlending : THREE.NormalBlending;
+    frameMat.blending = blendMode; mistMat.blending = blendMode; starMat.blending = blendMode;
+    mistMat.opacity = dark ? 0.3 : 0.45; frameMat.opacity = dark ? 0.85 : 0.9;
+    photoMat.color.setHex(dark ? 0xffffff : 0xffe0e5); photoMat.opacity = dark ? 0.85 : 0.65;
+  };
+
+  let t=0;
+  (function animate(){
+    requestAnimationFrame(animate); t += 0.016; controls.update();
+    const breathe = 1 + Math.sin(t * 1.5) * 0.01; sceneGroup.scale.set(breathe, breathe, 1);
+    sphereGroup.rotation.y = t * 0.4; sphereGroup.rotation.z = Math.sin(t * 0.5) * 0.1;
+
+    const mPos = mistGeo.attributes.position.array;
+    for(let i=0; i < mistInit.length/3; i++) {
+      mPos[i*3] = mistInit[i*3] + Math.sin(t * mistSpeed[i] + mistPhase[i]) * 0.04;
+      mPos[i*3+1] = mistInit[i*3+1] + Math.cos(t * mistSpeed[i]*0.8 + mistPhase[i]) * 0.06 + Math.sin(t*0.5)*0.02; 
+    }
+    mistGeo.attributes.position.needsUpdate = true;
+
+    const sPos = starGeo.attributes.position.array;
+    for(let i=0; i<150; i++) {
+      sPos[i*3+1] += 0.003 + Math.sin(t + starPhase[i])*0.001; sPos[i*3] += Math.sin(t*2 + starPhase[i])*0.001; 
+      if(sPos[i*3+1] > 1.5) { sPos[i*3+1] = -1.5; sPos[i*3] = (Math.random()-.5)*2.5; }
+    }
+    starGeo.attributes.position.needsUpdate = true; starMat.opacity = 0.5 + Math.sin(t * 3.0) * 0.3;
+    renderer.render(scene, cam);
+  })();
+})();
+</script>
 </body>
 </html>
