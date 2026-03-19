@@ -8,6 +8,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Chill OS">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#fafafa">
 <script src="https://unpkg.com/@phosphor-icons/web"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -445,8 +446,8 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg-body);display:flex;jus
         <div class="input-wrapper">
           <label class="label-text">模型 / MODEL</label>
           <span class="fetch-link" id="fetch-link-btn" onclick="ApiModule.fetchModels()">点击拉取列表</span>
-          <input type="text" id="api-model" list="model-options" class="input-line" placeholder="输入或从列表选择">
-          <datalist id="model-options"></datalist>
+          <select id="api-model-select" class="select-stylish" style="display:none" onchange="ApiModule.onModelSelectChange()"></select>
+          <input type="text" id="api-model" class="input-line" placeholder="先拉取列表或手动输入模型名">
         </div>
         <div class="input-wrapper">
           <label class="label-text">温度 / TEMPERATURE</label>
@@ -934,21 +935,23 @@ const ApiModule = (() => {
       $('api-name').value  = '';
       $('api-url').value   = '';
       $('api-key').value   = '';
-      $('api-model').value = '';
       $('api-temp').value  = 0.7;
       $('temp-display').textContent = '0.7';
-      $('model-options').innerHTML  = '';
+      _showModelInput(''); // 清空并显示手动输入
       return;
     }
     const p = _profiles.find(x => x.id === Number(id));
     if (!p) return;
-    $('api-name').value  = p.name;
-    $('api-url').value   = p.url;
-    $('api-key').value   = p.key;
-    $('api-model').value = p.model;
-    $('api-temp').value  = p.temp;
+    $('api-name').value = p.name;
+    $('api-url').value  = p.url;
+    $('api-key').value  = p.key;
+    $('api-temp').value = p.temp;
     $('temp-display').textContent = parseFloat(p.temp).toFixed(1);
-    if (p.savedModels?.length) _renderModelList(p.savedModels);
+    if (p.savedModels?.length) {
+      _renderModelList(p.savedModels, p.model);
+    } else {
+      _showModelInput(p.model || '');
+    }
   }
 
   function onSelectChange() {
@@ -964,10 +967,11 @@ const ApiModule = (() => {
     btn.textContent = '拉取中…';
     try {
       const models = await ApiHelper.fetchModels(url, key);
-      _renderModelList(models);
-      if (!$('api-model').value) $('api-model').value = models[0];
+      // 保留当前已输入的模型名，优先选中它
+      const current = $('api-model').value.trim() || ($('api-model-select').value);
+      _renderModelList(models, current || models[0]);
       btn.textContent = `✓ ${models.length} 个模型`;
-      setTimeout(() => btn.textContent = '点击拉取列表', 3000);
+      setTimeout(() => btn.textContent = '重新拉取', 3000);
       Toast.show(`拉取到 ${models.length} 个模型`);
     } catch (e) {
       btn.textContent = '拉取失败';
@@ -976,12 +980,34 @@ const ApiModule = (() => {
     }
   }
 
-  function _renderModelList(models) {
-    const dl = $('model-options');
-    dl.innerHTML = '';
+  // 显示下拉列表
+  function _renderModelList(models, selected) {
+    const sel = $('api-model-select');
+    sel.innerHTML = '';
     models.forEach(m => {
-      const opt = document.createElement('option'); opt.value = m; dl.appendChild(opt);
+      const opt = document.createElement('option');
+      opt.value = m;
+      opt.textContent = m;
+      if (m === selected) opt.selected = true;
+      sel.appendChild(opt);
     });
+    // 切换：隐藏手动输入，显示下拉
+    $('api-model').style.display       = 'none';
+    $('api-model-select').style.display = '';
+    // 同步当前选中值到隐藏的 input，save() 读取时用
+    $('api-model').value = sel.value;
+  }
+
+  // 显示手动输入框（无模型列表时）
+  function _showModelInput(value) {
+    $('api-model-select').style.display = 'none';
+    $('api-model').style.display        = '';
+    $('api-model').value                = value;
+  }
+
+  // 下拉选择变化时同步到隐藏 input
+  function onModelSelectChange() {
+    $('api-model').value = $('api-model-select').value;
   }
 
   async function save() {
@@ -993,7 +1019,7 @@ const ApiModule = (() => {
       key:         $('api-key').value.trim(),
       model:       $('api-model').value.trim(),
       temp:        parseFloat($('api-temp').value),
-      savedModels: Array.from($('model-options').options).map(o => o.value),
+      savedModels: Array.from($('api-model-select').options).map(o => o.value),
     };
     try {
       if (_currentId === '__new__') {
@@ -1032,7 +1058,7 @@ const ApiModule = (() => {
     } catch (e) { Toast.show('删除失败'); console.error(e); }
   }
 
-  return { render, onSelectChange, fetchModels, save, setActive, delete: deleteProfile };
+  return { render, onSelectChange, onModelSelectChange, fetchModels, save, setActive, delete: deleteProfile };
 })();
 
 // ============================================================
