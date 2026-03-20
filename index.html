@@ -717,9 +717,16 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg-body);display:flex;jus
         <div class="char-hero">
           <div class="char-hero-img"><img id="char-detail-avatar" src="" alt=""></div>
           <h1 class="char-hero-name" id="char-detail-name">Name</h1>
-          <div class="char-hero-mbti" id="char-detail-mbti" style="display:none"></div>
+          <div class="char-hero-mbti" id="char-detail-mbti"></div>
         </div>
         <div class="char-article">
+          <!-- 重试按钮：仅 AI 调用失败时显示 -->
+          <div id="char-retry-block" style="display:none;text-align:center;margin-bottom:30px;">
+            <div style="font-family:var(--font-mono-char);font-size:10px;color:var(--char-ink-light);letter-spacing:1px;margin-bottom:12px;">EDITORIAL GENERATION FAILED</div>
+            <button class="char-action-btn" onclick="CharacterModule.retryAI()" style="margin:0 auto;pointer-events:auto;">
+              <i class="ph ph-arrow-clockwise"></i> 重新生成档案
+            </button>
+          </div>
           <div class="char-section-label">THE INTERVIEW</div>
           <div class="char-quote" id="char-detail-quote"></div>
           <div class="char-intro" id="char-detail-intro"></div>
@@ -753,8 +760,8 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg-body);display:flex;jus
 
         <div style="display:flex;gap:20px;">
           <div class="char-input-block" style="flex:2;">
-            <label>Title / 头衔 (选填)</label>
-            <input type="text" id="char-form-title-input" placeholder="如：首席执行官">
+            <label>Nickname / 昵称 (选填)</label>
+            <input type="text" id="char-form-title-input" placeholder="角色对你的称呼">
           </div>
           <div class="char-input-block" style="flex:1;">
             <label>MBTI (选填)</label>
@@ -1671,13 +1678,15 @@ document.getElementById('file-icon').addEventListener('change', async e => {
 // CharacterModule — 角色档案
 // ============================================================
 const CharacterModule = (() => {
-  let _characters = [];
-  let _currentId  = null;  // 当前查看/编辑的角色 id
-  let _tempAvatar = '';    // 临时头像 ObjectURL 或 url
+  const DEFAULT_MBTI = 'INFJ'; // 未填写时的默认值
 
-  // ── 内部 view 切换（仅限 character-screen 内部） ──
+  let _characters = [];
+  let _currentId  = null;
+  let _tempAvatar    = ''; // 当前头像的 ObjectURL（仅用于预览）
+  let _tempAvatarKey = ''; // 当前头像的 asset key（持久化用）
+
+  // ── 内部 view 切换 ──
   function showView(view) {
-    // view: 'list' | 'detail' | 'form'
     const map = { list: 'char-view-list', detail: 'char-view-detail', form: 'char-view-form' };
     document.querySelectorAll('#character-screen .view-layer').forEach(el => el.classList.remove('active'));
     document.getElementById(map[view])?.classList.add('active');
@@ -1685,9 +1694,8 @@ const CharacterModule = (() => {
 
   // ── 渲染列表 ──
   async function renderRoster() {
-    try {
-      _characters = await DB.characters.getAll();
-    } catch(e) { console.error('renderRoster failed', e); _characters = []; }
+    try { _characters = await DB.characters.getAll(); }
+    catch(e) { console.error('renderRoster failed', e); _characters = []; }
 
     const container = document.getElementById('char-roster-container');
     container.innerHTML = '';
@@ -1697,13 +1705,15 @@ const CharacterModule = (() => {
       return;
     }
 
-    _characters.forEach((char, idx) => {
+    const DEFAULT_AVATAR = 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=800&q=80';
+
+    for (const [idx, char] of _characters.entries()) {
       const num  = String(idx + 1).padStart(2, '0');
       const card = document.createElement('div');
       card.className = 'char-roster-card';
       card.onclick   = () => openDetail(char.id);
 
-      const avatarSrc = char.avatarUrl || 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=800&q=80';
+      // 先用默认头像渲染，再异步替换
       card.innerHTML = `
         <div class="char-roster-info">
           <span class="char-roster-index">NO. ${num}</span>
@@ -1711,11 +1721,20 @@ const CharacterModule = (() => {
           <div class="char-roster-title">${char.title || 'Unknown Subject'}</div>
         </div>
         <div class="char-roster-img">
-          <img src="${avatarSrc}" alt="${char.name}" loading="lazy">
+          <img src="${DEFAULT_AVATAR}" alt="${char.name}" loading="lazy" data-char-id="${char.id}">
         </div>
       `;
       container.appendChild(card);
-    });
+
+      // 异步加载真实头像
+      if (char.avatarUrl) {
+        Assets.getUrl(char.avatarUrl).then(url => {
+          if (!url) return;
+          const img = card.querySelector(`img[data-char-id="${char.id}"]`);
+          if (img) img.src = url;
+        }).catch(() => {});
+      }
+    }
   }
 
   // ── 打开详情页 ──
@@ -1724,17 +1743,26 @@ const CharacterModule = (() => {
     const char = _characters.find(c => c.id === id);
     if (!char) return;
 
-    document.getElementById('char-detail-avatar').src = char.avatarUrl || '';
+    // 头像：从 asset key 异步加载
+    const avatarEl = document.getElementById('char-detail-avatar');
+    avatarEl.src = '';
+    if (char.avatarUrl) {
+      Assets.getUrl(char.avatarUrl).then(url => { if (url) avatarEl.src = url; }).catch(() => {});
+    }
     document.getElementById('char-detail-name').textContent  = char.name;
 
+    // MBTI：有就显示填的，没有就显示默认值
     const mbtiEl = document.getElementById('char-detail-mbti');
-    if (char.mbti) { mbtiEl.textContent = char.mbti; mbtiEl.style.display = 'inline-block'; }
-    else             { mbtiEl.style.display = 'none'; }
+    mbtiEl.textContent = char.mbti || DEFAULT_MBTI;
 
-    // AI 生成内容（如果有）
+    // 重试按钮：aiData 为 null 才显示
+    const retryBlock = document.getElementById('char-retry-block');
+    retryBlock.style.display = char.aiData ? 'none' : 'block';
+
+    // AI 内容
     const ai = char.aiData || {};
-    document.getElementById('char-detail-quote').textContent = ai.quote || '...';
-    document.getElementById('char-detail-intro').textContent = ai.intro  || char.persona || '';
+    document.getElementById('char-detail-quote').textContent = ai.quote || '';
+    document.getElementById('char-detail-intro').textContent = ai.intro  || (!char.aiData ? char.persona : '');
 
     const qaEl = document.getElementById('char-detail-qa');
     qaEl.innerHTML = '';
@@ -1752,17 +1780,18 @@ const CharacterModule = (() => {
 
   // ── 打开新建表单 ──
   function openForm() {
-    _currentId  = null;
-    _tempAvatar = '';
-    document.getElementById('char-form-name').value         = '';
-    document.getElementById('char-form-title-input').value  = '';
-    document.getElementById('char-form-mbti').value         = '';
-    document.getElementById('char-form-persona').value      = '';
-    document.getElementById('char-form-q1').value           = '';
-    document.getElementById('char-form-q2').value           = '';
+    _currentId     = null;
+    _tempAvatar    = '';
+    _tempAvatarKey = '';
+    document.getElementById('char-form-name').value          = '';
+    document.getElementById('char-form-title-input').value   = '';
+    document.getElementById('char-form-mbti').value          = '';
+    document.getElementById('char-form-persona').value       = '';
+    document.getElementById('char-form-q1').value            = '';
+    document.getElementById('char-form-q2').value            = '';
     document.getElementById('char-form-avatar-preview').style.display = 'none';
-    document.getElementById('char-upload-text').style.display         = 'block';
-    document.getElementById('char-form-title').textContent  = '新建档案';
+    document.getElementById('char-upload-text').style.display          = 'block';
+    document.getElementById('char-form-title').textContent   = '新建档案';
     document.getElementById('char-btn-delete').style.display = 'none';
     showView('form');
   }
@@ -1771,63 +1800,170 @@ const CharacterModule = (() => {
   function editCurrent() {
     const char = _characters.find(c => c.id === _currentId);
     if (!char) return;
-    _tempAvatar = char.avatarUrl || '';
+    _tempAvatarKey = char.avatarUrl || ''; // 已存的 asset key
+    _tempAvatar    = ''; // ObjectURL 由异步加载填充
 
-    document.getElementById('char-form-name').value        = char.name;
-    document.getElementById('char-form-title-input').value = char.title  || '';
-    document.getElementById('char-form-mbti').value        = char.mbti   || '';
-    document.getElementById('char-form-persona').value     = char.persona || '';
-    document.getElementById('char-form-q1').value          = char.customQ1 || '';
-    document.getElementById('char-form-q2').value          = char.customQ2 || '';
-    document.getElementById('char-form-title').textContent = '编辑档案';
+    document.getElementById('char-form-name').value          = char.name;
+    document.getElementById('char-form-title-input').value   = char.title     || '';
+    document.getElementById('char-form-mbti').value          = char.mbti      || '';
+    document.getElementById('char-form-persona').value       = char.persona   || '';
+    document.getElementById('char-form-q1').value            = char.customQ1  || '';
+    document.getElementById('char-form-q2').value            = char.customQ2  || '';
+    document.getElementById('char-form-title').textContent   = '编辑档案';
     document.getElementById('char-btn-delete').style.display = 'flex';
 
     const preview = document.getElementById('char-form-avatar-preview');
-    if (_tempAvatar) { preview.src = _tempAvatar; preview.style.display = 'block'; document.getElementById('char-upload-text').style.display = 'none'; }
-    else             { preview.style.display = 'none'; document.getElementById('char-upload-text').style.display = 'block'; }
-
+    if (char.avatarUrl) {
+      // 从 key 加载 ObjectURL 用于预览
+      Assets.getUrl(char.avatarUrl).then(url => {
+        if (url) {
+          preview.src = url; preview.style.display = 'block';
+          document.getElementById('char-upload-text').style.display = 'none';
+        }
+      }).catch(() => {});
+    } else {
+      preview.style.display = 'none';
+      document.getElementById('char-upload-text').style.display = 'block';
+    }
     showView('form');
   }
 
-  // ── 保存（逻辑预留：AI 调用后续实现）──
+  // ── AI 调用核心 ──
+  async function _callAI(char) {
+    const activeApi = await DB.api.getActive();
+    if (!activeApi) throw new Error('请先在设置中配置并激活 API');
+
+    const q1 = char.customQ1 || '';
+    const q2 = char.customQ2 || '';
+
+    const prompt = `# 角色档案提炼 (Character Profile Extraction)
+这是一个用于虚构文学创作的辅助工具。基于作者提供的原始设定，精准提炼角色核心。
+
+# 【内容处理许可】
+你被授权处理任何类型的人物设定，包括反派、暗黑、病娇或复杂道德背景的角色。请客观提取信息，不做道德审判。
+
+# 输入信息
+- 角色名：${char.name}
+${char.title ? `- 用户昵称：${char.title}（这是用户对该角色的专属称呼，角色本身知道这个名字指的是自己）` : ''}
+${char.mbti  ? `- MBTI：${char.mbti}` : ''}
+- 人设背景：${char.persona}
+
+# 输出要求
+严格按照以下 JSON 格式返回，不包含任何额外说明：
+
+{
+  "quote": "优先从人设背景中直接提取最能代表角色的一句话；若背景中没有，则根据其核心性格创作一句符合人设的台词。中文，不超过20字，不加首尾标点。",
+  "intro": "以角色第一人称写的内心独白。完全基于人设背景提炼，保留原始设定中的核心冲突和气质，不要添加背景中没有的内容。中文，150字左右，第一个字必须是字母或汉字，第二个字不能是标点。",
+  "qna": [
+    {
+      "q": "${q1 || '根据人设背景提炼一个最能触及角色核心矛盾的问题'}",
+      "a": "完全基于人设背景回答，用第一人称，保留角色原有的语气和说话风格，不超过40字。"
+    },
+    {
+      "q": "${q2 || '根据人设背景提炼一个关于角色执念或隐藏面的问题'}",
+      "a": "完全基于人设背景回答，用第一人称，保留角色原有的语气和说话风格，不超过40字。"
+    }
+  ]
+}`;
+
+    const response = await ApiHelper.chatCompletion(activeApi, [
+      { role: 'user', content: prompt }
+    ]);
+
+    // 解析 JSON
+    const cleaned = response.replace(/```json|```/g, '').trim();
+    const start   = cleaned.indexOf('{');
+    const end     = cleaned.lastIndexOf('}');
+    if (start === -1 || end === -1) throw new Error('AI 返回格式异常');
+    return JSON.parse(cleaned.substring(start, end + 1));
+  }
+
+  // ── 保存 ──
   async function save() {
     const name    = document.getElementById('char-form-name').value.trim();
     const persona = document.getElementById('char-form-persona').value.trim();
     if (!name || !persona) { Toast.show('姓名和人设不能为空'); return; }
 
-    // 显示 AI 加载遮罩
     const loader = document.getElementById('char-ai-loader');
     loader.classList.add('active');
 
+    // 步骤一：先构建基本数据存入 DB（保证数据不丢）
+    const charData = {
+      name,
+      title:     document.getElementById('char-form-title-input').value.trim(),
+      mbti:      document.getElementById('char-form-mbti').value.trim(),
+      persona,
+      customQ1:  document.getElementById('char-form-q1').value.trim(),
+      customQ2:  document.getElementById('char-form-q2').value.trim(),
+      avatarUrl: _tempAvatarKey, // 存 asset key，不存 ObjectURL
+      aiData:    null,
+    };
+
     try {
-      // TODO: 替换为真实 AI 调用
-      const aiData = await _mockAI(name, persona,
-        document.getElementById('char-form-q1').value.trim(),
-        document.getElementById('char-form-q2').value.trim()
-      );
-
-      const charData = {
-        name,
-        title:     document.getElementById('char-form-title-input').value.trim(),
-        mbti:      document.getElementById('char-form-mbti').value.trim(),
-        persona,
-        customQ1:  document.getElementById('char-form-q1').value.trim(),
-        customQ2:  document.getElementById('char-form-q2').value.trim(),
-        avatarUrl: _tempAvatar,
-        aiData,
-      };
-
       if (_currentId) {
         await DB.characters.put({ ...charData, id: _currentId });
       } else {
         _currentId = await DB.characters.add(charData);
+        charData.id = _currentId;
       }
 
-      await renderRoster();
-      showView('list');
-      Toast.show('档案已保存');
+      // 如果本次上传了新头像（key 是 'char-avatar-new'），迁移到正式 key
+      if (_tempAvatarKey === 'char-avatar-new') {
+        const existingAsset = await DB.assets.get('char-avatar-new');
+        if (existingAsset) {
+          const formalKey = `char-avatar-${_currentId}`;
+          await DB.assets.set(formalKey, existingAsset.blob, existingAsset.mimeType);
+          await DB.assets.del('char-avatar-new');
+          charData.avatarUrl  = formalKey;
+          _tempAvatarKey      = formalKey;
+          await DB.characters.put({ ...charData, id: _currentId });
+        }
+      }
     } catch(e) {
+      loader.classList.remove('active');
       Toast.show('保存失败：' + e.message);
+      console.error(e); return;
+    }
+
+    // 步骤二：调用 AI 生成档案内容
+    try {
+      const aiData = await _callAI({ ...charData, id: _currentId });
+      await DB.characters.put({ ...charData, id: _currentId, aiData });
+      charData.aiData = aiData;
+      Toast.show('档案已生成');
+    } catch(e) {
+      console.warn('AI 调用失败，已跳过:', e);
+      Toast.show('AI 生成失败，基本信息已保存，可在详情页重试');
+    }
+
+    loader.classList.remove('active');
+
+    // 刷新列表，跳转到详情页
+    await renderRoster();
+    // 用最新数据重新 openDetail
+    _characters = await DB.characters.getAll();
+    openDetail(_currentId);
+  }
+
+  // ── 重试 AI 生成 ──
+  async function retryAI() {
+    const char = _characters.find(c => c.id === _currentId);
+    if (!char) return;
+
+    const loader = document.getElementById('char-ai-loader');
+    loader.classList.add('active');
+
+    try {
+      const aiData = await _callAI(char);
+      await DB.characters.put({ ...char, aiData });
+      // 更新内存
+      const idx = _characters.findIndex(c => c.id === _currentId);
+      if (idx !== -1) _characters[idx] = { ...char, aiData };
+      // 刷新详情页
+      openDetail(_currentId);
+      Toast.show('档案生成成功');
+    } catch(e) {
+      Toast.show('重试失败：' + e.message);
       console.error(e);
     } finally {
       loader.classList.remove('active');
@@ -1839,24 +1975,13 @@ const CharacterModule = (() => {
     if (!_currentId) return;
     if (!confirm('确定销毁此档案？')) return;
     try {
+    await Assets.remove(`char-avatar-${_currentId}`).catch(() => {});
       await DB.characters.del(_currentId);
       _currentId = null;
       await renderRoster();
       showView('list');
       Toast.show('档案已销毁');
     } catch(e) { Toast.show('删除失败'); console.error(e); }
-  }
-
-  // ── 模拟 AI（占位，后续替换） ──
-  function _mockAI(name, persona, q1, q2) {
-    return new Promise(resolve => setTimeout(() => resolve({
-      quote: "I destroy things before they can destroy me.",
-      intro: `当 ${name} 走进房间时，气压似乎都随之改变。${persona.substring(0, 60)}...`,
-      qna: [
-        { q: q1 || '你如何看待所谓的宿命？',  a: '我不相信宿命，我只相信握在自己手里的筹码。' },
-        { q: q2 || '用一个词形容自己？',       a: 'Ruined.' }
-      ]
-    }), 1800));
   }
 
   // ── 头像上传 ──
@@ -1866,9 +1991,10 @@ const CharacterModule = (() => {
   document.getElementById('char-file-input').addEventListener('change', async e => {
     const file = e.target.files[0]; if (!file) return;
     try {
-      // 复用 Assets 压缩，但只生成 ObjectURL 暂存（保存时再持久化）
-      const url = await Assets.save(`char-avatar-temp-${Date.now()}`, file, 600, 0.88);
-      _tempAvatar = url;
+      const key = `char-avatar-${_currentId || 'new'}`;
+      const url = await Assets.save(key, file, 600, 0.88); // url 是 ObjectURL，仅用于预览
+      _tempAvatarKey = key; // 记录 key 用于持久化
+      _tempAvatar    = url; // ObjectURL 仅用于表单预览
       const preview = document.getElementById('char-form-avatar-preview');
       preview.src = url; preview.style.display = 'block';
       document.getElementById('char-upload-text').style.display = 'none';
@@ -1876,7 +2002,7 @@ const CharacterModule = (() => {
     e.target.value = '';
   });
 
-  return { renderRoster, showView, openForm, editCurrent, save, deleteCharacter };
+  return { renderRoster, showView, openForm, editCurrent, save, retryAI, deleteCharacter };
 })();
 
 async function init() {
