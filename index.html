@@ -761,7 +761,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg-body);display:flex;jus
         <div style="display:flex;gap:20px;">
           <div class="char-input-block" style="flex:2;">
             <label>Nickname / 昵称 (选填)</label>
-            <input type="text" id="char-form-title-input" placeholder="角色对你的称呼">
+            <input type="text" id="char-form-title-input" placeholder="你对角色的称呼">
           </div>
           <div class="char-input-block" style="flex:1;">
             <label>MBTI (选填)</label>
@@ -1844,7 +1844,7 @@ const CharacterModule = (() => {
 
 # 输入信息
 - 角色名：${char.name}
-${char.title ? `- 用户昵称：${char.title}（这是用户对该角色的专属称呼，角色本身知道这个名字指的是自己）` : ''}
+${char.title ? `- 用户对角色的昵称：${char.title}（用户用这个名字称呼这个角色，角色知道这个昵称指的是自己）` : ''}
 ${char.mbti  ? `- MBTI：${char.mbti}` : ''}
 - 人设背景：${char.persona}
 
@@ -1887,35 +1887,42 @@ ${char.mbti  ? `- MBTI：${char.mbti}` : ''}
     const loader = document.getElementById('char-ai-loader');
     loader.classList.add('active');
 
-    // 步骤一：先构建基本数据存入 DB（保证数据不丢）
+    const isEditing = !!_currentId; // 是否是编辑模式
+
+    // 构建基本数据
     const charData = {
       name,
-      title:     document.getElementById('char-form-title-input').value.trim(),
-      mbti:      document.getElementById('char-form-mbti').value.trim(),
+      title:    document.getElementById('char-form-title-input').value.trim(),
+      mbti:     document.getElementById('char-form-mbti').value.trim(),
       persona,
-      customQ1:  document.getElementById('char-form-q1').value.trim(),
-      customQ2:  document.getElementById('char-form-q2').value.trim(),
-      avatarUrl: _tempAvatarKey, // 存 asset key，不存 ObjectURL
+      customQ1: document.getElementById('char-form-q1').value.trim(),
+      customQ2: document.getElementById('char-form-q2').value.trim(),
+      avatarUrl: _tempAvatarKey,
       aiData:    null,
     };
 
     try {
-      if (_currentId) {
+      if (isEditing) {
+        // 编辑模式：保留原有 aiData 和头像（没上传新头像就保留原来的）
+        const existing = await DB.characters.get(_currentId);
+        charData.aiData    = existing?.aiData    || null;
+        charData.avatarUrl = _tempAvatarKey || existing?.avatarUrl || '';
         await DB.characters.put({ ...charData, id: _currentId });
       } else {
+        // 新建模式
         _currentId = await DB.characters.add(charData);
         charData.id = _currentId;
       }
 
-      // 如果本次上传了新头像（key 是 'char-avatar-new'），迁移到正式 key
+      // 头像迁移：新上传的从临时 key 迁移到正式 key
       if (_tempAvatarKey === 'char-avatar-new') {
         const existingAsset = await DB.assets.get('char-avatar-new');
         if (existingAsset) {
           const formalKey = `char-avatar-${_currentId}`;
           await DB.assets.set(formalKey, existingAsset.blob, existingAsset.mimeType);
           await DB.assets.del('char-avatar-new');
-          charData.avatarUrl  = formalKey;
-          _tempAvatarKey      = formalKey;
+          charData.avatarUrl = formalKey;
+          _tempAvatarKey     = formalKey;
           await DB.characters.put({ ...charData, id: _currentId });
         }
       }
@@ -1925,7 +1932,17 @@ ${char.mbti  ? `- MBTI：${char.mbti}` : ''}
       console.error(e); return;
     }
 
-    // 步骤二：调用 AI 生成档案内容
+    if (isEditing) {
+      // 编辑模式：直接刷新，不调 AI
+      loader.classList.remove('active');
+      await renderRoster();
+      _characters = await DB.characters.getAll();
+      openDetail(_currentId);
+      Toast.show('已更新');
+      return;
+    }
+
+    // 新建模式：调用 AI 生成档案内容
     try {
       const aiData = await _callAI({ ...charData, id: _currentId });
       await DB.characters.put({ ...charData, id: _currentId, aiData });
@@ -1937,10 +1954,7 @@ ${char.mbti  ? `- MBTI：${char.mbti}` : ''}
     }
 
     loader.classList.remove('active');
-
-    // 刷新列表，跳转到详情页
     await renderRoster();
-    // 用最新数据重新 openDetail
     _characters = await DB.characters.getAll();
     openDetail(_currentId);
   }
