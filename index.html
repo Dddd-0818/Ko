@@ -256,6 +256,157 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg-body);display:flex;jus
   .dock-wrapper{position:fixed;bottom:0;}
   .details-panel,.overlay,.modal-overlay{position:fixed;}
 }
+
+/* ============================================================
+   Character Screen — 编辑杂志风格
+   ============================================================ */
+#character-screen {
+  transform: translateX(100%);
+  z-index: 150;
+  background: var(--char-paper);
+  font-family: var(--font-serif-char);
+  --char-paper: #ECEAE5;
+  --char-ink: #1C1B1A;
+  --char-ink-light: #5A5855;
+  --char-blood: #8B2E2E;
+  --font-serif-char: 'Cormorant Garamond', serif;
+  --font-mono-char: 'Space Mono', monospace;
+  --ease-char: cubic-bezier(0.19, 1, 0.22, 1);
+}
+#character-screen.active { transform: translateX(0); opacity: 1; visibility: visible; }
+[data-theme="dark"] #character-screen {
+  --char-paper: #1a1a18;
+  --char-ink: #ECEAE5;
+  --char-ink-light: #9A9690;
+  --char-blood: #C4524A;
+}
+
+/* 内部 view-layer：在 character-screen 内切换 */
+#character-screen .view-layer {
+  position: absolute; inset: 0;
+  display: flex; flex-direction: column;
+  background: var(--char-paper);
+  opacity: 0; pointer-events: none;
+  transform: translateY(20px) scale(0.99);
+  transition: all 0.55s var(--ease-char);
+  z-index: 1;
+}
+#character-screen .view-layer.active {
+  opacity: 1; pointer-events: auto;
+  transform: translateY(0) scale(1); z-index: 10;
+}
+
+/* 巨型水印 */
+#char-view-list::after {
+  content: 'C';
+  position: absolute; top: 50%; right: -10%;
+  transform: translateY(-50%);
+  font-family: var(--font-serif-char); font-style: italic; font-weight: 300;
+  font-size: min(160vw, 100vh); line-height: 1;
+  color: rgba(28,27,26,0.025); pointer-events: none; z-index: 0; user-select: none;
+}
+[data-theme="dark"] #char-view-list::after { color: rgba(236,234,229,0.025); }
+
+/* 左侧导航条 */
+#character-screen .side-nav {
+  position: absolute; left: 0; top: 0; bottom: 0; width: 50px;
+  border-right: 1px solid rgba(28,27,26,0.1); z-index: 20;
+  display: flex; flex-direction: column; justify-content: space-between; align-items: center; padding: 40px 0;
+}
+[data-theme="dark"] #character-screen .side-nav { border-right-color: rgba(236,234,229,0.1); }
+.char-nav-back {
+  writing-mode: vertical-rl; transform: rotate(180deg);
+  display: flex; align-items: center; gap: 10px;
+  font-size: 12px; font-weight: 500; letter-spacing: 2px;
+  color: var(--char-ink-light); transition: color 0.3s; background: none; border: none; cursor: pointer; font-family: var(--font-mono-char);
+}
+.char-nav-back:active { color: var(--char-blood); }
+.char-nav-back i { transform: rotate(90deg); font-size: 16px; }
+.char-side-brand { writing-mode: vertical-rl; font-family: var(--font-mono-char); font-size: 9px; letter-spacing: 4px; text-transform: uppercase; opacity: 0.4; color: var(--char-ink); }
+
+/* 列表页 */
+.char-roster-scroll {
+  margin-left: 50px; height: 100%; overflow-y: auto; overflow-x: hidden;
+  padding: 40px 20px 120px 20px; scrollbar-width: none; position: relative; z-index: 10;
+}
+.char-roster-scroll::-webkit-scrollbar { display: none; }
+.char-roster-header { margin-bottom: 50px; }
+.char-roster-header h1 { font-family: var(--font-serif-char); font-size: 42px; font-weight: 300; margin: 0; line-height: 1; letter-spacing: 1px; color: var(--char-ink); }
+.char-roster-header p { font-family: var(--font-mono-char); font-size: 10px; color: var(--char-blood); text-transform: uppercase; letter-spacing: 2px; margin-top: 10px; }
+
+.char-roster-card { position: relative; margin-bottom: 60px; cursor: pointer; display: flex; justify-content: flex-end; }
+.char-roster-img { width: 75%; aspect-ratio: 3/4; overflow: hidden; filter: grayscale(40%) contrast(1.1); transition: filter 0.5s; }
+.char-roster-img img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.8s var(--ease-char); }
+.char-roster-card:active .char-roster-img { filter: grayscale(0%); }
+.char-roster-card:active .char-roster-img img { transform: scale(1.04); }
+.char-roster-info { position: absolute; left: 0; bottom: 20px; z-index: 2; width: 80%; pointer-events: none; }
+.char-roster-index { font-family: var(--font-mono-char); font-size: 10px; color: var(--char-blood); margin-bottom: 5px; display: block; }
+.char-roster-name { font-family: var(--font-serif-char); font-size: 38px; font-weight: 400; margin: 0; line-height: 0.9; color: var(--char-ink); text-shadow: 2px 2px 10px rgba(236,234,229,0.8); }
+.char-roster-title { font-size: 10px; text-transform: uppercase; letter-spacing: 1px; color: var(--char-ink-light); margin-top: 8px; font-family: var(--font-sans); }
+.char-empty { text-align: center; opacity: 0.35; padding: 80px 20px; font-family: var(--font-serif-char); font-size: 18px; font-style: italic; color: var(--char-ink); }
+
+/* FAB 环形按钮 */
+.char-fab { position: absolute; bottom: 30px; right: 20px; width: 90px; height: 90px; background: transparent; border: none; display: flex; justify-content: center; align-items: center; cursor: pointer; z-index: 50; }
+.char-fab-ring { position: absolute; inset: 0; animation: char-spin 15s linear infinite; pointer-events: none; }
+.char-fab-ring text { font-family: var(--font-mono-char); font-size: 10.5px; fill: var(--char-ink); letter-spacing: 3.5px; }
+.char-fab-center { width: 44px; height: 44px; background: var(--char-paper); border: 1px solid var(--char-ink); border-radius: 50%; display: flex; justify-content: center; align-items: center; transition: all 0.5s var(--ease-char); z-index: 2; }
+.char-fab-center i { font-size: 24px; color: var(--char-ink); transition: transform 0.5s var(--ease-char), color 0.5s; }
+.char-fab:active .char-fab-center { background: var(--char-ink); transform: scale(0.92); }
+.char-fab:active .char-fab-center i { color: var(--char-paper); transform: rotate(90deg); }
+@keyframes char-spin { 100% { transform: rotate(360deg); } }
+
+/* 详情页 */
+.char-detail-scroll { height: 100%; overflow-y: auto; padding-bottom: 80px; scrollbar-width: none; position: relative; z-index: 10; }
+.char-detail-scroll::-webkit-scrollbar { display: none; }
+.char-detail-actions { position: absolute; top: 0; left: 0; width: 100%; padding: 40px 20px 20px; display: flex; justify-content: space-between; z-index: 20; background: linear-gradient(to bottom, var(--char-paper), transparent); pointer-events: none; }
+.char-action-btn { display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 500; color: var(--char-ink); pointer-events: auto; padding: 5px 12px; background: rgba(236,234,229,0.6); backdrop-filter: blur(10px); border-radius: 20px; transition: 0.3s; border: none; cursor: pointer; font-family: var(--font-sans); }
+[data-theme="dark"] .char-action-btn { background: rgba(26,26,24,0.7); }
+.char-action-btn:active { background: var(--char-ink); color: var(--char-paper); }
+.char-hero { padding: 100px 20px 20px; text-align: center; }
+.char-hero-img { width: 100%; aspect-ratio: 4/5; overflow: hidden; margin: 0 auto 30px; }
+.char-hero-img img { width: 100%; height: 100%; object-fit: cover; }
+.char-hero-name { font-family: var(--font-serif-char); font-size: 42px; font-weight: 400; margin: 0; line-height: 1; color: var(--char-ink); }
+.char-hero-mbti { display: inline-block; margin-top: 15px; font-family: var(--font-mono-char); font-size: 10px; border: 1px solid var(--char-ink); padding: 4px 10px; color: var(--char-ink); }
+.char-article { padding: 20px 25px; }
+.char-section-label { font-family: var(--font-mono-char); font-size: 10px; color: var(--char-blood); text-transform: uppercase; letter-spacing: 2px; margin-bottom: 15px; display: flex; align-items: center; gap: 10px; }
+.char-section-label::after { content: ''; flex: 1; height: 1px; background: rgba(28,27,26,0.1); }
+[data-theme="dark"] .char-section-label::after { background: rgba(236,234,229,0.1); }
+.char-quote { font-family: var(--font-serif-char); font-size: 26px; font-style: italic; line-height: 1.3; text-align: center; margin: 40px 0; color: var(--char-ink); }
+.char-intro { font-size: 14px; line-height: 1.8; color: var(--char-ink-light); text-align: justify; margin-bottom: 50px; }
+.char-intro::first-letter { font-family: var(--font-serif-char); font-size: 56px; float: left; line-height: 0.8; margin-right: 8px; margin-top: 4px; color: var(--char-ink); }
+.char-qa { margin-bottom: 25px; }
+.char-qa-q { font-size: 12px; font-weight: 600; margin-bottom: 5px; line-height: 1.4; color: var(--char-ink); }
+.char-qa-q::before { content: 'Q. '; font-family: var(--font-serif-char); color: var(--char-blood); font-size: 14px; }
+.char-qa-a { font-family: var(--font-serif-char); font-size: 17px; font-style: italic; color: var(--char-ink-light); margin: 0 0 0 15px; line-height: 1.5; border-left: 1px solid rgba(28,27,26,0.2); padding-left: 15px; }
+[data-theme="dark"] .char-qa-a { border-left-color: rgba(236,234,229,0.2); }
+
+/* 表单页 */
+.char-form-header { padding: 50px 20px 20px; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
+.char-form-header h2 { font-family: var(--font-serif-char); font-size: 24px; margin: 0; font-weight: 400; color: var(--char-ink); }
+.char-form-scroll { padding: 0 20px 100px; overflow-y: auto; flex: 1; position: relative; z-index: 10; scrollbar-width: none; }
+.char-form-scroll::-webkit-scrollbar { display: none; }
+.char-upload-box { width: 140px; height: 180px; margin: 20px auto 40px; border: 1px dashed var(--char-ink-light); display: flex; flex-direction: column; justify-content: center; align-items: center; cursor: pointer; position: relative; overflow: hidden; color: var(--char-ink-light); }
+.char-upload-box i { font-size: 24px; margin-bottom: 10px; }
+.char-upload-box span { font-size: 10px; text-transform: uppercase; letter-spacing: 1px; font-family: var(--font-mono-char); }
+.char-upload-box img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: none; }
+.char-input-block { margin-bottom: 30px; position: relative; }
+.char-input-block label { display: block; font-family: var(--font-mono-char); font-size: 9px; text-transform: uppercase; letter-spacing: 2px; color: var(--char-blood); margin-bottom: 5px; }
+.char-input-block input, .char-input-block textarea { width: 100%; background: transparent; border: none; border-bottom: 1px solid var(--char-ink); padding: 8px 0; font-family: var(--font-serif-char); font-size: 20px; color: var(--char-ink); outline: none; border-radius: 0; transition: border-width 0.2s; }
+.char-input-block textarea { font-family: var(--font-sans); font-size: 14px; line-height: 1.6; min-height: 120px; resize: vertical; }
+.char-input-block input:focus, .char-input-block textarea:focus { border-bottom-width: 2px; }
+.char-form-actions { display: flex; gap: 15px; margin-top: 40px; }
+.char-btn-primary { flex: 1; background: var(--char-ink); color: var(--char-paper); padding: 15px; font-size: 12px; font-weight: 500; letter-spacing: 2px; text-transform: uppercase; cursor: pointer; text-align: center; border: none; font-family: var(--font-sans); transition: opacity 0.2s; }
+.char-btn-primary:active { opacity: 0.8; }
+.char-btn-danger { background: transparent; color: var(--char-blood); border: none; border-bottom: 1px solid var(--char-blood); padding: 15px; font-size: 12px; font-weight: 600; cursor: pointer; text-transform: uppercase; letter-spacing: 1px; font-family: var(--font-sans); }
+.char-btn-danger:active { opacity: 0.6; }
+
+/* AI 加载遮罩 */
+#char-ai-loader { position: absolute; inset: 0; background: var(--char-paper); z-index: 999; display: flex; flex-direction: column; justify-content: center; align-items: center; opacity: 0; pointer-events: none; transition: opacity 0.4s; }
+#char-ai-loader.active { opacity: 1; pointer-events: auto; }
+.char-loader-icon { font-size: 40px; color: var(--char-ink); animation: char-spin 2s linear infinite; margin-bottom: 20px; }
+.char-loader-text { font-family: var(--font-mono-char); font-size: 10px; letter-spacing: 4px; text-transform: uppercase; color: var(--char-ink); animation: char-pulse 1.5s infinite alternate; }
+@keyframes char-pulse { 0% { opacity: 0.4; } 100% { opacity: 1; } }
+
 </style>
 </head>
 <body>
@@ -387,7 +538,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg-body);display:flex;jus
         <div class="dock-item active-dot" onclick="toggleDock(event)"><i class="ph-fill ph-house"></i></div>
         <div class="dock-item"><i class="ph-fill ph-magnifying-glass"></i></div>
         <div class="dock-item"><i class="ph-fill ph-chat-circle-dots"></i></div>
-        <div class="dock-item"><i class="ph-fill ph-user"></i></div>
+        <div class="dock-item" id="dock-character"><i class="ph-fill ph-user"></i></div>
       </div>
     </div>
   </div>
@@ -512,6 +663,124 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg-body);display:flex;jus
     </div>
   </div>
 
+
+  <!-- ==================== CHARACTER SCREEN ==================== -->
+  <div id="character-screen" class="screen">
+
+    <!-- AI 加载遮罩 -->
+    <div id="char-ai-loader">
+      <i class="ph-thin ph-aperture char-loader-icon"></i>
+      <div class="char-loader-text">Curating Editorial...</div>
+    </div>
+
+    <!-- 隐藏文件上传 -->
+    <input type="file" id="char-file-input" accept="image/*" style="display:none">
+
+    <!-- ── View 1: 列表页 ── -->
+    <div id="char-view-list" class="view-layer active">
+      <div class="side-nav">
+        <button class="char-nav-back" onclick="Router.back()">
+          <i class="ph ph-arrow-down"></i> BACK
+        </button>
+        <div class="char-side-brand">THE ARCHIVE / VOL.1</div>
+      </div>
+
+      <div class="char-roster-scroll">
+        <div class="char-roster-header">
+          <h1>CASTING</h1>
+          <p>Volume II / The Muses</p>
+        </div>
+        <div id="char-roster-container"></div>
+      </div>
+
+      <button class="char-fab" onclick="CharacterModule.openForm()">
+        <svg viewBox="0 0 100 100" class="char-fab-ring">
+          <path id="char-fab-path" d="M 50,12 A 38,38 0 1,1 49.9,12" fill="none"/>
+          <text><textPath href="#char-fab-path" startOffset="0%">CREATE ARCHIVE ✦ NEW RECORD ✦ </textPath></text>
+        </svg>
+        <div class="char-fab-center"><i class="ph-thin ph-plus"></i></div>
+      </button>
+    </div>
+
+    <!-- ── View 2: 详情页 ── -->
+    <div id="char-view-detail" class="view-layer">
+      <div class="char-detail-actions">
+        <button class="char-action-btn" onclick="CharacterModule.showView('list')">
+          <i class="ph ph-arrow-left"></i> 返回
+        </button>
+        <button class="char-action-btn" onclick="CharacterModule.editCurrent()">
+          <i class="ph ph-pencil-simple"></i> 编辑
+        </button>
+      </div>
+
+      <div class="char-detail-scroll">
+        <div class="char-hero">
+          <div class="char-hero-img"><img id="char-detail-avatar" src="" alt=""></div>
+          <h1 class="char-hero-name" id="char-detail-name">Name</h1>
+          <div class="char-hero-mbti" id="char-detail-mbti" style="display:none"></div>
+        </div>
+        <div class="char-article">
+          <div class="char-section-label">THE INTERVIEW</div>
+          <div class="char-quote" id="char-detail-quote"></div>
+          <div class="char-intro" id="char-detail-intro"></div>
+          <div class="char-section-label" style="margin-top:40px;">Q &amp; A</div>
+          <div id="char-detail-qa"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── View 3: 表单页 ── -->
+    <div id="char-view-form" class="view-layer">
+      <div class="char-form-header">
+        <button class="char-action-btn" onclick="CharacterModule.showView('list')">
+          <i class="ph ph-x"></i> 取消
+        </button>
+        <h2 id="char-form-title">新建档案</h2>
+        <div style="width:60px"></div>
+      </div>
+
+      <div class="char-form-scroll">
+        <div class="char-upload-box" id="char-upload-box">
+          <i class="ph-thin ph-image"></i>
+          <span id="char-upload-text">上传照片</span>
+          <img id="char-form-avatar-preview" src="" alt="">
+        </div>
+
+        <div class="char-input-block">
+          <label>Name / 姓名 *</label>
+          <input type="text" id="char-form-name" placeholder="输入角色名">
+        </div>
+
+        <div style="display:flex;gap:20px;">
+          <div class="char-input-block" style="flex:2;">
+            <label>Title / 头衔 (选填)</label>
+            <input type="text" id="char-form-title-input" placeholder="如：首席执行官">
+          </div>
+          <div class="char-input-block" style="flex:1;">
+            <label>MBTI (选填)</label>
+            <input type="text" id="char-form-mbti" placeholder="INTJ">
+          </div>
+        </div>
+
+        <div class="char-input-block">
+          <label>Persona / 核心人设 *</label>
+          <textarea id="char-form-persona" placeholder="详细描述TA的身世、性格、以及不为人知的秘密。&#10;&#10;保存后，AI 将自动将其解构为杂志专访风格的文字..."></textarea>
+        </div>
+
+        <div class="char-input-block">
+          <label>Interview Questions / 专访问题 (选填，留空由 AI 生成)</label>
+          <input type="text" id="char-form-q1" placeholder="Q1:">
+          <input type="text" id="char-form-q2" placeholder="Q2:" style="margin-top:10px;">
+        </div>
+
+        <div class="char-form-actions">
+          <button class="char-btn-danger" id="char-btn-delete" style="display:none;" onclick="CharacterModule.deleteCharacter()">DELETE</button>
+          <button class="char-btn-primary" onclick="CharacterModule.save()">保存档案</button>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- #character-screen -->
 </div><!-- .device -->
 
 <script>
@@ -527,7 +796,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg-body);display:flex;jus
 // ============================================================
 const DB = (() => {
   const DB_NAME    = 'chillOS';
-  const DB_VERSION = 1;
+  const DB_VERSION = 2; // v2: 新增 characters store
   let _db = null;
 
   function open() {
@@ -536,19 +805,19 @@ const DB = (() => {
       const req = indexedDB.open(DB_NAME, DB_VERSION);
 
       req.onupgradeneeded = e => {
-        const db = e.target.result;
-        // settings: 简单 KV
-        if (!db.objectStoreNames.contains('settings')) {
+        const db  = e.target.result;
+        const old = e.oldVersion;
+
+        // v1 建的表
+        if (old < 1) {
           db.createObjectStore('settings', { keyPath: 'key' });
+          db.createObjectStore('assets',   { keyPath: 'key' });
+          const ap = db.createObjectStore('api_profiles', { keyPath: 'id', autoIncrement: true });
+          ap.createIndex('isActive', 'isActive', { unique: false });
         }
-        // assets: Blob 资产，key 为唯一标识（如 'avatar', 'icon-0'）
-        if (!db.objectStoreNames.contains('assets')) {
-          db.createObjectStore('assets', { keyPath: 'key' });
-        }
-        // api_profiles: 每条配置独立一条记录
-        if (!db.objectStoreNames.contains('api_profiles')) {
-          const store = db.createObjectStore('api_profiles', { keyPath: 'id', autoIncrement: true });
-          store.createIndex('isActive', 'isActive', { unique: false });
+        // v2 新增：角色档案
+        if (old < 2) {
+          db.createObjectStore('characters', { keyPath: 'id', autoIncrement: true });
         }
       };
 
@@ -700,10 +969,53 @@ const DB = (() => {
     ));
   }
 
+  // ---- characters ----
+  async function charGetAll() {
+    await open();
+    return new Promise((resolve, reject) => {
+      const req = tx('characters').getAll();
+      req.onsuccess = () => resolve(req.result);
+      req.onerror   = e => reject(e.target.error);
+    });
+  }
+  async function charGet(id) {
+    await open();
+    return new Promise((resolve, reject) => {
+      const req = tx('characters').get(id);
+      req.onsuccess = () => resolve(req.result || null);
+      req.onerror   = e => reject(e.target.error);
+    });
+  }
+  async function charAdd(data) {
+    await open();
+    return new Promise((resolve, reject) => {
+      const req = tx('characters', 'readwrite').add({ ...data, createdAt: Date.now() });
+      req.onsuccess = () => resolve(req.result);
+      req.onerror   = e => reject(e.target.error);
+    });
+  }
+  async function charPut(data) {
+    await open();
+    return new Promise((resolve, reject) => {
+      const req = tx('characters', 'readwrite').put({ ...data, updatedAt: Date.now() });
+      req.onsuccess = () => resolve();
+      req.onerror   = e => reject(e.target.error);
+    });
+  }
+  async function charDel(id) {
+    await open();
+    return new Promise((resolve, reject) => {
+      const req = tx('characters', 'readwrite').delete(id);
+      req.onsuccess = () => resolve();
+      req.onerror   = e => reject(e.target.error);
+    });
+  }
+
   return {
-    settings: { get: settingsGet, set: settingsSet, del: settingsDel },
-    assets:   { get: assetGet, set: assetSet, del: assetDel, getAll: assetGetAll },
-    api:      { getAll: apiGetAll, get: apiGet, add: apiAdd, put: apiPut, del: apiDel, setActive: apiSetActive, getActive: apiGetActive },
+    settings:   { get: settingsGet, set: settingsSet, del: settingsDel },
+    assets:     { get: assetGet, set: assetSet, del: assetDel, getAll: assetGetAll },
+    api:        { getAll: apiGetAll, get: apiGet, add: apiAdd, put: apiPut, del: apiDel, setActive: apiSetActive, getActive: apiGetActive },
+    characters: { getAll: charGetAll, get: charGet, add: charAdd, put: charPut, del: charDel },
     clearAll,
     init: open,
   };
@@ -785,49 +1097,67 @@ const Toast = (() => {
 
 // ============================================================
 // Router — 统一管理页面跳转
-// 支持层级：home → settings-screen → settings sub-page
+// 支持层级：home → top-level screen → sub-page
+// 顶层 screen 注册表：{ id, subPageStack }
 // ============================================================
 const Router = (() => {
-  const bgLetter = () => document.getElementById('bg-letter');
-  let _currentPage = null; // 当前打开的 sub-page id
+  // 顶层 screen id 列表
+  const TOP_SCREENS = ['settings-screen', 'character-screen'];
+
+  // 每个顶层 screen 有自己独立的 sub-page 栈
+  const _subStack = {};
 
   function go(target, watermark) {
-    // 如果是顶层 screen
-    if (target === 'settings') {
-      document.getElementById('settings-screen').classList.add('active');
+    // ── 顶层 screen ──
+    if (target === 'settings' || target === 'character') {
+      const screenId = target === 'settings' ? 'settings-screen' : 'character-screen';
+      // 关闭其他所有顶层 screen
+      TOP_SCREENS.forEach(id => {
+        if (id !== screenId) document.getElementById(id)?.classList.remove('active');
+      });
+      document.getElementById(screenId).classList.add('active');
+      _onEnterScreen(target);
       return;
     }
-    // sub-page
+
+    // ── settings sub-page ──
     const el = document.getElementById(target);
     if (!el) return;
-    if (_currentPage) document.getElementById(_currentPage)?.classList.remove('active');
+    // 找到当前属于哪个顶层 screen（简单：target 含 'settings' 相关的属于 settings）
+    const parentScreen = 'settings-screen';
+    const prev = _subStack[parentScreen];
+    if (prev) document.getElementById(prev)?.classList.remove('active');
     el.classList.add('active');
-    _currentPage = target;
-    // 更新水印
+    _subStack[parentScreen] = target;
     if (watermark) {
-      const bg = bgLetter();
-      bg.style.opacity = '0';
-      setTimeout(() => { bg.innerText = watermark; bg.style.opacity = '1'; }, 250);
+      const bg = document.getElementById('bg-letter');
+      if (bg) {
+        bg.style.opacity = '0';
+        setTimeout(() => { bg.innerText = watermark; bg.style.opacity = '1'; }, 250);
+      }
     }
-    // 页面进入钩子
-    _onEnter(target);
+    _onEnterPage(target);
   }
 
   function back() {
-    // 如果有打开的 sub-page，先关它
-    if (_currentPage) {
-      document.getElementById(_currentPage)?.classList.remove('active');
-      _currentPage = null;
-      const bg = bgLetter();
-      bg.style.opacity = '0';
-      setTimeout(() => { bg.innerText = 'S'; bg.style.opacity = '1'; }, 250);
+    // 先检查 settings sub-page
+    const settingsSub = _subStack['settings-screen'];
+    if (settingsSub && document.getElementById('settings-screen')?.classList.contains('active')) {
+      document.getElementById(settingsSub)?.classList.remove('active');
+      _subStack['settings-screen'] = null;
+      const bg = document.getElementById('bg-letter');
+      if (bg) { bg.style.opacity = '0'; setTimeout(() => { bg.innerText = 'S'; bg.style.opacity = '1'; }, 250); }
       return;
     }
-    // 否则关 settings-screen
-    document.getElementById('settings-screen').classList.remove('active');
+    // 关闭所有顶层 screen，回到 home
+    TOP_SCREENS.forEach(id => document.getElementById(id)?.classList.remove('active'));
   }
 
-  function _onEnter(pageId) {
+  function _onEnterScreen(target) {
+    if (target === 'character') CharacterModule.renderRoster();
+  }
+
+  function _onEnterPage(pageId) {
     if (pageId === 'data-page')  DataModule.refresh();
     if (pageId === 'ui-page')    UIModule.renderIconsEditGrid();
     if (pageId === 'api-page')   ApiModule.render();
@@ -1258,6 +1588,7 @@ function closePanel() { document.getElementById('overlay').classList.remove('act
 // ============================================================
 // 设置图标
 document.getElementById('icon-settings').addEventListener('click', () => Router.go('settings'));
+document.getElementById('dock-character').addEventListener('click', () => Router.go('character'));
 
 // Profile 编辑
 document.getElementById('avatar-wrap').addEventListener('click', () => document.getElementById('file-avatar').click());
@@ -1335,6 +1666,219 @@ document.getElementById('file-icon').addEventListener('change', async e => {
 // ============================================================
 // 启动 — 按模块独立恢复，互不影响
 // ============================================================
+
+// ============================================================
+// CharacterModule — 角色档案
+// ============================================================
+const CharacterModule = (() => {
+  let _characters = [];
+  let _currentId  = null;  // 当前查看/编辑的角色 id
+  let _tempAvatar = '';    // 临时头像 ObjectURL 或 url
+
+  // ── 内部 view 切换（仅限 character-screen 内部） ──
+  function showView(view) {
+    // view: 'list' | 'detail' | 'form'
+    const map = { list: 'char-view-list', detail: 'char-view-detail', form: 'char-view-form' };
+    document.querySelectorAll('#character-screen .view-layer').forEach(el => el.classList.remove('active'));
+    document.getElementById(map[view])?.classList.add('active');
+  }
+
+  // ── 渲染列表 ──
+  async function renderRoster() {
+    try {
+      _characters = await DB.characters.getAll();
+    } catch(e) { console.error('renderRoster failed', e); _characters = []; }
+
+    const container = document.getElementById('char-roster-container');
+    container.innerHTML = '';
+
+    if (_characters.length === 0) {
+      container.innerHTML = '<div class="char-empty">尚无档案。<br><br><em>点击右下角创建第一份。</em></div>';
+      return;
+    }
+
+    _characters.forEach((char, idx) => {
+      const num  = String(idx + 1).padStart(2, '0');
+      const card = document.createElement('div');
+      card.className = 'char-roster-card';
+      card.onclick   = () => openDetail(char.id);
+
+      const avatarSrc = char.avatarUrl || 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=800&q=80';
+      card.innerHTML = `
+        <div class="char-roster-info">
+          <span class="char-roster-index">NO. ${num}</span>
+          <h2 class="char-roster-name">${char.name}</h2>
+          <div class="char-roster-title">${char.title || 'Unknown Subject'}</div>
+        </div>
+        <div class="char-roster-img">
+          <img src="${avatarSrc}" alt="${char.name}" loading="lazy">
+        </div>
+      `;
+      container.appendChild(card);
+    });
+  }
+
+  // ── 打开详情页 ──
+  function openDetail(id) {
+    _currentId = id;
+    const char = _characters.find(c => c.id === id);
+    if (!char) return;
+
+    document.getElementById('char-detail-avatar').src = char.avatarUrl || '';
+    document.getElementById('char-detail-name').textContent  = char.name;
+
+    const mbtiEl = document.getElementById('char-detail-mbti');
+    if (char.mbti) { mbtiEl.textContent = char.mbti; mbtiEl.style.display = 'inline-block'; }
+    else             { mbtiEl.style.display = 'none'; }
+
+    // AI 生成内容（如果有）
+    const ai = char.aiData || {};
+    document.getElementById('char-detail-quote').textContent = ai.quote || '...';
+    document.getElementById('char-detail-intro').textContent = ai.intro  || char.persona || '';
+
+    const qaEl = document.getElementById('char-detail-qa');
+    qaEl.innerHTML = '';
+    (ai.qna || []).forEach(item => {
+      qaEl.innerHTML += `
+        <div class="char-qa">
+          <div class="char-qa-q">${item.q}</div>
+          <div class="char-qa-a">${item.a}</div>
+        </div>
+      `;
+    });
+
+    showView('detail');
+  }
+
+  // ── 打开新建表单 ──
+  function openForm() {
+    _currentId  = null;
+    _tempAvatar = '';
+    document.getElementById('char-form-name').value         = '';
+    document.getElementById('char-form-title-input').value  = '';
+    document.getElementById('char-form-mbti').value         = '';
+    document.getElementById('char-form-persona').value      = '';
+    document.getElementById('char-form-q1').value           = '';
+    document.getElementById('char-form-q2').value           = '';
+    document.getElementById('char-form-avatar-preview').style.display = 'none';
+    document.getElementById('char-upload-text').style.display         = 'block';
+    document.getElementById('char-form-title').textContent  = '新建档案';
+    document.getElementById('char-btn-delete').style.display = 'none';
+    showView('form');
+  }
+
+  // ── 打开编辑表单 ──
+  function editCurrent() {
+    const char = _characters.find(c => c.id === _currentId);
+    if (!char) return;
+    _tempAvatar = char.avatarUrl || '';
+
+    document.getElementById('char-form-name').value        = char.name;
+    document.getElementById('char-form-title-input').value = char.title  || '';
+    document.getElementById('char-form-mbti').value        = char.mbti   || '';
+    document.getElementById('char-form-persona').value     = char.persona || '';
+    document.getElementById('char-form-q1').value          = char.customQ1 || '';
+    document.getElementById('char-form-q2').value          = char.customQ2 || '';
+    document.getElementById('char-form-title').textContent = '编辑档案';
+    document.getElementById('char-btn-delete').style.display = 'flex';
+
+    const preview = document.getElementById('char-form-avatar-preview');
+    if (_tempAvatar) { preview.src = _tempAvatar; preview.style.display = 'block'; document.getElementById('char-upload-text').style.display = 'none'; }
+    else             { preview.style.display = 'none'; document.getElementById('char-upload-text').style.display = 'block'; }
+
+    showView('form');
+  }
+
+  // ── 保存（逻辑预留：AI 调用后续实现）──
+  async function save() {
+    const name    = document.getElementById('char-form-name').value.trim();
+    const persona = document.getElementById('char-form-persona').value.trim();
+    if (!name || !persona) { Toast.show('姓名和人设不能为空'); return; }
+
+    // 显示 AI 加载遮罩
+    const loader = document.getElementById('char-ai-loader');
+    loader.classList.add('active');
+
+    try {
+      // TODO: 替换为真实 AI 调用
+      const aiData = await _mockAI(name, persona,
+        document.getElementById('char-form-q1').value.trim(),
+        document.getElementById('char-form-q2').value.trim()
+      );
+
+      const charData = {
+        name,
+        title:     document.getElementById('char-form-title-input').value.trim(),
+        mbti:      document.getElementById('char-form-mbti').value.trim(),
+        persona,
+        customQ1:  document.getElementById('char-form-q1').value.trim(),
+        customQ2:  document.getElementById('char-form-q2').value.trim(),
+        avatarUrl: _tempAvatar,
+        aiData,
+      };
+
+      if (_currentId) {
+        await DB.characters.put({ ...charData, id: _currentId });
+      } else {
+        _currentId = await DB.characters.add(charData);
+      }
+
+      await renderRoster();
+      showView('list');
+      Toast.show('档案已保存');
+    } catch(e) {
+      Toast.show('保存失败：' + e.message);
+      console.error(e);
+    } finally {
+      loader.classList.remove('active');
+    }
+  }
+
+  // ── 删除角色 ──
+  async function deleteCharacter() {
+    if (!_currentId) return;
+    if (!confirm('确定销毁此档案？')) return;
+    try {
+      await DB.characters.del(_currentId);
+      _currentId = null;
+      await renderRoster();
+      showView('list');
+      Toast.show('档案已销毁');
+    } catch(e) { Toast.show('删除失败'); console.error(e); }
+  }
+
+  // ── 模拟 AI（占位，后续替换） ──
+  function _mockAI(name, persona, q1, q2) {
+    return new Promise(resolve => setTimeout(() => resolve({
+      quote: "I destroy things before they can destroy me.",
+      intro: `当 ${name} 走进房间时，气压似乎都随之改变。${persona.substring(0, 60)}...`,
+      qna: [
+        { q: q1 || '你如何看待所谓的宿命？',  a: '我不相信宿命，我只相信握在自己手里的筹码。' },
+        { q: q2 || '用一个词形容自己？',       a: 'Ruined.' }
+      ]
+    }), 1800));
+  }
+
+  // ── 头像上传 ──
+  document.getElementById('char-upload-box').addEventListener('click', () => {
+    document.getElementById('char-file-input').click();
+  });
+  document.getElementById('char-file-input').addEventListener('change', async e => {
+    const file = e.target.files[0]; if (!file) return;
+    try {
+      // 复用 Assets 压缩，但只生成 ObjectURL 暂存（保存时再持久化）
+      const url = await Assets.save(`char-avatar-temp-${Date.now()}`, file, 600, 0.88);
+      _tempAvatar = url;
+      const preview = document.getElementById('char-form-avatar-preview');
+      preview.src = url; preview.style.display = 'block';
+      document.getElementById('char-upload-text').style.display = 'none';
+    } catch(err) { Toast.show('图片上传失败'); console.error(err); }
+    e.target.value = '';
+  });
+
+  return { renderRoster, showView, openForm, editCurrent, save, deleteCharacter };
+})();
+
 async function init() {
   try { await DB.init(); } catch(e) { console.error('DB init failed:', e); return; }
 
