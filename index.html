@@ -13,7 +13,7 @@
 <script src="https://unpkg.com/@phosphor-icons/web"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Noto+Sans+SC:wght@300;400;500;700&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400;1,700&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Space+Mono&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Noto+Sans+SC:wght@300;400;500;700&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400;1,700&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Inter:wght@300;400;500;700;900&family=Libre+Barcode+39+Text&display=swap" rel="stylesheet">
 
 <style>
 /* ============================================================
@@ -30,6 +30,7 @@
   --s-select-arrow:url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
   --muyu-ink:#2C2A28; --muyu-ink-sub:#7A756D; --muyu-red:#8B3A33;
   --font-cg:'Cormorant Garamond',serif; --font-mono2:'Space Mono',monospace;
+  --base-font-size:1rem; --font-ui-custom: '';
 }
 [data-theme="dark"] {
   --bg-body:#111; --bg-device:#1a1a1a; --bg-card:#222;
@@ -46,6 +47,7 @@
 /* ============================================================
    基础 Reset
    ============================================================ */
+html{font-size:var(--base-font-size);}
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;outline:none;}
 body{font-family:'DM Sans',sans-serif;background:var(--bg-body);display:flex;justify-content:center;align-items:center;min-height:100vh;transition:background-color .3s;color:var(--text-main);overscroll-behavior-y:none;}
 .serif{font-family:'Playfair Display',serif;}
@@ -75,9 +77,35 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg-body);display:flex;jus
 .scroll-content{height:100%;overflow-y:auto;padding:calc(env(safe-area-inset-top,0px) + 20px) 20px 120px;}
 .scroll-content::-webkit-scrollbar{display:none;}
 .header{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:24px;padding:0 4px;}
-.date-box h1{font-size:32px;font-weight:400;font-style:italic;line-height:1;margin-bottom:4px;}
-.date-time-line{display:flex;align-items:center;gap:8px;color:var(--text-sub);font-size:12px;letter-spacing:1px;text-transform:uppercase;}
-.theme-switch{width:40px;height:40px;border-radius:50%;border:1px solid var(--border-line);background:var(--bg-card);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:18px;color:var(--text-main);transition:all .3s;}
+.date-box h1{font-size:2.1333rem;font-weight:400;font-style:italic;line-height:1;margin-bottom:4px;}
+.date-time-line{display:flex;align-items:center;gap:8px;color:var(--text-sub);font-size:0.8rem;letter-spacing:1px;text-transform:uppercase;}
+/* ================== 杂志编辑部标签：深浅色切换 ================== */
+.theme-switch {
+  font-family: 'Space Mono', monospace;
+  font-size:0.6rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  color: var(--text-main);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 0;
+  user-select: none;
+  transition: opacity 0.3s;
+}
+/* 前面的状态闪烁圆点 */
+.theme-switch::before {
+  content: '';
+  width: 5px;
+  height: 5px;
+  background: var(--text-main);
+  border-radius: 50%;
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.theme-switch:active { opacity: 0.6; }
+.theme-switch:active::before { transform: scale(0.5); }
 
 /* Profile Card */
 .profile-card{background:var(--bg-card);border-radius:24px;padding:20px;display:flex;align-items:center;gap:16px;box-shadow:var(--shadow-card);margin-bottom:32px;border:1px solid var(--border-line);position:relative;}
@@ -85,63 +113,66 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg-body);display:flex;jus
 .avatar{width:64px;height:64px;border-radius:50%;object-fit:cover;border:2px solid var(--bg-device);outline:1px solid var(--text-main);display:block;}
 .avatar-edit-hint{position:absolute;inset:0;border-radius:50%;background:rgba(0,0,0,0.4);display:flex;align-items:center;justify-content:center;opacity:0;transition:opacity .2s;pointer-events:none;}
 .avatar-wrap:active .avatar-edit-hint{opacity:1;}
-.avatar-edit-hint i{color:#fff;font-size:18px;}
+.avatar-edit-hint i{color:#fff;font-size:1.2rem;}
 .profile-info{flex:1;min-width:0;}
-.profile-name{font-size:18px;font-weight:600;margin-bottom:4px;}
-.profile-bio{font-size:12px;color:var(--text-sub);font-family:'Playfair Display',serif;font-style:italic;line-height:1.4;}
+.profile-name{font-size:1.2rem;font-weight:600;margin-bottom:4px;}
+.profile-bio{font-size:0.8rem;color:var(--text-sub);font-family:'Playfair Display',serif;font-style:italic;line-height:1.4;}
 .profile-tags{margin-top:8px;display:flex;gap:6px;flex-wrap:wrap;}
-.tag{font-size:10px;padding:2px 8px;border-radius:100px;border:1px solid var(--border-line);color:var(--text-sub);}
-.profile-edit-btn{position:absolute;top:12px;right:14px;width:26px;height:26px;border-radius:50%;background:var(--bg-body);border:1px solid var(--border-line);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:12px;color:var(--text-sub);}
+.tag{font-size:0.6667rem;padding:2px 8px;border-radius:100px;border:1px solid var(--border-line);color:var(--text-sub);}
+.profile-edit-btn{position:absolute;top:12px;right:14px;width:26px;height:26px;border-radius:50%;background:var(--bg-body);border:1px solid var(--border-line);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:0.8rem;color:var(--text-sub);}
 
 /* Stack / Notifications */
-.stack-label{font-size:11px;text-transform:uppercase;color:var(--text-sub);margin-bottom:12px;margin-left:12px;letter-spacing:.5px;display:flex;justify-content:space-between;align-items:center;}
-.stack-label span:last-child{background:var(--text-main);color:var(--bg-device);padding:2px 6px;border-radius:6px;font-size:9px;font-weight:700;}
+.stack-label{font-size:0.7333rem;text-transform:uppercase;color:var(--text-sub);margin-bottom:12px;margin-left:12px;letter-spacing:.5px;display:flex;justify-content:space-between;align-items:center;}
+.stack-label span:last-child{background:var(--text-main);color:var(--bg-device);padding:2px 6px;border-radius:6px;font-size:0.6rem;font-weight:700;}
 .stack-container{position:relative;height:100px;margin-bottom:32px;cursor:pointer;perspective:1000px;margin-left:8px;margin-right:8px;}
 .stack-card{position:absolute;width:100%;min-height:76px;top:0;left:0;background:var(--glass-bg);backdrop-filter:var(--glass-blur);-webkit-backdrop-filter:var(--glass-blur);border:1px solid var(--glass-border);border-radius:20px;padding:16px;display:flex;align-items:center;gap:14px;box-shadow:0 4px 15px rgba(0,0,0,.1);transition:all .4s cubic-bezier(.25,.8,.25,1);transform-origin:center top;}
 [data-theme="dark"] .stack-card{border-top:1px solid rgba(255,255,255,.15);background:rgba(40,40,40,.7);}
 .stack-card:nth-child(1){z-index:3;transform:translateY(0) scale(1);}
 .stack-card:nth-child(2){z-index:2;transform:translateY(14px) scale(.92);}
 .stack-card:nth-child(3){z-index:1;transform:translateY(28px) scale(.84);opacity:.6;}
-.notify-icon{width:40px;height:40px;border-radius:12px;background:var(--bg-card);border:1px solid var(--border-line);display:flex;align-items:center;justify-content:center;font-size:18px;color:var(--text-main);flex-shrink:0;}
+.notify-icon{width:40px;height:40px;border-radius:12px;background:var(--bg-card);border:1px solid var(--border-line);display:flex;align-items:center;justify-content:center;font-size:1.2rem;color:var(--text-main);flex-shrink:0;}
 .notify-content{flex:1;min-width:0;}
 .notify-header{display:flex;justify-content:space-between;margin-bottom:2px;}
-.notify-app{font-size:10px;font-weight:700;text-transform:uppercase;color:var(--text-sub);}
-.notify-msg{font-size:13px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.notify-app{font-size:0.6667rem;font-weight:700;text-transform:uppercase;color:var(--text-sub);}
+.notify-msg{font-size:0.8667rem;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 
 /* Bento */
 .bento-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:32px;padding:0 4px;align-items:start;}
 .canvas-wrap{position:relative;aspect-ratio:1/1.15;display:flex;justify-content:center;align-items:center;cursor:pointer;-webkit-tap-highlight-color:transparent;}
 .wg-boxless-muyu{width:100%;height:100%;position:relative;display:flex;justify-content:center;align-items:center;flex-direction:column;}
-.muyu-meta{position:absolute;top:8px;left:8px;font-family:var(--font-mono2);font-size:7px;color:var(--muyu-ink-sub);letter-spacing:1px;}
+.muyu-meta{position:absolute;top:8px;left:8px;font-family:var(--font-mono2);font-size:0.4667rem;color:var(--muyu-ink-sub);letter-spacing:1px;}
 .muyu-counter{position:absolute;bottom:8px;right:8px;text-align:right;}
-.muyu-counter-title{font-family:var(--font-mono2);font-size:6px;color:var(--muyu-ink-sub);letter-spacing:2px;text-transform:uppercase;}
-.muyu-counter-value{font-family:var(--font-cg);font-size:26px;color:var(--muyu-ink);line-height:1;}
+.muyu-counter-title{font-family:var(--font-mono2);font-size:0.4rem;color:var(--muyu-ink-sub);letter-spacing:2px;text-transform:uppercase;}
+.muyu-counter-value{font-family:var(--font-cg);font-size:1.7333rem;color:var(--muyu-ink);line-height:1;}
 .zen-stone{width:72px;height:72px;border:1.5px dashed var(--muyu-ink);border-radius:50%;display:flex;justify-content:center;align-items:center;position:relative;z-index:10;background-color:transparent;transition:transform .1s cubic-bezier(.4,0,.2,1);}
-.zen-stone span{font-family:var(--font-cg);font-size:15px;font-style:italic;color:var(--muyu-ink);}
+.zen-stone span{font-family:var(--font-cg);font-size:1rem;font-style:italic;color:var(--muyu-ink);}
 .wg-boxless-muyu:active .zen-stone{transform:scale(0.85);background-color:rgba(44,42,40,.05);border-style:solid;}
 [data-theme="dark"] .wg-boxless-muyu:active .zen-stone{background-color:rgba(232,227,216,.07);}
 .muyu-ripple{position:absolute;top:50%;left:50%;width:72px;height:72px;border:1px solid var(--muyu-ink);border-radius:50%;transform:translate(-50%,-50%);pointer-events:none;animation:muyu-ink-ripple 1s cubic-bezier(.2,.8,.3,1) forwards;}
 @keyframes muyu-ink-ripple{0%{width:72px;height:72px;opacity:.6;}100%{width:160px;height:160px;opacity:0;border-color:var(--muyu-red);border-width:.5px;}}
-.muyu-float{position:absolute;font-family:var(--font-cg);font-size:16px;font-style:italic;color:var(--muyu-red);pointer-events:none;white-space:nowrap;animation:muyu-float-up 1.2s cubic-bezier(.25,1,.5,1) forwards;z-index:5;}
+.muyu-float{position:absolute;font-family:var(--font-cg);font-size:1.0667rem;font-style:italic;color:var(--muyu-red);pointer-events:none;white-space:nowrap;animation:muyu-float-up 1.2s cubic-bezier(.25,1,.5,1) forwards;z-index:5;}
 @keyframes muyu-float-up{0%{opacity:0;transform:translate(-50%,0) scale(.8);}10%{opacity:1;transform:translate(-50%,-10px) scale(1.1);}100%{opacity:0;transform:translate(-50%,-65px) scale(1);filter:blur(1.5px);}}
 
 /* Polaroid */
 .photo-stack-widget{position:relative;aspect-ratio:1/1.1;padding:10px;display:flex;align-items:center;justify-content:center;cursor:pointer;}
-.paperclip-back,.paperclip-front{position:absolute;top:-8px;left:50%;transform:translateX(-50%) rotate(-42deg);font-size:28px;color:var(--clip-color);}
+.paperclip-back,.paperclip-front{position:absolute;top:0px;left:50%;transform:translateX(-50%) rotate(-35deg);font-size:1.8667rem;color:var(--clip-color);}
 .paperclip-back{z-index:1;}.paperclip-front{z-index:10;clip-path:inset(0 0 45% 0);filter:drop-shadow(0 2px 2px rgba(0,0,0,.1));}
 .polaroid-layer{position:absolute;width:85%;height:85%;background:var(--photo-paper);padding:6px;padding-bottom:28px;border-radius:4px;box-shadow:0 4px 12px rgba(0,0,0,.1);transition:transform .3s;}
 .polaroid-layer img{width:100%;height:100%;object-fit:cover;opacity:.95;display:block;}
-.polaroid-caption{position:absolute;bottom:8px;left:0;width:100%;text-align:center;color:var(--photo-caption);font-family:'Playfair Display',serif;font-style:italic;font-size:10px;}
+.polaroid-caption{position:absolute;bottom:8px;left:0;width:100%;text-align:center;color:var(--photo-caption);font-family:'Playfair Display',serif;font-style:italic;font-size:0.6667rem;}
 .polaroid-layer.back{transform:rotate(-6deg) translateX(-4px);z-index:1;opacity:.8;}
 .polaroid-layer.front{transform:rotate(3deg);z-index:2;}
 .photo-stack-widget:active .polaroid-layer.front{transform:rotate(0) scale(1.02);}
 .photo-stack-widget:active .polaroid-layer.back{transform:rotate(-12deg) translateX(-10px);}
 
 /* Icons Grid */
-.grid-icons{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;padding:0 24px;margin-bottom:24px;}
-.icon-box{width:100%;max-width:52px;aspect-ratio:1;margin:0 auto;background:var(--glass-bg);backdrop-filter:var(--glass-blur);-webkit-backdrop-filter:var(--glass-blur);border:1px solid var(--glass-border);border-radius:18px;display:flex;align-items:center;justify-content:center;color:var(--text-main);transition:transform .2s;cursor:pointer;overflow:hidden;position:relative;}
-.icon-box:active{transform:scale(.9);}
-.icon-box i{font-size:22px;opacity:.9;}
+.grid-icons{display:grid;grid-template-columns:repeat(4,1fr);gap:8px 12px;padding:0 24px;margin-bottom:24px;}
+.icon-cell{display:flex;flex-direction:column;align-items:center;gap:6px;cursor:pointer;-webkit-tap-highlight-color:transparent;}
+.icon-cell:active .icon-box{transform:scale(.9);}
+.icon-label{font-size:0.6rem;color:var(--text-sub);letter-spacing:0.5px;text-align:center;line-height:1;transition:opacity .2s;}
+.icon-labels-hidden .icon-label{display:none;}
+.icon-box{width:100%;max-width:52px;aspect-ratio:1;margin:0 auto;background:var(--glass-bg);backdrop-filter:var(--glass-blur);-webkit-backdrop-filter:var(--glass-blur);border:1px solid var(--glass-border);border-radius:18px;display:flex;align-items:center;justify-content:center;color:var(--text-main);transition:transform .2s;overflow:hidden;position:relative;}
+.icon-box i{font-size:1.4667rem;opacity:.9;}
 .icon-box img.icon-custom{width:100%;height:100%;object-fit:cover;position:absolute;inset:0;border-radius:18px;}
 .icon-box:has(img.icon-custom){background:transparent;border-color:transparent;backdrop-filter:none;-webkit-backdrop-filter:none;}
 
@@ -151,7 +182,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg-body);display:flex;jus
 .details-panel{position:absolute;bottom:0;left:0;width:100%;height:70%;background:var(--panel-bg);border-radius:40px 40px 0 0;z-index:100;transform:translateY(110%);transition:transform .5s cubic-bezier(.19,1,.22,1);box-shadow:0 -10px 40px rgba(0,0,0,.1);padding:24px;display:flex;flex-direction:column;}
 .details-panel.active{transform:translateY(0);}
 .panel-handle{width:40px;height:5px;background:var(--border-line);border-radius:10px;margin:0 auto 24px;}
-.panel-title{font-size:20px;font-weight:600;margin-bottom:20px;font-family:'Playfair Display',serif;}
+.panel-title{font-size:1.3333rem;font-weight:600;margin-bottom:20px;font-family:'Playfair Display',serif;}
 .panel-list{overflow-y:auto;flex:1;padding-bottom:40px;}
 .panel-item{display:flex;align-items:flex-start;gap:14px;padding:16px 0;border-bottom:1px solid var(--border-line);}
 .panel-item:last-child{border-bottom:none;}
@@ -159,7 +190,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg-body);display:flex;jus
 /* Dock */
 .dock-wrapper{position:absolute;bottom:0;left:0;width:100%;height:100px;display:flex;justify-content:center;align-items:center;z-index:50;padding-bottom:calc(env(safe-area-inset-bottom,24px));transition:transform .5s cubic-bezier(.19,1,.22,1);pointer-events:none;}
 .dock{pointer-events:auto;background:var(--dock-bg);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);padding:12px 28px;border-radius:100px;border:1px solid var(--border-line);display:flex;gap:28px;box-shadow:0 10px 40px rgba(0,0,0,.1);}
-.dock-item{font-size:24px;color:var(--text-main);transition:transform .2s;display:flex;align-items:center;cursor:pointer;}
+.dock-item{font-size:1.6rem;color:var(--text-main);transition:transform .2s;display:flex;align-items:center;cursor:pointer;}
 .dock-item:active{transform:scale(.85);}
 .dock-item.active-dot{position:relative;}
 .dock-item.active-dot::after{content:'';position:absolute;bottom:-6px;left:50%;transform:translateX(-50%);width:4px;height:4px;background:var(--text-main);border-radius:50%;}
@@ -170,71 +201,105 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg-body);display:flex;jus
    ============================================================ */
 .bg-watermark{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-family:'Playfair Display',serif;font-size:500px;font-style:italic;color:var(--s-watermark);pointer-events:none;z-index:0;line-height:1;white-space:nowrap;transition:opacity 0.3s ease;}
 .main-view{position:relative;z-index:1;padding:calc(env(safe-area-inset-top,40px) + 80px) 40px 40px 40px;height:100%;display:flex;flex-direction:column;justify-content:flex-start;}
-.main-back-btn{position:absolute;top:calc(env(safe-area-inset-top,40px) + 20px);right:30px;border:none;background:transparent;cursor:pointer;transition:opacity .3s;z-index:20;font-family:'DM Sans',sans-serif;font-size:12px;font-weight:500;text-transform:uppercase;letter-spacing:2px;color:var(--s-text-primary);text-decoration:underline;text-underline-offset:4px;padding:4px 0;}
+.main-back-btn{position:absolute;top:calc(env(safe-area-inset-top,40px) + 20px);right:30px;border:none;background:transparent;cursor:pointer;transition:opacity .3s;z-index:20;font-family:'DM Sans',sans-serif;font-size:0.8rem;font-weight:500;text-transform:uppercase;letter-spacing:2px;color:var(--s-text-primary);text-decoration:underline;text-underline-offset:4px;padding:4px 0;}
 .main-back-btn:active{opacity:.4;}
-.sub-back-btn{background:transparent;border:none;color:var(--s-text-primary);cursor:pointer;transition:opacity .3s;font-family:'DM Sans',sans-serif;font-size:12px;font-weight:500;text-transform:uppercase;letter-spacing:2px;text-decoration:underline;text-underline-offset:4px;padding:4px 0;}
+.sub-back-btn{background:transparent;border:none;color:var(--s-text-primary);cursor:pointer;transition:opacity .3s;font-family:'DM Sans',sans-serif;font-size:0.8rem;font-weight:500;text-transform:uppercase;letter-spacing:2px;text-decoration:underline;text-underline-offset:4px;padding:4px 0;}
 .sub-back-btn:active{opacity:.4;}
 .main-header{margin-bottom:60px;}
-.main-title{font-family:'Playfair Display',serif;font-size:42px;margin:0;font-weight:700;font-style:italic;letter-spacing:-1px;color:var(--s-text-primary);}
-.main-subtitle{font-size:12px;color:var(--s-text-secondary);text-transform:uppercase;letter-spacing:4px;margin-top:10px;}
+.main-title{font-family:'Playfair Display',serif;font-size:2.8rem;margin:0;font-weight:700;font-style:italic;letter-spacing:-1px;color:var(--s-text-primary);}
+.main-subtitle{font-size:0.8rem;color:var(--s-text-secondary);text-transform:uppercase;letter-spacing:4px;margin-top:10px;}
 .menu-list{display:flex;flex-direction:column;}
 .menu-item{cursor:pointer;padding:30px 0;position:relative;}
 .menu-item::after{content:'';position:absolute;bottom:0;left:0;width:100%;height:1px;background:linear-gradient(90deg,var(--s-line) 0%,rgba(0,0,0,0) 80%);}
 [data-theme="dark"] .menu-item::after{background:linear-gradient(90deg,var(--s-line) 0%,rgba(255,255,255,0) 80%);}
 .menu-item:last-child::after{display:none;}
-.menu-text-cn{font-size:24px;font-weight:500;color:var(--s-text-primary);display:block;margin-bottom:4px;transition:color .3s;}
-.menu-text-en{font-family:'Playfair Display',serif;font-size:14px;font-style:italic;color:var(--s-text-secondary);}
+.menu-text-cn{font-size:1.6rem;font-weight:500;color:var(--s-text-primary);display:block;margin-bottom:4px;transition:color .3s;}
+.menu-text-en{font-family:'Playfair Display',serif;font-size:0.9333rem;font-style:italic;color:var(--s-text-secondary);}
 .menu-item:active .menu-text-cn{color:var(--s-text-secondary);}
 
 /* Settings Sub Pages */
 .settings-page{position:absolute;inset:0;background:var(--s-panel-bg);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);z-index:10;transform:translateX(100%);transition:transform 0.42s cubic-bezier(0.19,1,0.22,1);display:flex;flex-direction:column;}
 .settings-page.active{transform:translateX(0);}
 .nav-bar{padding:calc(env(safe-area-inset-top,40px) + 20px) 30px 20px 30px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--s-line);flex-shrink:0;}
-.nav-title{font-size:16px;font-weight:600;color:var(--s-text-primary);}
+.nav-title{font-size:1.0667rem;font-weight:600;color:var(--s-text-primary);}
 .content-scroll{flex:1;overflow-y:auto;padding:30px;}
 .content-scroll::-webkit-scrollbar{display:none;}
 .page-watermark{position:absolute;bottom:-50px;right:-20px;font-family:'Playfair Display',serif;font-size:200px;color:var(--s-watermark);font-style:italic;pointer-events:none;z-index:-1;}
 
 /* Form Elements */
 .form-section{margin-bottom:40px;}
-.section-title{font-size:11px;text-transform:uppercase;letter-spacing:2px;color:var(--s-text-secondary);margin-bottom:20px;padding-bottom:8px;border-bottom:1px solid var(--s-line);}
+.section-title{font-size:0.7333rem;text-transform:uppercase;letter-spacing:2px;color:var(--s-text-secondary);margin-bottom:20px;padding-bottom:8px;border-bottom:1px solid var(--s-line);}
 .input-wrapper{margin-bottom:30px;position:relative;}
-.label-text{display:block;font-size:11px;color:var(--s-text-secondary);margin-bottom:10px;letter-spacing:1px;text-transform:uppercase;}
-.input-line{width:100%;border:none;border-bottom:1px solid var(--s-line);background:transparent;padding:10px 0;font-size:16px;font-family:'Noto Sans SC',sans-serif;color:var(--s-text-primary);border-radius:0;transition:border-color .3s;}
+.label-text{display:block;font-size:0.7333rem;color:var(--s-text-secondary);margin-bottom:10px;letter-spacing:1px;text-transform:uppercase;}
+.input-line{width:100%;border:none;border-bottom:1px solid var(--s-line);background:transparent;padding:10px 0;font-size:1.0667rem;font-family:'Noto Sans SC',sans-serif;color:var(--s-text-primary);border-radius:0;transition:border-color .3s;}
 .input-line:focus{border-bottom-color:var(--s-accent);}
-.select-stylish{width:100%;padding:12px 0;background:transparent;border:none;border-bottom:1px solid var(--s-accent);font-size:16px;font-weight:500;color:var(--s-text-primary);border-radius:0;-webkit-appearance:none;background-image:var(--s-select-arrow);background-repeat:no-repeat;background-position:right center;background-size:16px;cursor:pointer;}
+.select-stylish{width:100%;padding:12px 0;background:transparent;border:none;border-bottom:1px solid var(--s-accent);font-size:1.0667rem;font-weight:500;color:var(--s-text-primary);border-radius:0;-webkit-appearance:none;background-image:var(--s-select-arrow);background-repeat:no-repeat;background-position:right center;background-size:16px;cursor:pointer;}
 .slider-row{display:flex;align-items:center;gap:15px;}
 .styled-slider{flex:1;-webkit-appearance:none;height:2px;background:var(--s-line);}
 .styled-slider::-webkit-slider-thumb{-webkit-appearance:none;width:16px;height:16px;background:var(--s-accent);border-radius:0;transform:rotate(45deg);}
-.slider-val{font-family:'Playfair Display',serif;font-size:18px;font-style:italic;width:40px;text-align:right;color:var(--s-text-primary);}
-.btn-primary{width:100%;background:var(--s-accent);color:var(--s-btn-text);border:none;padding:18px;font-size:13px;font-weight:500;letter-spacing:2px;cursor:pointer;margin-bottom:12px;transition:opacity .3s;font-family:'DM Sans',sans-serif;text-transform:uppercase;}
+.slider-val{font-family:'Playfair Display',serif;font-size:1.2rem;font-style:italic;width:40px;text-align:right;color:var(--s-text-primary);}
+.btn-primary{width:100%;background:var(--s-accent);color:var(--s-btn-text);border:none;padding:18px;font-size:0.8667rem;font-weight:500;letter-spacing:2px;cursor:pointer;margin-bottom:12px;transition:opacity .3s;font-family:'DM Sans',sans-serif;text-transform:uppercase;}
 .btn-primary:active{opacity:.8;}
-.btn-outline{width:100%;background:transparent;color:var(--s-accent);border:1px solid var(--s-accent);padding:16px;font-size:13px;font-weight:500;letter-spacing:2px;cursor:pointer;margin-bottom:12px;transition:opacity .3s;font-family:'DM Sans',sans-serif;text-transform:uppercase;}
+.btn-outline{width:100%;background:transparent;color:var(--s-accent);border:1px solid var(--s-accent);padding:16px;font-size:0.8667rem;font-weight:500;letter-spacing:2px;cursor:pointer;margin-bottom:12px;transition:opacity .3s;font-family:'DM Sans',sans-serif;text-transform:uppercase;}
 .btn-outline:active{opacity:.6;}
-.btn-ghost{background:none;border:none;color:var(--s-text-secondary);font-size:12px;text-decoration:underline;padding:10px;cursor:pointer;width:100%;font-family:'DM Sans',sans-serif;}
-.fetch-link{position:absolute;right:0;top:0;font-size:12px;color:var(--s-accent);text-decoration:underline;cursor:pointer;font-weight:500;}
+.btn-ghost{background:none;border:none;color:var(--s-text-secondary);font-size:0.8rem;text-decoration:underline;padding:10px;cursor:pointer;width:100%;font-family:'DM Sans',sans-serif;}
+.fetch-link{position:absolute;right:0;top:0;font-size:0.8rem;color:var(--s-accent);text-decoration:underline;cursor:pointer;font-weight:500;}
 
 /* API active indicator */
 .api-active-dot{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--s-accent);margin-right:6px;vertical-align:middle;}
+
+/* ── System Page ── */
+.sys-size-preview-box{background:var(--s-bg);border:1px solid var(--s-line);border-radius:12px;padding:20px;margin-bottom:24px;position:relative;overflow:hidden;}
+.sys-size-preview-label{font-size:0.6667rem;letter-spacing:2px;text-transform:uppercase;color:var(--s-text-secondary);margin-bottom:12px;}
+.sys-size-preview-text{color:var(--s-text-primary);line-height:1.6;transition:font-size .15s ease;}
+.sys-size-preview-text em{font-family:'Playfair Display',serif;font-style:italic;}
+.sys-font-add-box{border:1px solid var(--s-line);border-radius:12px;padding:20px;margin-bottom:24px;}
+.sys-font-add-preview{margin-top:16px;padding:14px;background:var(--s-bg);border-radius:8px;font-size:1rem;line-height:1.7;color:var(--s-text-primary);display:none;border-left:2px solid var(--s-accent);}
+.sys-font-list{display:flex;flex-direction:column;gap:12px;margin-bottom:8px;}
+.sys-font-empty{font-size:0.8rem;color:var(--s-text-secondary);text-align:center;padding:24px 0;letter-spacing:1px;}
+.sys-font-card{border:1px solid var(--s-line);border-radius:12px;padding:16px;display:flex;align-items:center;gap:12px;transition:border-color .2s;}
+.sys-font-card.active{border-color:var(--s-accent);}
+.sys-font-card-info{flex:1;min-width:0;}
+.sys-font-card-name{font-size:0.8rem;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:var(--s-text-primary);margin-bottom:6px;}
+.sys-font-card-preview{font-size:0.9333rem;color:var(--s-text-secondary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.5;}
+.sys-font-card-actions{display:flex;align-items:center;gap:8px;flex-shrink:0;}
+.sys-font-active-badge{font-size:0.6rem;letter-spacing:1.5px;text-transform:uppercase;color:var(--s-accent);font-weight:700;border:1px solid var(--s-accent);padding:3px 8px;border-radius:4px;}
+.sys-font-use-btn{font-size:0.6667rem;letter-spacing:1px;text-transform:uppercase;font-weight:600;background:transparent;border:1px solid var(--s-line);color:var(--s-text-primary);padding:5px 10px;border-radius:4px;cursor:pointer;font-family:'DM Sans',sans-serif;transition:border-color .2s,color .2s;}
+.sys-font-use-btn:active{opacity:.6;}
+.sys-font-del-btn{background:none;border:none;color:var(--s-text-secondary);cursor:pointer;padding:4px;display:flex;align-items:center;font-size:1.0667rem;}
+.sys-font-del-btn:active{opacity:.5;}
+.sys-hint{font-size:0.7333rem;color:var(--s-text-secondary);line-height:1.6;margin-bottom:16px;padding:10px 12px;background:var(--s-bg);border-radius:8px;border-left:2px solid var(--s-line);}
+/* Toggle switch */
+.toggle-row{display:flex;align-items:center;justify-content:space-between;padding:16px 0;border-bottom:1px solid var(--s-line);}
+.toggle-row:last-child{border-bottom:none;}
+.toggle-row-info{flex:1;}
+.toggle-row-label{font-size:0.9333rem;color:var(--s-text-primary);font-weight:500;}
+.toggle-row-desc{font-size:0.7333rem;color:var(--s-text-secondary);margin-top:3px;}
+.toggle-switch{position:relative;width:44px;height:26px;flex-shrink:0;}
+.toggle-switch input{opacity:0;width:0;height:0;position:absolute;}
+.toggle-track{position:absolute;inset:0;background:var(--s-line);border-radius:100px;transition:background .25s;}
+.toggle-thumb{position:absolute;top:3px;left:3px;width:20px;height:20px;background:#fff;border-radius:50%;transition:transform .25s;box-shadow:0 1px 4px rgba(0,0,0,.2);}
+.toggle-switch input:checked + .toggle-track{background:var(--s-accent);}
+.toggle-switch input:checked ~ .toggle-thumb{transform:translateX(18px);}
 
 /* UI Page */
 .upload-area{border:1px dashed var(--s-line);border-radius:12px;padding:24px;text-align:center;cursor:pointer;transition:border-color .2s;margin-bottom:12px;overflow:hidden;position:relative;}
 .upload-area:active{border-color:var(--s-accent);}
 .upload-area-img{width:100%;height:90px;object-fit:cover;border-radius:8px;display:block;}
-.upload-placeholder{font-size:13px;color:var(--s-text-secondary);display:flex;flex-direction:column;align-items:center;gap:8px;}
-.upload-placeholder i{font-size:28px;}
+.upload-placeholder{font-size:0.8667rem;color:var(--s-text-secondary);display:flex;flex-direction:column;align-items:center;gap:8px;}
+.upload-placeholder i{font-size:1.8667rem;}
 .icons-grid-edit{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:12px;}
 .icon-edit-item{aspect-ratio:1;border-radius:14px;border:1px solid var(--s-line);display:flex;align-items:center;justify-content:center;cursor:pointer;overflow:hidden;position:relative;background:var(--bg-card);}
-.icon-edit-item i{font-size:20px;color:var(--s-text-secondary);}
+.icon-edit-item i{font-size:1.3333rem;color:var(--s-text-secondary);}
 .icon-edit-item img{width:100%;height:100%;object-fit:cover;position:absolute;inset:0;}
 
 /* Data Page */
 .data-row{display:flex;justify-content:space-between;align-items:center;padding:16px 0;border-bottom:1px solid var(--s-line);}
-.data-row-label{font-size:14px;color:var(--s-text-primary);}
-.data-row-value{font-family:'Space Mono',monospace;font-size:12px;color:var(--s-text-secondary);}
+.data-row-label{font-size:0.9333rem;color:var(--s-text-primary);}
+.data-row-value{font-family:'Space Mono',monospace;font-size:0.8rem;color:var(--s-text-secondary);}
 
 /* Toast */
-.toast{position:absolute;bottom:120px;left:50%;transform:translateX(-50%) translateY(16px);background:var(--text-main);color:var(--bg-device);padding:10px 20px;border-radius:100px;font-size:13px;font-weight:500;white-space:nowrap;opacity:0;pointer-events:none;transition:all .28s;z-index:9999;}
+.toast{position:absolute;bottom:120px;left:50%;transform:translateX(-50%) translateY(16px);background:var(--text-main);color:var(--bg-device);padding:10px 20px;border-radius:100px;font-size:0.8667rem;font-weight:500;white-space:nowrap;opacity:0;pointer-events:none;transition:all .28s;z-index:9999;}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
 
 /* Profile Edit Modal (bottom sheet) */
@@ -242,11 +307,11 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg-body);display:flex;jus
 .modal-overlay.show{opacity:1;pointer-events:auto;}
 .modal-sheet{width:100%;background:var(--panel-bg);border-radius:28px 28px 0 0;padding:24px 24px calc(env(safe-area-inset-bottom,24px) + 24px);transform:translateY(100%);transition:transform .4s cubic-bezier(.19,1,.22,1);}
 .modal-overlay.show .modal-sheet{transform:translateY(0);}
-.modal-title{font-size:18px;font-weight:600;margin-bottom:20px;font-family:'Playfair Display',serif;}
-.modal-input{width:100%;border:none;border-bottom:1px solid var(--border-line);background:transparent;padding:10px 0;font-size:15px;font-family:'Noto Sans SC',sans-serif;color:var(--text-main);margin-bottom:16px;transition:border-color .3s;}
+.modal-title{font-size:1.2rem;font-weight:600;margin-bottom:20px;font-family:'Playfair Display',serif;}
+.modal-input{width:100%;border:none;border-bottom:1px solid var(--border-line);background:transparent;padding:10px 0;font-size:1rem;font-family:'Noto Sans SC',sans-serif;color:var(--text-main);margin-bottom:16px;transition:border-color .3s;}
 .modal-input:focus{border-bottom-color:var(--text-main);}
 .modal-btn-row{display:flex;gap:12px;margin-top:8px;}
-.modal-btn{flex:1;padding:14px;border:1px solid var(--border-line);background:transparent;border-radius:12px;font-size:14px;cursor:pointer;color:var(--text-main);font-family:'DM Sans',sans-serif;transition:opacity .2s;}
+.modal-btn{flex:1;padding:14px;border:1px solid var(--border-line);background:transparent;border-radius:12px;font-size:0.9333rem;cursor:pointer;color:var(--text-main);font-family:'DM Sans',sans-serif;transition:opacity .2s;}
 .modal-btn.primary{background:var(--text-main);color:var(--bg-device);border-color:var(--text-main);}
 .modal-btn:active{opacity:.7;}
 
@@ -317,12 +382,12 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg-body);display:flex;jus
 .char-nav-back {
   writing-mode: vertical-rl; transform: rotate(180deg);
   display: flex; align-items: center; gap: 10px;
-  font-size: 12px; font-weight: 500; letter-spacing: 2px;
+  font-size:0.8rem; font-weight: 500; letter-spacing: 2px;
   color: var(--char-ink-light); transition: color 0.3s; background: none; border: none; cursor: pointer; font-family: var(--font-mono-char);
 }
 .char-nav-back:active { color: var(--char-blood); }
-.char-nav-back i { transform: rotate(90deg); font-size: 16px; }
-.char-side-brand { writing-mode: vertical-rl; font-family: var(--font-mono-char); font-size: 9px; letter-spacing: 4px; text-transform: uppercase; opacity: 0.4; color: var(--char-ink); }
+.char-nav-back i { transform: rotate(90deg); font-size:1.0667rem; }
+.char-side-brand { writing-mode: vertical-rl; font-family: var(--font-mono-char); font-size:0.6rem; letter-spacing: 4px; text-transform: uppercase; opacity: 0.4; color: var(--char-ink); }
 
 /* 列表页 */
 .char-roster-scroll {
@@ -331,26 +396,95 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg-body);display:flex;jus
 }
 .char-roster-scroll::-webkit-scrollbar { display: none; }
 .char-roster-header { margin-bottom: 50px; }
-.char-roster-header h1 { font-family: var(--font-serif-char); font-size: 42px; font-weight: 300; margin: 0; line-height: 1; letter-spacing: 1px; color: var(--char-ink); }
-.char-roster-header p { font-family: var(--font-mono-char); font-size: 10px; color: var(--char-blood); text-transform: uppercase; letter-spacing: 2px; margin-top: 10px; }
+.char-roster-header h1 { font-family: var(--font-serif-char); font-size:2.8rem; font-weight: 300; margin: 0; line-height: 1; letter-spacing: 1px; color: var(--char-ink); }
+.char-roster-header p { font-family: var(--font-mono-char); font-size:0.6667rem; color: var(--char-blood); text-transform: uppercase; letter-spacing: 2px; margin-top: 10px; }
+/* 列表页  */
+.char-roster-card {
+  position: relative;
+  margin-bottom: 60px;
+  padding-top: 18px; 
+  border-top: 1px solid var(--char-ink); 
+  display: flex;
+  flex-direction: row;
+  /* 核心修改：让左侧文字块在照片高度范围内【垂直居中】，也就是你画圈的位置 */
+  align-items: center; 
+  justify-content: space-between;
+  gap: 16px; 
+  min-height: 180px; /* 给一个最小高度，保证排版撑开 */
+  cursor: pointer;
+}
 
-.char-roster-card { position: relative; margin-bottom: 60px; cursor: pointer; display: flex; justify-content: flex-end; }
-.char-roster-img { width: 75%; aspect-ratio: 3/4; overflow: hidden; filter: grayscale(40%) contrast(1.1); transition: filter 0.5s; }
-.char-roster-img img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.8s var(--ease-char); }
+.char-roster-index {
+  position: absolute;
+  top: -9px; /* 编号依然稳稳地压在顶部的线上 */
+  left: 0;
+  background: var(--char-paper); 
+  padding-right: 12px;
+  font-family: var(--font-mono-char);
+  font-size:0.6667rem;
+  font-weight: 600;
+  letter-spacing: 2px;
+  color: var(--char-blood);
+}
+
+.char-roster-info {
+  flex: 1; 
+  min-width: 0; 
+  display: flex;
+  flex-direction: column;
+  /* 移除之前的底部对齐，让它在 center 模式下自然居中 */
+  justify-content: center; 
+}
+
+.char-roster-name {
+  font-family: var(--font-serif-char);
+  font-size:2.1333rem; 
+  font-weight: 600; 
+  margin: 0;
+  line-height: 1.1;
+  color: var(--char-ink);
+  word-wrap: break-word; 
+}
+
+.char-roster-title {
+  font-family: var(--font-mono-char);
+  font-size:0.6rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--char-ink-light);
+  margin-top: 10px;
+}
+
+.char-roster-title::before {
+  content: '— ';
+  color: var(--char-blood);
+  opacity: 0.8;
+}
+
+.char-roster-img {
+  width: 44%; 
+  aspect-ratio: 3/4;
+  overflow: hidden;
+  filter: grayscale(35%) contrast(1.1); 
+  transition: filter 0.5s;
+  flex-shrink: 0; 
+}
+
+.char-roster-img img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.8s var(--ease-char);
+}
+
 .char-roster-card:active .char-roster-img { filter: grayscale(0%); }
 .char-roster-card:active .char-roster-img img { transform: scale(1.04); }
-.char-roster-info { position: absolute; left: 0; bottom: 20px; z-index: 2; width: 80%; pointer-events: none; }
-.char-roster-index { font-family: var(--font-mono-char); font-size: 10px; color: var(--char-blood); margin-bottom: 5px; display: block; }
-.char-roster-name { font-family: var(--font-serif-char); font-size: 38px; font-weight: 400; margin: 0; line-height: 0.9; color: var(--char-ink); text-shadow: 2px 2px 10px rgba(236,234,229,0.8); }
-.char-roster-title { font-size: 10px; text-transform: uppercase; letter-spacing: 1px; color: var(--char-ink-light); margin-top: 8px; font-family: var(--font-sans); }
-.char-empty { text-align: center; opacity: 0.35; padding: 80px 20px; font-family: var(--font-serif-char); font-size: 18px; font-style: italic; color: var(--char-ink); }
-
 /* FAB 环形按钮 */
 .char-fab { position: absolute; bottom: 30px; right: 20px; width: 90px; height: 90px; background: transparent; border: none; display: flex; justify-content: center; align-items: center; cursor: pointer; z-index: 50; }
 .char-fab-ring { position: absolute; inset: 0; animation: char-spin 15s linear infinite; pointer-events: none; }
-.char-fab-ring text { font-family: var(--font-mono-char); font-size: 10.5px; fill: var(--char-ink); letter-spacing: 3.5px; }
+.char-fab-ring text { font-family: var(--font-mono-char); font-size:0.7rem; fill: var(--char-ink); letter-spacing: 3.5px; }
 .char-fab-center { width: 44px; height: 44px; background: var(--char-paper); border: 1px solid var(--char-ink); border-radius: 50%; display: flex; justify-content: center; align-items: center; transition: all 0.5s var(--ease-char); z-index: 2; }
-.char-fab-center i { font-size: 24px; color: var(--char-ink); transition: transform 0.5s var(--ease-char), color 0.5s; }
+.char-fab-center i { font-size:1.6rem; color: var(--char-ink); transition: transform 0.5s var(--ease-char), color 0.5s; }
 .char-fab:active .char-fab-center { background: var(--char-ink); transform: scale(0.92); }
 .char-fab:active .char-fab-center i { color: var(--char-paper); transform: rotate(90deg); }
 @keyframes char-spin { 100% { transform: rotate(360deg); } }
@@ -359,53 +493,482 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg-body);display:flex;jus
 .char-detail-scroll { height: 100%; overflow-y: auto; padding-bottom: 80px; scrollbar-width: none; position: relative; z-index: 10; }
 .char-detail-scroll::-webkit-scrollbar { display: none; }
 .char-detail-actions { position: absolute; top: 0; left: 0; width: 100%; padding: 40px 20px 20px; display: flex; justify-content: space-between; z-index: 20; background: linear-gradient(to bottom, var(--char-paper), transparent); pointer-events: none; }
-.char-action-btn { display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 500; color: var(--char-ink); pointer-events: auto; padding: 5px 12px; background: rgba(236,234,229,0.6); backdrop-filter: blur(10px); border-radius: 20px; transition: 0.3s; border: none; cursor: pointer; font-family: var(--font-sans); }
+.char-action-btn { display: flex; align-items: center; gap: 6px; font-size:0.8rem; font-weight: 500; color: var(--char-ink); pointer-events: auto; padding: 5px 12px; background: rgba(236,234,229,0.6); backdrop-filter: blur(10px); border-radius: 20px; transition: 0.3s; border: none; cursor: pointer; font-family: var(--font-sans); }
 [data-theme="dark"] .char-action-btn { background: rgba(26,26,24,0.7); }
 .char-action-btn:active { background: var(--char-ink); color: var(--char-paper); }
 .char-hero { padding: 100px 20px 20px; text-align: center; }
 .char-hero-img { width: 100%; aspect-ratio: 4/5; overflow: hidden; margin: 0 auto 30px; }
 .char-hero-img img { width: 100%; height: 100%; object-fit: cover; }
-.char-hero-name { font-family: var(--font-serif-char); font-size: 42px; font-weight: 400; margin: 0; line-height: 1; color: var(--char-ink); }
-.char-hero-mbti { display: inline-block; margin-top: 15px; font-family: var(--font-mono-char); font-size: 10px; border: 1px solid var(--char-ink); padding: 4px 10px; color: var(--char-ink); }
+.char-hero-name { font-family: var(--font-serif-char); font-size:2.8rem; font-weight: 400; margin: 0; line-height: 1; color: var(--char-ink); }
+.char-hero-mbti { display: inline-block; margin-top: 15px; font-family: var(--font-mono-char); font-size:0.6667rem; border: 1px solid var(--char-ink); padding: 4px 10px; color: var(--char-ink); }
 .char-article { padding: 20px 25px; }
-.char-section-label { font-family: var(--font-mono-char); font-size: 10px; color: var(--char-blood); text-transform: uppercase; letter-spacing: 2px; margin-bottom: 15px; display: flex; align-items: center; gap: 10px; }
+.char-section-label { font-family: var(--font-mono-char); font-size:0.6667rem; color: var(--char-blood); text-transform: uppercase; letter-spacing: 2px; margin-bottom: 15px; display: flex; align-items: center; gap: 10px; }
 .char-section-label::after { content: ''; flex: 1; height: 1px; background: rgba(28,27,26,0.1); }
 [data-theme="dark"] .char-section-label::after { background: rgba(236,234,229,0.1); }
-.char-quote { font-family: var(--font-serif-char); font-size: 26px; font-style: italic; line-height: 1.3; text-align: center; margin: 40px 0; color: var(--char-ink); }
-.char-intro { font-size: 14px; line-height: 1.8; color: var(--char-ink-light); text-align: justify; margin-bottom: 50px; }
-.char-intro::first-letter { font-family: var(--font-serif-char); font-size: 56px; float: left; line-height: 0.8; margin-right: 8px; margin-top: 4px; color: var(--char-ink); }
+/* 取消斜体，加入上下边框和档案专属星标装饰 */
+.char-quote { position: relative; font-family: var(--font-serif-char); font-size:1.4667rem; font-weight: 600; font-style: normal; line-height: 1.5; text-align: center; margin: 55px 0; padding: 35px 15px; color: var(--char-ink); border-top: 1px solid var(--char-ink-light); border-bottom: 1px solid var(--char-ink-light); }
+.char-quote::before, .char-quote::after { content: '✦'; position: absolute; left: 50%; transform: translateX(-50%); font-size:0.8rem; color: var(--char-blood); background: var(--char-paper); padding: 0 12px; }
+.char-quote::before { top: -8.5px; }
+.char-quote::after { bottom: -8.5px; }
+.char-intro { font-size:0.9333rem; line-height: 1.8; color: var(--char-ink-light); text-align: justify; margin-bottom: 50px; }
+.char-intro::first-letter { font-family: var(--font-serif-char); font-size:3.7333rem; float: left; line-height: 0.8; margin-right: 8px; margin-top: 4px; color: var(--char-ink); }
 .char-qa { margin-bottom: 25px; }
-.char-qa-q { font-size: 12px; font-weight: 600; margin-bottom: 5px; line-height: 1.4; color: var(--char-ink); }
-.char-qa-q::before { content: 'Q. '; font-family: var(--font-serif-char); color: var(--char-blood); font-size: 14px; }
-.char-qa-a { font-family: var(--font-serif-char); font-size: 17px; font-style: italic; color: var(--char-ink-light); margin: 0 0 0 15px; line-height: 1.5; border-left: 1px solid rgba(28,27,26,0.2); padding-left: 15px; }
+.char-qa-q { font-size:0.8rem; font-weight: 600; margin-bottom: 5px; line-height: 1.4; color: var(--char-ink); }
+.char-qa-q::before { content: 'Q. '; font-family: var(--font-serif-char); color: var(--char-blood); font-size:0.9333rem; }
+.char-qa-a { font-family: var(--font-serif-char); font-size:1.1333rem; font-style: italic; color: var(--char-ink-light); margin: 0 0 0 15px; line-height: 1.5; border-left: 1px solid rgba(28,27,26,0.2); padding-left: 15px; }
 [data-theme="dark"] .char-qa-a { border-left-color: rgba(236,234,229,0.2); }
 
 /* 表单页 */
 .char-form-header { padding: 50px 20px 20px; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
-.char-form-header h2 { font-family: var(--font-serif-char); font-size: 24px; margin: 0; font-weight: 400; color: var(--char-ink); }
+.char-form-header h2 { font-family: var(--font-serif-char); font-size:1.6rem; margin: 0; font-weight: 400; color: var(--char-ink); }
 .char-form-scroll { padding: 0 20px 100px; overflow-y: auto; flex: 1; position: relative; z-index: 10; scrollbar-width: none; }
 .char-form-scroll::-webkit-scrollbar { display: none; }
 .char-upload-box { width: 140px; height: 180px; margin: 20px auto 40px; border: 1px dashed var(--char-ink-light); display: flex; flex-direction: column; justify-content: center; align-items: center; cursor: pointer; position: relative; overflow: hidden; color: var(--char-ink-light); }
-.char-upload-box i { font-size: 24px; margin-bottom: 10px; }
-.char-upload-box span { font-size: 10px; text-transform: uppercase; letter-spacing: 1px; font-family: var(--font-mono-char); }
+.char-upload-box i { font-size:1.6rem; margin-bottom: 10px; }
+.char-upload-box span { font-size:0.6667rem; text-transform: uppercase; letter-spacing: 1px; font-family: var(--font-mono-char); }
 .char-upload-box img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: none; }
 .char-input-block { margin-bottom: 30px; position: relative; }
-.char-input-block label { display: block; font-family: var(--font-mono-char); font-size: 9px; text-transform: uppercase; letter-spacing: 2px; color: var(--char-blood); margin-bottom: 5px; }
-.char-input-block input, .char-input-block textarea { width: 100%; background: transparent; border: none; border-bottom: 1px solid var(--char-ink); padding: 8px 0; font-family: var(--font-serif-char); font-size: 20px; color: var(--char-ink); outline: none; border-radius: 0; transition: border-width 0.2s; }
-.char-input-block textarea { font-family: var(--font-sans); font-size: 14px; line-height: 1.6; min-height: 120px; resize: vertical; }
+.char-input-block label { display: block; font-family: var(--font-mono-char); font-size:0.6rem; text-transform: uppercase; letter-spacing: 2px; color: var(--char-blood); margin-bottom: 5px; }
+.char-input-block input, .char-input-block textarea { width: 100%; background: transparent; border: none; border-bottom: 1px solid var(--char-ink); padding: 8px 0; font-family: var(--font-serif-char); font-size:1.3333rem; color: var(--char-ink); outline: none; border-radius: 0; transition: border-width 0.2s; }
+.char-input-block textarea { font-family: var(--font-sans); font-size:0.9333rem; line-height: 1.6; min-height: 120px; resize: vertical; }
 .char-input-block input:focus, .char-input-block textarea:focus { border-bottom-width: 2px; }
 .char-form-actions { display: flex; gap: 15px; margin-top: 40px; }
-.char-btn-primary { flex: 1; background: var(--char-ink); color: var(--char-paper); padding: 15px; font-size: 12px; font-weight: 500; letter-spacing: 2px; text-transform: uppercase; cursor: pointer; text-align: center; border: none; font-family: var(--font-sans); transition: opacity 0.2s; }
+.char-btn-primary { flex: 1; background: var(--char-ink); color: var(--char-paper); padding: 15px; font-size:0.8rem; font-weight: 500; letter-spacing: 2px; text-transform: uppercase; cursor: pointer; text-align: center; border: none; font-family: var(--font-sans); transition: opacity 0.2s; }
 .char-btn-primary:active { opacity: 0.8; }
-.char-btn-danger { background: transparent; color: var(--char-blood); border: none; border-bottom: 1px solid var(--char-blood); padding: 15px; font-size: 12px; font-weight: 600; cursor: pointer; text-transform: uppercase; letter-spacing: 1px; font-family: var(--font-sans); }
+.char-btn-danger { background: transparent; color: var(--char-blood); border: none; border-bottom: 1px solid var(--char-blood); padding: 15px; font-size:0.8rem; font-weight: 600; cursor: pointer; text-transform: uppercase; letter-spacing: 1px; font-family: var(--font-sans); }
 .char-btn-danger:active { opacity: 0.6; }
 
 /* AI 加载遮罩 */
 #char-ai-loader { position: absolute; inset: 0; background: var(--char-paper); z-index: 999; display: flex; flex-direction: column; justify-content: center; align-items: center; opacity: 0; pointer-events: none; transition: opacity 0.4s; }
 #char-ai-loader.active { opacity: 1; pointer-events: auto; }
-.char-loader-icon { font-size: 40px; color: var(--char-ink); animation: char-spin 2s linear infinite; margin-bottom: 20px; }
-.char-loader-text { font-family: var(--font-mono-char); font-size: 10px; letter-spacing: 4px; text-transform: uppercase; color: var(--char-ink); animation: char-pulse 1.5s infinite alternate; }
+.char-loader-icon { font-size:2.6667rem; color: var(--char-ink); animation: char-spin 2s linear infinite; margin-bottom: 20px; }
+.char-loader-text { font-family: var(--font-mono-char); font-size:0.6667rem; letter-spacing: 4px; text-transform: uppercase; color: var(--char-ink); animation: char-pulse 1.5s infinite alternate; }
 @keyframes char-pulse { 0% { opacity: 0.4; } 100% { opacity: 1; } }
+
+/* ============================================================
+   Chat Screen — 对话列表 + 个人主页
+   所有样式用 ch- 前缀隔离
+   ============================================================ */
+#chat-screen { background: #EFECE7; overflow: hidden; z-index: 150; }
+#chat-screen .ch-noise {
+  position: absolute; inset: 0; pointer-events: none; z-index: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.035'/%3E%3C/svg%3E");
+}
+
+/* Sidebar */
+#chat-screen .ch-app { width: 100%; height: 100%; display: flex; position: relative; }
+#chat-screen .ch-sidebar {
+  width: 64px; height: 100%; background: rgba(239,236,231,0.5);
+  backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px);
+  border-right: 1px solid rgba(255,255,255,0.7);
+  display: flex; flex-direction: column; justify-content: space-between; align-items: center;
+  padding: 3rem 0 2rem; position: relative; z-index: 100; flex-shrink: 0;
+  transition: transform 0.4s cubic-bezier(0.16,1,0.3,1);
+}
+#chat-screen.ch-collapsed .ch-sidebar { transform: translateX(-100%); }
+#chat-screen .ch-brand { font-family: 'Cormorant Garamond', serif; font-size: 1rem; font-weight: 600; letter-spacing: 5px; writing-mode: vertical-rl; transform: rotate(180deg); color: #121212; }
+#chat-screen .ch-nav-group { display: flex; flex-direction: column; align-items: center; gap: 1.5rem; }
+#chat-screen .ch-nav-divider { width: 20px; height: 1px; background: rgba(0,0,0,0.1); }
+#chat-screen .ch-nav-btn {
+  width: 44px; height: 44px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+  font-size: 1.3rem; color: #888; cursor: pointer; position: relative; transition: color 0.3s;
+}
+#chat-screen .ch-nav-btn::after {
+  content: ''; position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%) scale(0);
+  width: 100%; height: 100%; background: #121212; border-radius: 50%;
+  transition: transform 0.4s cubic-bezier(0.16,1,0.3,1); z-index: -1;
+}
+#chat-screen .ch-nav-btn.active { color: #fff; }
+#chat-screen .ch-nav-btn.active::after { transform: translate(-50%,-50%) scale(1); }
+#chat-screen .ch-back { color: #121212; background: rgba(255,255,255,0.8); box-shadow: 0 4px 12px rgba(0,0,0,0.05); margin-bottom: 0.5rem; }
+#chat-screen .ch-back:active { transform: scale(0.9); }
+
+/* Views */
+#chat-screen .ch-view {
+  flex: 1; height: 100%; position: absolute; top: 0; left: 64px; right: 0;
+  opacity: 0; pointer-events: none; transform: translateY(8px);
+  transition: opacity 0.35s ease, transform 0.35s ease, left 0.4s cubic-bezier(0.16,1,0.3,1);
+  overflow: hidden;
+}
+#chat-screen .ch-view.active { opacity: 1; pointer-events: auto; z-index: 10; transform: translateY(0); }
+#chat-screen.ch-collapsed .ch-view { left: 0; }
+
+/* View 1: Lookbook */
+#chat-screen .ch-feed { height: 100%; overflow-y: auto; scroll-snap-type: y mandatory; scrollbar-width: none; }
+#chat-screen .ch-feed::-webkit-scrollbar { display: none; }
+#chat-screen .ch-page { width: 100%; height: 100%; scroll-snap-align: start; display: flex; align-items: center; justify-content: center; position: relative; overflow: hidden; }
+#chat-screen .ch-bg-typo { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); font-family: 'Cormorant Garamond', serif; font-size: 24vh; font-weight: 500; font-style: italic; color: rgba(0,0,0,0.025); white-space: nowrap; z-index: 0; pointer-events: none; }
+#chat-screen .ch-pres-group { position: relative; width: 68%; max-width: 250px; transform: translateX(-10px); z-index: 10; }
+#chat-screen .ch-photo-wrapper { position: relative; width: 100%; aspect-ratio: 3/4; border-radius: 12px; z-index: 2; box-shadow: 0 25px 50px rgba(0,0,0,0.15), inset 0 0 0 1px rgba(255,255,255,0.3); overflow: hidden; background: #ccc; transform: scale(0.9) translateY(20px); opacity: 0; transition: all 0.8s cubic-bezier(0.16,1,0.3,1); }
+#chat-screen .ch-photo { width: 100%; height: 100%; object-fit: cover; transform: scale(1.1); transition: transform 1.2s cubic-bezier(0.16,1,0.3,1); }
+#chat-screen .ch-page.is-active .ch-photo-wrapper { transform: scale(1) translateY(0); opacity: 1; }
+#chat-screen .ch-page.is-active .ch-photo { transform: scale(1); }
+#chat-screen .ch-bookmark { position: absolute; bottom: 0; right: 0; z-index: 1; background: #0F0F0F; color: #fff; padding: 1.5rem 0.6rem 1.5rem 1.6rem; border-radius: 0 12px 12px 0; box-shadow: 15px 15px 30px rgba(0,0,0,0.15); transform: translateX(0) translateY(20px); opacity: 0; transition: all 0.7s cubic-bezier(0.25,1,0.5,1) 0.2s; }
+#chat-screen .ch-page.is-active .ch-bookmark { transform: translateX(calc(100% - 16px)) translateY(0); opacity: 1; }
+#chat-screen .ch-bm-content { writing-mode: vertical-rl; display: flex; align-items: center; gap: 0.6rem; }
+#chat-screen .ch-bm-name { font-family: 'Cormorant Garamond', serif; font-size: 1.3rem; font-weight: 600; letter-spacing: 1.5px; }
+#chat-screen .ch-bm-divider { width: 1px; height: 24px; background: rgba(255,255,255,0.3); }
+#chat-screen .ch-bm-role { font-size: 0.55rem; text-transform: uppercase; letter-spacing: 2px; color: rgba(255,255,255,0.5); }
+#chat-screen .ch-enter-btn { position: absolute; bottom: -12px; left: -15px; z-index: 3; background: rgba(255,255,255,0.9); backdrop-filter: blur(16px); border: 1px solid #fff; box-shadow: 0 10px 25px rgba(0,0,0,0.1); padding: 10px 18px; border-radius: 100px; display: flex; align-items: center; gap: 8px; color: #121212; font-size: 0.75rem; font-weight: 600; cursor: pointer; transform: translateY(20px) scale(0.9); opacity: 0; transition: all 0.6s cubic-bezier(0.16,1,0.3,1) 0.3s; }
+#chat-screen .ch-page.is-active .ch-enter-btn { transform: translateY(0) scale(1); opacity: 1; }
+#chat-screen .ch-enter-btn:active { transform: scale(0.95) !important; }
+#chat-screen .ch-swipe-hint { position: absolute; bottom: 2rem; left: 50%; transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; gap: 4px; color: #888; font-size: 0.55rem; letter-spacing: 2px; text-transform: uppercase; animation: ch-bounce 2s infinite; }
+@keyframes ch-bounce { 0%,20%,50%,80%,100%{transform:translateX(-50%) translateY(0)} 40%{transform:translateX(-50%) translateY(-6px)} 60%{transform:translateX(-50%) translateY(-3px)} }
+#chat-screen .ch-deco { position: absolute; top: 5vh; left: 20px; z-index: 20; pointer-events: none; padding: 12px 14px; opacity: 0; animation: ch-focusin 1.5s cubic-bezier(0.16,1,0.3,1) 0.2s forwards; }
+@keyframes ch-focusin { 0%{opacity:0;transform:translateY(-10px) scale(0.98);filter:blur(3px)} 100%{opacity:1;transform:translateY(0) scale(1);filter:blur(0)} }
+#chat-screen .ch-deco-cross { position: absolute; color: rgba(0,0,0,0.25); font-size: 10px; font-family: monospace; line-height: 1; }
+#chat-screen .ch-deco-cross.tl { top: 0; left: 0; }
+#chat-screen .ch-deco-cross.br { bottom: 0; right: 0; }
+#chat-screen .ch-deco-header { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+#chat-screen .ch-deco-badge { font-size: 0.45rem; font-weight: 600; text-transform: uppercase; letter-spacing: 2px; background: #121212; color: #fff; padding: 3px 6px; border-radius: 2px; }
+#chat-screen .ch-deco-season { font-size: 0.5rem; font-weight: 500; text-transform: uppercase; letter-spacing: 4px; color: #888; }
+#chat-screen .ch-deco-title { font-family: 'Cormorant Garamond', serif; font-size: 3.2rem; line-height: 0.85; font-weight: 500; color: #121212; letter-spacing: -1.5px; margin: 0 0 12px -2px; }
+#chat-screen .ch-deco-title em { font-style: italic; font-weight: 300; color: rgba(0,0,0,0.45); font-size: 2.8rem; }
+#chat-screen .ch-deco-footer { display: flex; align-items: center; gap: 10px; }
+#chat-screen .ch-barcode { font-family: 'Libre Barcode 39 Text', cursive; font-size: 1.4rem; line-height: 0.7; opacity: 0.7; }
+#chat-screen .ch-deco-div { width: 1px; height: 14px; background: rgba(0,0,0,0.25); transform: rotate(20deg); }
+#chat-screen .ch-deco-coord { font-size: 0.45rem; text-transform: uppercase; letter-spacing: 2px; color: #888; }
+
+/* View 2: Groups / Invitations */
+#chat-screen .ch-inv-layout { height: 100%; display: flex; flex-direction: column; overflow-y: auto; scrollbar-width: none; padding-bottom: 4rem; }
+#chat-screen .ch-inv-layout::-webkit-scrollbar { display: none; }
+#chat-screen .ch-inv-header { padding: 3rem 1.5rem 1rem; }
+#chat-screen .ch-inv-title { font-family: 'Cormorant Garamond', serif; font-size: 2.5rem; font-weight: 600; line-height: 1; color: #121212; }
+#chat-screen .ch-inv-title span { font-style: italic; color: #888; font-weight: 400; }
+#chat-screen .ch-inv-subtitle { font-size: 0.65rem; text-transform: uppercase; letter-spacing: 3px; color: #888; margin-top: 0.5rem; }
+#chat-screen .ch-inv-list { display: flex; flex-direction: column; gap: 1.5rem; padding: 1rem 1.5rem; }
+#chat-screen .ch-invite-card { display: flex; width: 100%; background: #FAFAFA; border-radius: 4px; box-shadow: 0 20px 40px rgba(0,0,0,0.06), 0 1px 3px rgba(0,0,0,0.02); position: relative; overflow: hidden; cursor: pointer; transition: transform 0.3s cubic-bezier(0.16,1,0.3,1), box-shadow 0.3s; }
+#chat-screen .ch-invite-card:active { transform: scale(0.97); }
+#chat-screen .ch-invite-card.pinned { background: #1A1A1A; color: #fff; }
+#chat-screen .ch-wm-letter { position: absolute; top: -30px; right: 10px; font-family: 'Cormorant Garamond', serif; font-size: 160px; font-style: italic; font-weight: 300; color: rgba(0,0,0,0.035); z-index: 0; pointer-events: none; line-height: 1; user-select: none; }
+#chat-screen .ch-invite-card.pinned .ch-wm-letter { color: rgba(255,255,255,0.04); }
+#chat-screen .ch-invite-main { flex: 1; padding: 1.5rem; border-right: 2px dashed rgba(0,0,0,0.1); position: relative; z-index: 1; display: flex; flex-direction: column; justify-content: space-between; min-height: 130px; }
+#chat-screen .ch-invite-card.pinned .ch-invite-main { border-right-color: rgba(255,255,255,0.15); }
+#chat-screen .ch-invite-top { display: flex; justify-content: space-between; align-items: flex-start; }
+#chat-screen .ch-invite-season { font-size: 0.55rem; text-transform: uppercase; letter-spacing: 2px; font-weight: 600; color: #888; }
+#chat-screen .ch-invite-card.pinned .ch-invite-season { color: rgba(255,255,255,0.5); }
+#chat-screen .ch-barcode-sm { font-family: 'Libre Barcode 39 Text', cursive; font-size: 1.2rem; line-height: 0.8; opacity: 0.5; }
+#chat-screen .ch-invite-name { font-family: 'Cormorant Garamond', serif; font-size: 1.8rem; font-weight: 600; margin: 0.8rem 0 0.4rem; line-height: 1; color: inherit; }
+#chat-screen .ch-invite-bottom { display: flex; align-items: center; gap: 1rem; }
+#chat-screen .ch-invite-seats { font-size: 0.65rem; text-transform: uppercase; letter-spacing: 1px; font-weight: 500; color: inherit; }
+#chat-screen .ch-invite-stub { width: 50px; display: flex; align-items: center; justify-content: center; position: relative; z-index: 1; background: rgba(0,0,0,0.02); }
+#chat-screen .ch-invite-card.pinned .ch-invite-stub { background: rgba(255,255,255,0.03); }
+#chat-screen .ch-stub-text { writing-mode: vertical-rl; transform: rotate(180deg); font-size: 0.6rem; text-transform: uppercase; letter-spacing: 4px; font-weight: 600; display: flex; align-items: center; gap: 6px; color: inherit; }
+#chat-screen .ch-stub-text i { transform: rotate(90deg); font-size: 0.8rem; }
+#chat-screen .ch-req-btn { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; background: transparent; border: 1px solid rgba(0,0,0,0.1); border-radius: 4px; padding: 1.2rem; font-size: 0.7rem; font-weight: 600; text-transform: uppercase; letter-spacing: 2px; color: #121212; cursor: pointer; transition: all 0.2s; font-family: 'DM Sans', sans-serif; }
+#chat-screen .ch-req-btn:active { background: rgba(0,0,0,0.03); }
+
+/* View 3: Group detail */
+#chat-screen #ch-view-detail { background: #EFECE7; z-index: 20; transform: translateX(100%); transition: transform 0.5s cubic-bezier(0.16,1,0.3,1); display: flex; flex-direction: column; opacity: 1; pointer-events: none; }
+#chat-screen #ch-view-detail.active { transform: translateX(0); opacity: 1; pointer-events: auto; }
+#chat-screen .ch-detail-topbar { padding: 3rem 1.5rem 1rem; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
+#chat-screen .ch-roster-wrap { flex: 1; overflow-y: auto; scrollbar-width: none; padding: 0 1.5rem 4rem; }
+#chat-screen .ch-roster-wrap::-webkit-scrollbar { display: none; }
+#chat-screen .ch-roster-hdr { border-bottom: 2px solid #121212; padding-bottom: 2rem; margin-bottom: 2rem; text-align: center; }
+#chat-screen .ch-roster-hdr .ch-barcode { font-size: 2.5rem; margin-bottom: 1rem; opacity: 0.8; display: block; }
+#chat-screen .ch-roster-title { font-family: 'Cormorant Garamond', serif; font-size: 2.8rem; line-height: 1; font-weight: 600; margin-bottom: 0.5rem; color: #121212; }
+#chat-screen .ch-roster-subtitle { font-size: 0.65rem; text-transform: uppercase; letter-spacing: 4px; color: #888; }
+#chat-screen .ch-roster-list { display: flex; flex-direction: column; gap: 1.5rem; }
+#chat-screen .ch-roster-item { display: flex; align-items: center; gap: 0.8rem; cursor: pointer; transition: opacity 0.2s; }
+#chat-screen .ch-roster-item:active { opacity: 0.6; }
+#chat-screen .ch-roster-avatar { width: 36px; height: 36px; border-radius: 50%; object-fit: cover; }
+#chat-screen .ch-roster-name { font-family: 'Cormorant Garamond', serif; font-size: 1.3rem; font-weight: 600; white-space: nowrap; color: #121212; }
+#chat-screen .ch-roster-dots { flex: 1; border-bottom: 1px dotted rgba(0,0,0,0.3); height: 1px; margin: 0 5px; opacity: 0.5; }
+#chat-screen .ch-roster-role { font-size: 0.6rem; text-transform: uppercase; letter-spacing: 1px; color: #888; white-space: nowrap; }
+#chat-screen .ch-roster-icon { width: 28px; height: 28px; border: 1px solid rgba(0,0,0,0.15); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.9rem; margin-left: 0.5rem; color: #121212; }
+
+/* View 4: Sparkle placeholder */
+#chat-screen .ch-placeholder { height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #121212; }
+#chat-screen .ch-placeholder h2 { font-family: 'Cormorant Garamond', serif; font-size: 2.5rem; font-style: italic; }
+#chat-screen .ch-placeholder p { color: #888; font-size: 0.65rem; margin-top: 0.5rem; letter-spacing: 4px; text-transform: uppercase; }
+
+/* View 5: User Dossier (个人主页) */
+#chat-screen .ch-dossier-layout { height: 100%; display: flex; flex-direction: column; position: relative; overflow-y: auto; scrollbar-width: none; }
+#chat-screen .ch-dossier-layout::-webkit-scrollbar { display: none; }
+#chat-screen .ch-dossier-upper { padding: 3rem 2rem 2rem; display: flex; flex-direction: column; position: relative; }
+#chat-screen .ch-zipper { display: flex; align-items: center; width: 100%; margin-bottom: 2rem; opacity: 0.6; }
+#chat-screen .ch-zipper-teeth { flex: 1; height: 8px; background-image: repeating-linear-gradient(90deg,transparent,transparent 3px,#121212 3px,#121212 6px); }
+#chat-screen .ch-zipper-head { font-size: 1.5rem; color: #121212; margin: 0 8px; cursor: pointer; transition: transform 0.4s cubic-bezier(0.16,1,0.3,1), color 0.4s; }
+#chat-screen .ch-zipper-head:active { transform: scale(0.85); }
+#chat-screen.ch-collapsed .ch-zipper-head { color: #9c2b2b; transform: rotate(-15deg); }
+#chat-screen .ch-dossier-meta-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; }
+#chat-screen .ch-dossier-meta { font-size: 0.65rem; text-transform: uppercase; letter-spacing: 4px; font-weight: 600; color: #121212; }
+#chat-screen .ch-auth-seal { position: relative; width: 68px; height: 68px; display: flex; justify-content: center; align-items: center; color: #121212; opacity: 0.85; }
+#chat-screen .ch-seal-svg { position: absolute; width: 100%; height: 100%; animation: ch-spin-slow 15s linear infinite; }
+#chat-screen .ch-seal-svg text { font-family: 'DM Sans', sans-serif; font-size: 11.5px; font-weight: 600; letter-spacing: 2px; text-transform: uppercase; fill: currentColor; }
+#chat-screen .ch-seal-icon { font-size: 1.2rem; animation: ch-breath 4s ease-in-out infinite; }
+@keyframes ch-spin-slow { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
+@keyframes ch-breath { 0%,100%{transform:scale(1);opacity:0.9} 50%{transform:scale(0.75);opacity:0.4} }
+#chat-screen .ch-identity-core { display: flex; gap: 1.5rem; align-items: stretch; margin-bottom: 2.5rem; }
+#chat-screen .ch-window-el { display: flex; flex-direction: column; align-items: center; gap: 0.5rem; }
+#chat-screen .ch-window-cutout { width: 80px; height: 110px; background: #FAFAFA; border-radius: 6px; box-shadow: inset 0 6px 12px rgba(0,0,0,0.3), 0 2px 0 rgba(255,255,255,0.8); padding: 4px; position: relative; overflow: hidden; }
+#chat-screen .ch-window-cutout img { width: 100%; height: 100%; object-fit: cover; border-radius: 3px; box-shadow: 0 0 5px rgba(0,0,0,0.5); }
+#chat-screen .ch-window-label { font-size: 0.5rem; letter-spacing: 2px; color: #888; text-transform: uppercase; }
+#chat-screen .ch-identity-text { flex: 1; display: flex; flex-direction: column; justify-content: center; }
+#chat-screen .ch-persona-name { font-family: 'Cormorant Garamond', serif; font-size: 2.2rem; font-weight: 700; line-height: 1.1; color: #121212; margin-bottom: 0.8rem; word-break: break-word; }
+#chat-screen .ch-role-label { font-size: 0.55rem; color: #888; text-transform: uppercase; letter-spacing: 3px; }
+#chat-screen .ch-role-value { font-family: 'Cormorant Garamond', serif; font-size: 1.2rem; font-weight: 600; color: #121212; }
+#chat-screen .ch-fastener-actions { display: flex; gap: 2rem; align-items: center; }
+#chat-screen .ch-action-item { display: flex; flex-direction: column; align-items: center; gap: 0.8rem; cursor: pointer; }
+#chat-screen .ch-action-text { font-size: 0.6rem; letter-spacing: 2px; text-transform: uppercase; font-weight: 600; color: #121212; transition: opacity 0.2s; }
+#chat-screen .ch-btn-fastener { width: 44px; height: 44px; border-radius: 50%; background: #E0DDD6; border: 1px solid rgba(0,0,0,0.1); box-shadow: inset 0 -3px 5px rgba(0,0,0,0.15), inset 0 3px 5px rgba(255,255,255,0.7), 2px 4px 8px rgba(0,0,0,0.1); display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; gap: 6px; padding: 12px; position: relative; transition: transform 0.15s; }
+#chat-screen .ch-action-item:active .ch-btn-fastener { transform: scale(0.92) translateY(2px); box-shadow: inset 0 2px 5px rgba(0,0,0,0.2), 0 1px 2px rgba(0,0,0,0.1); }
+#chat-screen .ch-action-item:active .ch-action-text { opacity: 0.6; }
+#chat-screen .ch-btn-hole { width: 100%; height: 100%; border-radius: 50%; background: #222; box-shadow: inset 0 2px 3px rgba(0,0,0,0.8), 0 1px 0 rgba(255,255,255,0.4); }
+#chat-screen .ch-btn-fastener::after {
+  content: ''; position: absolute; top: 50%; left: 50%; width: 20px; height: 20px; transform: translate(-50%, -50%);
+  background: linear-gradient(45deg, transparent 40%, #EFECE7 40%, #EFECE7 60%, transparent 60%), linear-gradient(-45deg, transparent 40%, #EFECE7 40%, #EFECE7 60%, transparent 60%);
+  opacity: 0.85; pointer-events: none; filter: drop-shadow(0 1px 1px rgba(0,0,0,0.3));
+}
+#chat-screen .ch-dossier-lower { flex: 1; padding: 0 2rem 3rem; display: flex; flex-direction: column; }
+#chat-screen .ch-blueprint { flex: 1; width: 100%; border: 2px dashed rgba(0,0,0,0.1); border-radius: 12px; background-image: linear-gradient(rgba(0,0,0,0.03) 1px,transparent 1px),linear-gradient(90deg,rgba(0,0,0,0.03) 1px,transparent 1px); background-size: 20px 20px; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 1rem; color: rgba(0,0,0,0.3); }
+#chat-screen .ch-blueprint i { font-size: 2rem; }
+#chat-screen .ch-blueprint span { font-size: 0.65rem; letter-spacing: 3px; text-transform: uppercase; font-weight: 500; }
+
+/* Vault overlay */
+#chat-screen .ch-vault-overlay { position: absolute; inset: 0; background: rgba(10,10,12,0.95); backdrop-filter: blur(20px); z-index: 200; opacity: 0; pointer-events: none; transition: opacity 0.5s; display: flex; flex-direction: column; color: #F0F0F0; }
+#chat-screen .ch-vault-overlay.active { opacity: 1; pointer-events: auto; }
+#chat-screen .ch-vault-header { padding: 3rem 2rem 1rem; display: flex; justify-content: space-between; align-items: flex-end; }
+#chat-screen .ch-vault-title { font-family: 'Cormorant Garamond', serif; font-size: 2.5rem; font-style: italic; line-height: 1; font-weight: 400; }
+#chat-screen .ch-vault-subtitle { font-size: 0.6rem; letter-spacing: 4px; text-transform: uppercase; color: #A0A0A0; margin-top: 4px; }
+#chat-screen .ch-vault-close { width: 40px; height: 40px; border: 1px solid rgba(255,255,255,0.15); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; color: #F0F0F0; background: rgba(255,255,255,0.05); cursor: pointer; }
+#chat-screen .ch-vault-close:active { background: rgba(255,255,255,0.2); transform: scale(0.9); }
+#chat-screen .ch-vault-carousel { flex: 1; display: flex; align-items: center; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; padding: 0 2rem; gap: 1.5rem; }
+#chat-screen .ch-vault-carousel::-webkit-scrollbar { display: none; }
+#chat-screen .ch-vault-footer { padding: 1rem 2rem 3rem; text-align: center; font-size: 0.55rem; letter-spacing: 3px; color: rgba(255,255,255,0.3); text-transform: uppercase; }
+#chat-screen .ch-vault-card { scroll-snap-align: center; flex-shrink: 0; width: 240px; height: 360px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; display: flex; flex-direction: column; padding: 12px; position: relative; cursor: pointer; transition: transform 0.3s cubic-bezier(0.16,1,0.3,1), box-shadow 0.3s; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+#chat-screen .ch-vault-card:active { transform: scale(0.96); }
+#chat-screen .ch-vault-card.is-active { border-color: rgba(255,255,255,0.6); box-shadow: 0 0 20px rgba(255,255,255,0.1), 0 10px 30px rgba(0,0,0,0.5); }
+#chat-screen .ch-vault-card.is-active::after { content: 'ACTIVE'; position: absolute; top: 20px; right: 20px; background: rgba(0,0,0,0.7); backdrop-filter: blur(4px); padding: 4px 8px; border-radius: 4px; font-size: 0.5rem; letter-spacing: 2px; font-weight: 600; border: 1px solid rgba(255,255,255,0.2); color: #fff; }
+#chat-screen .ch-vault-img-wrap { width: 100%; height: 220px; border-radius: 8px; overflow: hidden; margin-bottom: 1.2rem; background: #111; }
+#chat-screen .ch-vault-img-wrap img { width: 100%; height: 100%; object-fit: cover; }
+#chat-screen .ch-vault-card-info { display: flex; flex-direction: column; gap: 4px; padding: 0 4px; }
+#chat-screen .ch-vault-card-name { font-family: 'Cormorant Garamond', serif; font-size: 1.6rem; font-weight: 500; color: #fff; line-height: 1.1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+#chat-screen .ch-vault-card-role { font-size: 0.65rem; text-transform: uppercase; letter-spacing: 2px; color: #A0A0A0; }
+#chat-screen .ch-vault-edit-btn { position: absolute; bottom: 16px; right: 16px; width: 36px; height: 36px; background: rgba(255,255,255,0.1); backdrop-filter: blur(10px); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #fff; border: 1px solid rgba(255,255,255,0.2); cursor: pointer; }
+#chat-screen .ch-vault-edit-btn:active { background: #fff; color: #000; }
+#chat-screen .ch-vault-add { background: transparent; border: 1px dashed rgba(255,255,255,0.3); justify-content: center; align-items: center; text-align: center; gap: 1rem; }
+#chat-screen .ch-vault-add i { font-size: 2.5rem; color: rgba(255,255,255,0.5); }
+#chat-screen .ch-vault-add span { font-family: 'Cormorant Garamond', serif; font-size: 1.2rem; color: rgba(255,255,255,0.8); }
+
+/* Persona edit modal */
+#chat-screen .ch-edit-modal { position: absolute; inset: 0; background: rgba(239,236,231,0.8); backdrop-filter: blur(15px); opacity: 0; pointer-events: none; transition: opacity 0.4s; z-index: 300; display: flex; align-items: flex-end; }
+#chat-screen .ch-edit-modal.active { opacity: 1; pointer-events: auto; }
+#chat-screen .ch-edit-sheet { width: 100%; background: #FAFAFA; border-radius: 24px 24px 0 0; padding: 2.5rem 2rem 3rem; transform: translateY(100%); transition: transform 0.5s cubic-bezier(0.16,1,0.3,1); display: flex; flex-direction: column; box-shadow: 0 -10px 40px rgba(0,0,0,0.08); max-height: 90%; overflow-y: auto; }
+#chat-screen .ch-edit-modal.active .ch-edit-sheet { transform: translateY(0); }
+#chat-screen .ch-edit-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; }
+#chat-screen .ch-edit-title { font-family: 'Cormorant Garamond', serif; font-size: 1.8rem; font-style: italic; line-height: 1; }
+#chat-screen .ch-circle-close { width: 36px; height: 36px; border: 1px solid rgba(0,0,0,0.15); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; color: #121212; background: transparent; cursor: pointer; }
+#chat-screen .ch-circle-close:active { background: rgba(0,0,0,0.05); transform: scale(0.9); }
+#chat-screen .ch-upload-section { display: flex; align-items: center; gap: 1.5rem; margin-bottom: 2rem; }
+#chat-screen .ch-upload-sq { width: 64px; height: 64px; border: 1px dashed rgba(0,0,0,0.3); display: flex; align-items: center; justify-content: center; color: #888; cursor: pointer; position: relative; overflow: hidden; background: rgba(0,0,0,0.02); flex-shrink: 0; }
+#chat-screen .ch-upload-sq img { width: 100%; height: 100%; object-fit: cover; position: absolute; inset: 0; display: none; }
+#chat-screen .ch-upload-sq.has-img img { display: block; }
+#chat-screen .ch-upload-info { flex: 1; font-size: 0.65rem; color: #888; text-transform: uppercase; letter-spacing: 1px; line-height: 1.5; }
+#chat-screen .ch-clean-input { width: 100%; background: transparent; border: none; border-bottom: 1px solid rgba(0,0,0,0.1); font-family: 'Cormorant Garamond', serif; font-size: 1.5rem; padding: 0.5rem 0; color: #121212; outline: none; transition: border-color 0.3s; margin-bottom: 1.5rem; display: block; }
+#chat-screen .ch-clean-input:focus { border-bottom-color: #121212; }
+#chat-screen .ch-clean-input::placeholder { color: rgba(0,0,0,0.2); }
+#chat-screen .ch-bio-input { font-size: 1rem; }
+#chat-screen .ch-clean-textarea { width: 100%; background: rgba(0,0,0,0.02); border: none; border-radius: 4px; padding: 1rem; font-family: 'DM Sans', sans-serif; font-size: 0.8rem; color: #121212; outline: none; resize: none; height: 100px; margin-bottom: 1rem; line-height: 1.5; }
+#chat-screen .ch-clean-textarea::placeholder { color: rgba(0,0,0,0.3); }
+#chat-screen .ch-action-row { display: flex; gap: 1rem; margin-top: 1rem; }
+#chat-screen .ch-save-persona-btn { flex: 1; background: #121212; color: #fff; padding: 1.2rem; border: none; border-radius: 4px; font-size: 0.85rem; font-weight: 600; letter-spacing: 2px; text-transform: uppercase; cursor: pointer; font-family: 'DM Sans', sans-serif; }
+#chat-screen .ch-save-persona-btn:active { transform: scale(0.98); }
+#chat-screen .ch-delete-persona-btn { width: 56px; background: transparent; border: 1px solid #9c2b2b; color: #9c2b2b; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; cursor: pointer; }
+#chat-screen .ch-delete-persona-btn:active { background: #9c2b2b; color: #fff; }
+#chat-screen .ch-delete-persona-btn.hidden { display: none; }
+
+/* New group modal */
+#chat-screen .ch-modal-overlay { position: absolute; inset: 0; background: rgba(239,236,231,0.7); backdrop-filter: blur(15px); opacity: 0; pointer-events: none; transition: opacity 0.4s; z-index: 200; }
+#chat-screen .ch-modal-overlay.active { opacity: 1; pointer-events: auto; }
+#chat-screen .ch-modal-sheet { position: absolute; bottom: 0; left: 0; width: 100%; height: 85%; background: #FAFAFA; border-radius: 24px 24px 0 0; padding: 2rem 1.5rem; transform: translateY(100%); transition: transform 0.5s cubic-bezier(0.16,1,0.3,1); display: flex; flex-direction: column; box-shadow: 0 -10px 40px rgba(0,0,0,0.08); }
+#chat-screen .ch-modal-overlay.active .ch-modal-sheet { transform: translateY(0); }
+#chat-screen .ch-modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; }
+#chat-screen .ch-modal-title { font-family: 'Cormorant Garamond', serif; font-size: 2rem; font-style: italic; line-height: 1; color: #121212; }
+#chat-screen .ch-close-btn { background: none; border: none; font-size: 1.5rem; color: #121212; cursor: pointer; }
+#chat-screen .ch-group-input { width: 100%; background: transparent; border: none; border-bottom: 1px solid rgba(0,0,0,0.1); font-family: 'Cormorant Garamond', serif; font-size: 2rem; padding: 0.5rem 0; color: #121212; outline: none; transition: border-color 0.3s; margin-bottom: 2rem; }
+#chat-screen .ch-group-input:focus { border-bottom-color: #121212; }
+#chat-screen .ch-group-input::placeholder { color: rgba(0,0,0,0.2); }
+#chat-screen .ch-pin-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 2px; color: #121212; }
+#chat-screen .ch-pin-toggle { width: 44px; height: 24px; background: rgba(0,0,0,0.1); border-radius: 12px; position: relative; cursor: pointer; transition: background 0.3s; }
+#chat-screen .ch-pin-toggle.on { background: #121212; }
+#chat-screen .ch-pin-knob { width: 20px; height: 20px; background: #fff; border-radius: 50%; position: absolute; top: 2px; left: 2px; transition: transform 0.3s cubic-bezier(0.16,1,0.3,1); box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
+#chat-screen .ch-pin-toggle.on .ch-pin-knob { transform: translateX(20px); }
+#chat-screen .ch-sel-title { font-size: 0.65rem; font-weight: 600; text-transform: uppercase; letter-spacing: 2px; color: #888; margin-bottom: 1rem; }
+#chat-screen .ch-sel-scroll { display: flex; gap: 1rem; overflow-x: auto; scrollbar-width: none; padding-bottom: 1rem; flex: 1; }
+#chat-screen .ch-sel-scroll::-webkit-scrollbar { display: none; }
+#chat-screen .ch-sel-item { width: 100px; flex-shrink: 0; display: flex; flex-direction: column; align-items: center; gap: 8px; cursor: pointer; }
+#chat-screen .ch-sel-photo-wrap { position: relative; width: 100%; aspect-ratio: 3/4; border-radius: 4px; overflow: hidden; transition: transform 0.2s; box-shadow: 0 5px 15px rgba(0,0,0,0.05); }
+#chat-screen .ch-sel-item:active .ch-sel-photo-wrap { transform: scale(0.95); }
+#chat-screen .ch-sel-photo { width: 100%; height: 100%; object-fit: cover; filter: grayscale(100%) opacity(0.6); transition: all 0.4s; }
+#chat-screen .ch-sel-item.selected .ch-sel-photo { filter: grayscale(0%) opacity(1); }
+#chat-screen .ch-sel-item.selected .ch-sel-photo-wrap { box-shadow: 0 0 0 2px #FAFAFA, 0 0 0 4px #121212; }
+#chat-screen .ch-sel-name { font-family: 'Cormorant Garamond', serif; font-size: 1.1rem; font-weight: 600; color: #121212; }
+#chat-screen .ch-save-btn { width: 100%; background: #121212; color: #fff; padding: 1.2rem; border: none; border-radius: 4px; font-size: 0.85rem; font-weight: 600; letter-spacing: 2px; text-transform: uppercase; cursor: pointer; margin-top: auto; font-family: 'DM Sans', sans-serif; }
+#chat-screen .ch-save-btn:active { background: #000; transform: scale(0.98); }
+
+/* ============================================================
+   Persona Select Overlay — 面具选择浮窗
+   ============================================================ */
+#ps-overlay {
+  position: absolute; inset: 0;
+  background: rgba(0,0,0,0.85); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+  opacity: 0; visibility: hidden; transition: opacity 0.5s ease;
+  z-index: 500;
+}
+#ps-overlay.active { opacity: 1; visibility: visible; }
+
+#ps-monolith {
+  position: absolute; top: 50%; left: 50%;
+  transform: translate(-50%, -45%) scale(0.95);
+  width: 92%; max-width: 360px; height: 78%;
+  background: rgba(15,15,15,0.92);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 24px;
+  display: flex; flex-direction: column; padding: 24px 0;
+  opacity: 0; visibility: hidden;
+  transition: all 0.6s cubic-bezier(0.25,1,0.2,1);
+  box-shadow: 0 40px 80px rgba(0,0,0,0.9), inset 0 1px 0 rgba(255,255,255,0.05);
+  z-index: 501;
+}
+#ps-monolith.active {
+  transform: translate(-50%, -50%) scale(1);
+  opacity: 1; visibility: visible;
+}
+
+.ps-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; padding: 0 24px; }
+.ps-header h2 { font-family: 'Cormorant Garamond', serif; font-size: 1.2rem; font-weight: 400; font-style: italic; color: #fff; }
+.ps-header-meta { font-size: 0.6667rem; letter-spacing: 2px; color: rgba(255,255,255,0.4); text-transform: uppercase; }
+
+.ps-gallery { flex: 1; width: 100%; overflow: hidden; position: relative; }
+.ps-accordion {
+  height: 100%; display: flex; gap: 8px;
+  overflow-x: auto; overflow-y: hidden;
+  scroll-snap-type: x mandatory; scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+  padding: 0 calc(50% - 120px); /* 120 = 240/2 */
+}
+.ps-accordion::-webkit-scrollbar { display: none; }
+
+.ps-pane {
+  flex-shrink: 0; width: 56px; height: 100%;
+  border-radius: 12px; background: #111;
+  position: relative; overflow: hidden; cursor: pointer;
+  scroll-snap-align: center;
+  transition: width 0.6s cubic-bezier(0.25,1,0.2,1), filter 0.6s ease;
+  filter: grayscale(100%) brightness(0.4);
+}
+.ps-pane.active { width: 240px; filter: grayscale(0%) brightness(1); cursor: default; }
+.ps-pane img { width: 100%; height: 100%; object-fit: cover; object-position: center 20%; position: absolute; top: 0; left: 0; transition: transform 1.5s ease; }
+.ps-pane.active img { transform: scale(1.03); }
+
+.ps-spine {
+  position: absolute; bottom: 24px; left: 50%; transform: translateX(-50%);
+  display: flex; flex-direction: column; align-items: center; gap: 12px;
+  transition: opacity 0.3s; z-index: 2;
+}
+.ps-pane.active .ps-spine { opacity: 0; pointer-events: none; }
+.ps-spine-num { font-family: 'Space Mono', monospace; font-size: 0.8667rem; color: #C4A484; opacity: 0.8; }
+.ps-spine-text { font-family: 'Noto Sans SC', sans-serif; writing-mode: vertical-rl; font-size: 1rem; font-weight: 300; letter-spacing: 6px; color: rgba(255,255,255,0.7); white-space: nowrap; }
+
+.ps-content {
+  position: absolute; bottom: 0; left: 0; width: 100%;
+  padding: 60px 20px 24px;
+  background: linear-gradient(to top, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.6) 40%, transparent 100%);
+  opacity: 0; transform: translateY(15px);
+  transition: opacity 0.6s ease 0.2s, transform 0.6s cubic-bezier(0.25,1,0.2,1) 0.2s;
+  pointer-events: none; display: flex; flex-direction: column; align-items: center;
+}
+.ps-pane.active .ps-content { opacity: 1; transform: translateY(0); }
+.ps-content-name { font-family: 'Noto Sans SC', sans-serif; font-size: 1.8667rem; font-weight: 600; margin-bottom: 8px; letter-spacing: 2px; color: #fff; }
+.ps-content-bio { font-family: 'Cormorant Garamond', serif; font-size: 0.8rem; letter-spacing: 2px; color: #C4A484; font-style: italic; text-align: center; max-width: 180px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* 空状态 */
+.ps-pane-placeholder { width: 240px; flex-shrink: 0; scroll-snap-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; color: rgba(255,255,255,0.3); border-radius: 12px; border: 1px dashed rgba(255,255,255,0.15); cursor: pointer; }
+.ps-pane-placeholder i { font-size: 2rem; }
+.ps-pane-placeholder span { font-size: 0.6667rem; letter-spacing: 3px; text-transform: uppercase; }
+
+.ps-footer { margin-top: 24px; padding: 0 24px; display: flex; justify-content: space-between; align-items: center; }
+.ps-status { display: flex; align-items: center; gap: 8px; }
+.ps-dot { width: 6px; height: 6px; background: #C4A484; border-radius: 50%; animation: ps-pulse 2s infinite; }
+@keyframes ps-pulse { 0%{box-shadow:0 0 0 0 rgba(196,164,132,0.4)} 70%{box-shadow:0 0 0 6px rgba(196,164,132,0)} 100%{box-shadow:0 0 0 0 rgba(196,164,132,0)} }
+.ps-status-text { font-size: 0.6667rem; letter-spacing: 2px; color: rgba(255,255,255,0.4); text-transform: uppercase; }
+.ps-confirm-btn {
+  background: #fff; color: #000; border: none;
+  padding: 14px 28px; border-radius: 100px;
+  font-family: 'DM Sans', sans-serif; font-size: 0.8rem; font-weight: 600;
+  letter-spacing: 2px; text-transform: uppercase; cursor: pointer; transition: all 0.3s;
+}
+.ps-confirm-btn:active { transform: scale(0.95); background: #C4A484; }
+
+/* ============================================================
+   Conv Screen — 聊天页面
+   ============================================================ */
+#conv-screen { background: #EFECE7; overflow: hidden; z-index: 160; font-family: 'Inter','Noto Sans SC',sans-serif; }
+#conv-screen .cv-noise { position:absolute;inset:0;pointer-events:none;z-index:0;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.035'/%3E%3C/svg%3E"); }
+#conv-screen .cv-watermark { position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-family:'Playfair Display',serif;font-size:280px;font-style:italic;font-weight:300;color:rgba(0,0,0,0.025);pointer-events:none;z-index:0;line-height:1; }
+
+/* Header */
+#conv-screen .cv-header { position:absolute;top:20px;left:16px;right:16px;display:flex;justify-content:space-between;align-items:center;padding:12px 16px;background:rgba(239,236,231,0.7);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);border:1px solid rgba(255,255,255,0.4);border-radius:28px;box-shadow:0 10px 30px rgba(0,0,0,0.06);z-index:20; }
+#conv-screen .cv-icon-btn { width:40px;height:40px;border-radius:50%;background:#fff;border:1px solid rgba(18,18,18,0.05);color:#121212;font-size:1.2rem;display:flex;justify-content:center;align-items:center;cursor:pointer;transition:0.2s;box-shadow:0 2px 10px rgba(0,0,0,0.03); }
+#conv-screen .cv-icon-btn:active { transform:scale(0.9); }
+#conv-screen .cv-header-profile { display:flex;align-items:center;gap:12px; }
+#conv-screen .cv-header-avatar { width:38px;height:38px;border-radius:50%;object-fit:cover; }
+#conv-screen .cv-header-name { font-family:'Playfair Display',serif;font-size:1.3rem;font-weight:500;font-style:italic;color:#121212;line-height:1;display:block; }
+#conv-screen .cv-header-status { font-family:'Space Mono',monospace;font-size:0.5rem;letter-spacing:2px;color:#888;margin-top:4px;text-transform:uppercase;display:block; }
+
+/* Feed */
+#conv-screen .cv-feed { height:100%;overflow-y:auto;padding:110px 20px 130px;display:flex;flex-direction:column;gap:28px;position:relative;scroll-behavior:smooth;z-index:10; }
+#conv-screen .cv-feed::-webkit-scrollbar { display:none; }
+
+/* Load more */
+#conv-screen .cv-load-more { display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;margin-bottom:8px;cursor:pointer;opacity:0.6;transition:all 0.3s; }
+#conv-screen .cv-load-more:active { opacity:1;transform:scale(0.95); }
+#conv-screen .cv-lm-icon { font-size:1.6rem;color:#121212;animation:cv-spin-slow 6s linear infinite; }
+#conv-screen .cv-lm-text { font-family:'Space Mono',monospace;font-size:0.5rem;letter-spacing:3px;color:#121212;text-transform:uppercase; }
+@keyframes cv-spin-slow { 100%{transform:rotate(360deg);} }
+
+/* Time divider */
+#conv-screen .cv-time-div { display:flex;align-items:center;justify-content:center;gap:16px;margin:10px 0;opacity:0.7; }
+#conv-screen .cv-tdline { width:30px;height:1px;background:#121212;opacity:0.2; }
+#conv-screen .cv-tdtext { font-family:'Playfair Display',serif;font-size:0.8rem;color:#121212;font-style:italic;font-weight:500;letter-spacing:1px;display:flex;align-items:center;gap:8px; }
+#conv-screen .cv-tdtime { font-family:'Space Mono',monospace;font-size:0.65rem;font-style:normal;font-weight:400;opacity:0.7; }
+
+/* Message rows */
+#conv-screen .cv-msg-row { display:flex;align-items:flex-end;gap:12px;width:100%;animation:cv-fade-up 0.4s cubic-bezier(0.16,1,0.3,1) forwards;position:relative; }
+@keyframes cv-fade-up { 0%{opacity:0;transform:translateY(10px);}100%{opacity:1;transform:translateY(0);} }
+#conv-screen .cv-msg-row.ai { flex-direction:row; }
+#conv-screen .cv-msg-row.user { flex-direction:row-reverse; }
+#conv-screen .cv-avatar-wrap { position:relative;width:40px;height:40px;flex-shrink:0; }
+#conv-screen .cv-msg-avatar { width:100%;height:100%;border-radius:50%;object-fit:cover;box-shadow:0 4px 10px rgba(0,0,0,0.05); }
+#conv-screen .cv-msg-time { position:absolute;top:calc(100% + 6px);left:50%;transform:translateX(-50%);font-family:'Space Mono',monospace;font-size:0.55rem;color:#888;white-space:nowrap; }
+
+/* Bubbles */
+#conv-screen .cv-bubble { max-width:75%;width:fit-content;padding:8px 12px;border-radius:14px;font-size:13px;line-height:1.4;border:0.5px solid #121212;position:relative;z-index:1;word-break:break-word; }
+#conv-screen .cv-msg-row.ai  .cv-bubble { background:#121212;color:#fff;border-color:#121212; }
+#conv-screen .cv-msg-row.user .cv-bubble { background:#fff;color:#121212;box-shadow:0 4px 10px rgba(0,0,0,0.02); }
+
+/* Typing indicator */
+#conv-screen .cv-msg-row.typing .cv-msg-avatar { filter:grayscale(100%) opacity(0.6); }
+#conv-screen .cv-bubble.typing-capsule { background:transparent!important;border:1px solid #121212!important;border-radius:100px!important;padding:8px 14px!important;display:flex;align-items:center;gap:8px;box-shadow:none!important;color:#121212!important; }
+#conv-screen .cv-ticking { font-size:1rem;color:#121212;animation:cv-tick-spin 1.2s steps(6) infinite; }
+@keyframes cv-tick-spin { from{transform:rotate(0deg);}to{transform:rotate(360deg);} }
+#conv-screen .cv-typing-text { font-family:'Space Mono',monospace;font-size:0.55rem;letter-spacing:2px;color:#121212;text-transform:uppercase; }
+#conv-screen .cv-cursor { display:inline-block;width:5px;height:10px;background:#121212;margin-left:4px;vertical-align:middle;animation:cv-blink 0.8s steps(2) infinite; }
+@keyframes cv-blink { 0%,100%{opacity:1;}50%{opacity:0;} }
+
+/* Footer */
+#conv-screen .cv-footer { position:absolute;bottom:24px;left:16px;right:16px;padding:8px 12px;background:rgba(239,236,231,0.85);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);border:1px solid rgba(255,255,255,0.4);border-radius:36px;box-shadow:0 15px 40px rgba(0,0,0,0.08),inset 0 1px 0 rgba(255,255,255,0.6);display:flex;align-items:flex-end;gap:12px;z-index:20; }
+#conv-screen .cv-func-btn { width:44px;height:44px;border-radius:50%;background:#fff;border:1px solid rgba(18,18,18,0.05);color:#121212;font-size:1.4rem;display:flex;justify-content:center;align-items:center;cursor:pointer;flex-shrink:0;margin-bottom:2px;box-shadow:0 2px 10px rgba(0,0,0,0.03); }
+#conv-screen .cv-func-btn:active { transform:scale(0.9); }
+#conv-screen .cv-input-area { flex:1;background:transparent; }
+#conv-screen .cv-input-area textarea { width:100%;background:transparent;border:none;font-family:'Inter','Noto Sans SC',sans-serif;font-size:0.95rem;color:#121212;resize:none;max-height:120px;line-height:1.5;padding:12px 4px;height:44px; }
+#conv-screen .cv-input-area textarea::placeholder { color:#A0A0A0;font-family:'Playfair Display',serif;font-style:italic; }
+#conv-screen .cv-action-capsule { display:flex;align-items:center;gap:4px;background:#121212;border-radius:100px;padding:4px;flex-shrink:0;margin-bottom:2px; }
+#conv-screen .cv-btn-user { width:40px;height:40px;border-radius:50%;background:transparent;border:none;color:#fff;font-size:1.2rem;display:flex;justify-content:center;align-items:center;cursor:pointer;transition:0.2s; }
+#conv-screen .cv-btn-user:active { opacity:0.5; }
+#conv-screen .cv-btn-ai { width:40px;height:40px;border-radius:50%;background:#fff;border:none;color:#121212;font-size:1.2rem;display:flex;justify-content:center;align-items:center;cursor:pointer;transition:0.2s;box-shadow:0 2px 8px rgba(0,0,0,0.2); }
+#conv-screen .cv-btn-ai:active { transform:scale(0.9); }
 
 </style>
 </head>
@@ -444,9 +1007,8 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg-body);display:flex;jus
           <h1 class="serif" id="day-main">Saturday.</h1>
           <div class="date-time-line"><p id="date-main">OCT 24</p><span>•</span><p id="time-main">09:41</p></div>
         </div>
-        <div class="theme-switch" id="theme-btn"><i class="ph ph-moon" id="theme-icon"></i></div>
-      </div>
-
+       <div class="theme-switch" id="theme-btn">MODE: DAY</div></div>
+       
       <div class="profile-card">
         <div class="avatar-wrap" id="avatar-wrap">
           <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&q=80" alt="" class="avatar" id="profile-avatar">
@@ -500,14 +1062,38 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg-body);display:flex;jus
       </div>
 
       <div class="grid-icons" id="grid-icons">
-        <div class="icon-box" data-icon-id="0"><i class="ph ph-image"></i></div>
-        <div class="icon-box" data-icon-id="1"><i class="ph ph-envelope-simple"></i></div>
-        <div class="icon-box" data-icon-id="2"><i class="ph ph-music-note"></i></div>
-        <div class="icon-box" data-icon-id="3"><i class="ph ph-calendar-blank"></i></div>
-        <div class="icon-box" data-icon-id="4" id="icon-settings"><i class="ph ph-gear"></i></div>
-        <div class="icon-box" data-icon-id="5"><i class="ph ph-bell"></i></div>
-        <div class="icon-box" data-icon-id="6"><i class="ph ph-spotify-logo"></i></div>
-        <div class="icon-box" data-icon-id="7"><i class="ph ph-cloud"></i></div>
+        <div class="icon-cell">
+          <div class="icon-box" data-icon-id="0"><i class="ph ph-image"></i></div>
+          <span class="icon-label">待定</span>
+        </div>
+        <div class="icon-cell">
+          <div class="icon-box" data-icon-id="1"><i class="ph ph-envelope-simple"></i></div>
+          <span class="icon-label">待定</span>
+        </div>
+        <div class="icon-cell">
+          <div class="icon-box" data-icon-id="2"><i class="ph ph-music-note"></i></div>
+          <span class="icon-label">音乐</span>
+        </div>
+        <div class="icon-cell">
+          <div class="icon-box" data-icon-id="3"><i class="ph ph-calendar-blank"></i></div>
+          <span class="icon-label">行程</span>
+        </div>
+        <div class="icon-cell">
+          <div class="icon-box" data-icon-id="4" id="icon-settings"><i class="ph ph-gear"></i></div>
+          <span class="icon-label">设置</span>
+        </div>
+        <div class="icon-cell">
+          <div class="icon-box" data-icon-id="5"><i class="ph ph-bell"></i></div>
+          <span class="icon-label">待定</span>
+        </div>
+        <div class="icon-cell">
+          <div class="icon-box" data-icon-id="6"><i class="ph ph-spotify-logo"></i></div>
+          <span class="icon-label">待定</span>
+        </div>
+        <div class="icon-cell">
+          <div class="icon-box" data-icon-id="7"><i class="ph ph-cloud"></i></div>
+          <span class="icon-label">云端</span>
+        </div>
       </div>
     </div>
 
@@ -537,7 +1123,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg-body);display:flex;jus
       <div class="dock">
         <div class="dock-item active-dot" onclick="toggleDock(event)"><i class="ph-fill ph-house"></i></div>
         <div class="dock-item"><i class="ph-fill ph-magnifying-glass"></i></div>
-        <div class="dock-item"><i class="ph-fill ph-chat-circle-dots"></i></div>
+        <div class="dock-item" onclick="Router.go('chat')"><i class="ph-fill ph-chat-circle-dots"></i></div>
         <div class="dock-item" id="dock-character"><i class="ph-fill ph-user"></i></div>
       </div>
     </div>
@@ -564,6 +1150,10 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg-body);display:flex;jus
         <div class="menu-item" onclick="Router.go('data-page','D')">
           <span class="menu-text-cn">数据设置</span>
           <span class="menu-text-en">Storage & Backup</span>
+        </div>
+        <div class="menu-item" onclick="Router.go('system-page','⌘')">
+          <span class="menu-text-cn">系统设置</span>
+          <span class="menu-text-en">Display & Typography</span>
         </div>
       </div>
     </div>
@@ -635,7 +1225,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg-body);display:flex;jus
         </div>
         <div class="form-section">
           <div class="section-title">自定义图标 / Icons</div>
-          <p style="font-size:12px;color:var(--s-text-secondary);margin-bottom:14px;">点击对应位置上传图片</p>
+          <p style="font-size:0.8rem;color:var(--s-text-secondary);margin-bottom:14px;">点击对应位置上传图片</p>
           <div class="icons-grid-edit" id="icons-grid-edit"></div>
           <button class="btn-ghost" onclick="UIModule.clearAllIcons()">恢复所有图标默认</button>
         </div>
@@ -661,10 +1251,103 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg-body);display:flex;jus
         <button class="btn-ghost"   onclick="DataModule.clearAll()">清除全部数据</button>
       </div>
     </div>
-  </div>
 
+    <!-- 系统设置页 -->
+    <div id="system-page" class="settings-page">
+      <div class="page-watermark">Sys</div>
+      <div class="nav-bar">
+        <span class="nav-title">系统设置</span>
+        <button class="sub-back-btn" onclick="Router.back()">Back</button>
+      </div>
+      <div class="content-scroll">
 
-  <!-- ==================== CHARACTER SCREEN ==================== -->
+        <!-- ── 显示设置 ── -->
+        <div class="form-section">
+          <div class="section-title">显示设置 / Display</div>
+          <div class="toggle-row">
+            <div class="toggle-row-info">
+              <div class="toggle-row-label">图标标签</div>
+              <div class="toggle-row-desc">在主页图标下方显示文字说明</div>
+            </div>
+            <label class="toggle-switch">
+              <input type="checkbox" id="sys-toggle-icon-labels" checked
+                onchange="SystemModule.toggleIconLabels(this.checked)">
+              <div class="toggle-track"></div>
+              <div class="toggle-thumb"></div>
+            </label>
+          </div>
+        </div>
+
+        <!-- ── 字体大小 ── -->
+        <div class="form-section">
+          <div class="section-title">字体大小 / Font Size</div>
+          <div class="sys-size-preview-box">
+            <div class="sys-size-preview-label">Preview</div>
+            <div class="sys-size-preview-text" id="sys-size-preview">
+              今天也是平静的一天。<em>Chill Mono OS</em> — keeping it simple &amp; quiet.
+            </div>
+          </div>
+          <div class="input-wrapper" style="margin-bottom:16px;">
+            <div class="slider-row">
+              <span style="font-size:0.7333rem;color:var(--s-text-secondary);width:24px;flex-shrink:0;">A</span>
+              <input type="range" id="sys-font-size-slider" class="styled-slider"
+                min="12" max="20" step="1" value="15"
+                oninput="SystemModule.onFontSizeInput(this.value)">
+              <span style="font-size:1.1333rem;color:var(--s-text-secondary);width:20px;flex-shrink:0;">A</span>
+              <span class="slider-val" id="sys-font-size-display">15</span>
+            </div>
+          </div>
+          <button class="btn-primary" onclick="SystemModule.saveFontSize()">保存字体大小</button>
+        </div>
+
+        <!-- ── 自定义字体 ── -->
+        <div class="form-section">
+          <div class="section-title">自定义字体 / Custom Font</div>
+          <div class="sys-hint">
+            支持 Google Fonts CSS 链接，或直接填入字体文件 URL（.woff2 / .woff / .ttf / .otf）。<br>
+            字体将应用于主界面正文，内置标题装饰字体不受影响。
+          </div>
+
+          <div class="sys-font-add-box">
+            <div class="input-wrapper" style="margin-bottom:20px;">
+              <label class="label-text">字体名称 / Name</label>
+              <input type="text" id="sys-font-name" class="input-line" placeholder="例：LXGW WenKai">
+            </div>
+            <div class="input-wrapper" style="margin-bottom:4px;">
+              <label class="label-text">字体地址 / URL</label>
+              <input type="text" id="sys-font-url" class="input-line"
+                placeholder="https://fonts.googleapis.com/css2?family=... 或 .woff2 直链">
+            </div>
+            <div class="sys-font-add-preview" id="sys-add-font-preview">
+              今天也是平静的一天。The quick brown fox jumps over the lazy dog.
+            </div>
+            <div style="display:flex;gap:10px;margin-top:20px;">
+              <button class="btn-outline" style="margin-bottom:0;flex:1;" onclick="SystemModule.previewFont()">预览</button>
+              <button class="btn-primary" style="margin-bottom:0;flex:1;" onclick="SystemModule.addFont()">添加字体</button>
+            </div>
+          </div>
+
+          <!-- 已保存字体列表 -->
+          <div class="section-title" style="margin-top:8px;">已保存 / Saved</div>
+          <div class="sys-font-list" id="sys-font-list">
+            <div class="sys-font-empty">暂无自定义字体</div>
+          </div>
+          <button class="btn-ghost" onclick="SystemModule.deactivateFont()">恢复默认字体</button>
+        </div>
+
+        <!-- 预留区域 -->
+        <div class="form-section" style="opacity:0.35;pointer-events:none;">
+          <div class="section-title">更多选项 / More &nbsp;<span style="font-size:0.6rem;letter-spacing:1px;">(即将推出)</span></div>
+          <div style="font-size:0.8rem;color:var(--s-text-secondary);padding:16px 0;line-height:2.2;">
+            动画速度 / Animation Speed<br>
+            布局密度 / Layout Density<br>
+            无障碍选项 / Accessibility
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div><!-- #settings-screen -->
   <div id="character-screen" class="screen">
 
     <!-- AI 加载遮罩 -->
@@ -722,7 +1405,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg-body);display:flex;jus
         <div class="char-article">
           <!-- 重试按钮：仅 AI 调用失败时显示 -->
           <div id="char-retry-block" style="display:none;text-align:center;margin-bottom:30px;">
-            <div style="font-family:var(--font-mono-char);font-size:10px;color:var(--char-ink-light);letter-spacing:1px;margin-bottom:12px;">EDITORIAL GENERATION FAILED</div>
+            <div style="font-family:var(--font-mono-char);font-size:0.6667rem;color:var(--char-ink-light);letter-spacing:1px;margin-bottom:12px;">EDITORIAL GENERATION FAILED</div>
             <button class="char-action-btn" onclick="CharacterModule.retryAI()" style="margin:0 auto;pointer-events:auto;">
               <i class="ph ph-arrow-clockwise"></i> 重新生成档案
             </button>
@@ -788,6 +1471,261 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg-body);display:flex;jus
     </div>
 
   </div><!-- #character-screen -->
+
+  <!-- ==================== CHAT SCREEN ==================== -->
+  <div id="chat-screen" class="screen">
+    <div class="ch-noise"></div>
+    <div class="ch-app">
+
+      <!-- Sidebar -->
+      <nav class="ch-sidebar">
+        <div class="ch-brand">DIALOGUE</div>
+        <div class="ch-nav-group">
+          <div class="ch-nav-btn ch-back" onclick="Router.back()"><i class="ph ph-arrow-left"></i></div>
+          <div class="ch-nav-divider"></div>
+          <div class="ch-nav-btn active" data-ch-target="ch-view-muses" onclick="ChatModule.switchView(this)"><i class="ph ph-user-list"></i></div>
+          <div class="ch-nav-btn" data-ch-target="ch-view-groups" onclick="ChatModule.switchView(this)"><i class="ph ph-circles-three"></i></div>
+          <div class="ch-nav-btn" data-ch-target="ch-view-sparkle" onclick="ChatModule.switchView(this)"><i class="ph ph-sparkle"></i></div>
+          <div class="ch-nav-btn" data-ch-target="ch-view-user" onclick="ChatModule.switchView(this)"><i class="ph ph-user"></i></div>
+        </div>
+      </nav>
+
+      <!-- View 1: Lookbook 画报流 -->
+      <div class="ch-view active" id="ch-view-muses">
+        <div class="ch-deco">
+          <div class="ch-deco-cross tl">+</div>
+          <div class="ch-deco-cross br">+</div>
+          <div class="ch-deco-header">
+            <div class="ch-deco-badge">NO. 01</div>
+            <span class="ch-deco-season">FW 2026 // EXCLUSIVE</span>
+          </div>
+          <h2 class="ch-deco-title">The<br><em>Archive.</em></h2>
+          <div class="ch-deco-footer">
+            <span class="ch-barcode">*INDEX*</span>
+            <div class="ch-deco-div"></div>
+            <span class="ch-deco-coord">PAR 48.86°N</span>
+          </div>
+        </div>
+        <main class="ch-feed" id="ch-feed-muses"></main>
+      </div>
+
+      <!-- View 2: Groups / Invitations -->
+      <div class="ch-view" id="ch-view-groups">
+        <div class="ch-inv-layout">
+          <div class="ch-inv-header">
+            <h1 class="ch-inv-title">Guestlist<span>.</span></h1>
+            <div class="ch-inv-subtitle">Show Invitations</div>
+          </div>
+          <div class="ch-inv-list" id="ch-inv-list"></div>
+        </div>
+      </div>
+
+      <!-- View 3: Group detail (Roster) -->
+      <div class="ch-view" id="ch-view-detail">
+        <div class="ch-detail-topbar">
+          <div class="ch-nav-btn ch-back" onclick="ChatModule.closeDetail()"><i class="ph ph-arrow-left"></i></div>
+          <div style="width:44px;"></div>
+        </div>
+        <div class="ch-roster-wrap">
+          <div class="ch-roster-hdr">
+            <span class="ch-barcode" id="ch-roster-barcode">*MASTERARCHIVE*</span>
+            <h1 class="ch-roster-title" id="ch-roster-title">Show Name</h1>
+            <div class="ch-roster-subtitle">Official Guest Roster</div>
+          </div>
+          <div class="ch-roster-list" id="ch-roster-list"></div>
+        </div>
+      </div>
+
+      <!-- View 4: Feed 动态 占位 -->
+      <div class="ch-view" id="ch-view-sparkle">
+        <div class="ch-placeholder">
+          <i class="ph ph-sparkle" style="font-size:4rem;opacity:0.15;margin-bottom:1rem;"></i>
+          <h2>Feed.</h2>
+          <p>Coming Soon</p>
+        </div>
+      </div>
+
+      <!-- View 5: User Dossier 个人主页 -->
+      <div class="ch-view" id="ch-view-user">
+        <div class="ch-dossier-layout">
+          <div class="ch-dossier-upper">
+            <!-- 拉链：点击唤出/收起侧边栏 -->
+            <div class="ch-zipper">
+              <div class="ch-zipper-teeth"></div>
+              <i class="ph ph-lock-key ch-zipper-head" id="ch-zipper-head" onclick="ChatModule.toggleSidebar()"></i>
+              <div class="ch-zipper-teeth"></div>
+            </div>
+            <div class="ch-dossier-meta-row">
+              <div class="ch-dossier-meta">IDENTITY // <span id="ch-display-id">01</span></div>
+              <div class="ch-auth-seal">
+                <svg class="ch-seal-svg" viewBox="0 0 100 100">
+                  <path id="ch-seal-path" d="M 50,50 m -36,0 a 36,36 0 1,1 72,0 a 36,36 0 1,1 -72,0" fill="none"/>
+                  <text><textPath href="#ch-seal-path" textLength="210"> • CLASSIFIED DOSSIER • SECURE IDENTITY</textPath></text>
+                </svg>
+                <i class="ph-fill ph-star-four ch-seal-icon"></i>
+              </div>
+            </div>
+            <div class="ch-identity-core">
+              <div class="ch-window-el">
+                <div class="ch-window-cutout">
+                  <img id="ch-display-img" src="" alt="" style="display:none;width:100%;height:100%;object-fit:cover;border-radius:3px;">
+                </div>
+                <div class="ch-window-label">VISUAL ID</div>
+              </div>
+              <div class="ch-identity-text">
+                <div class="ch-persona-name" id="ch-display-name">Loading...</div>
+                <div class="ch-role-label">Bio</div>
+                <div class="ch-role-value" id="ch-display-bio">—</div>
+              </div>
+            </div>
+            <div class="ch-fastener-actions">
+              <div class="ch-action-item" onclick="PersonaModule.openVault()">
+                <div class="ch-btn-fastener">
+                  <div class="ch-btn-hole"></div><div class="ch-btn-hole"></div>
+                  <div class="ch-btn-hole"></div><div class="ch-btn-hole"></div>
+                </div>
+                <span class="ch-action-text">ARCHIVE</span>
+              </div>
+              <div class="ch-action-item" onclick="PersonaModule.openEdit(null, true)">
+                <div class="ch-btn-fastener">
+                  <div class="ch-btn-hole"></div><div class="ch-btn-hole"></div>
+                  <div class="ch-btn-hole"></div><div class="ch-btn-hole"></div>
+                </div>
+                <span class="ch-action-text">MODIFY</span>
+              </div>
+            </div>
+          </div>
+          <div class="ch-dossier-lower">
+            <div class="ch-blueprint">
+              <i class="ph ph-bounding-box"></i>
+              <span>EXTENSION BAY // EMPTY</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- .ch-app -->
+
+    <!-- Vault overlay -->
+    <div class="ch-vault-overlay" id="ch-vault-overlay">
+      <div class="ch-vault-header">
+        <div>
+          <div class="ch-vault-title">The Archive</div>
+          <div class="ch-vault-subtitle">Classified Identities</div>
+        </div>
+        <button class="ch-vault-close" onclick="PersonaModule.closeVault()"><i class="ph ph-x"></i></button>
+      </div>
+      <div class="ch-vault-carousel" id="ch-vault-list"></div>
+      <div class="ch-vault-footer">Swipe to browse →</div>
+    </div>
+
+    <!-- Persona edit modal -->
+    <div class="ch-edit-modal" id="ch-edit-modal">
+      <div class="ch-edit-sheet" onclick="event.stopPropagation()">
+        <div class="ch-edit-header">
+          <h2 class="ch-edit-title" id="ch-edit-title">New Identity</h2>
+          <button class="ch-circle-close" onclick="PersonaModule.closeEdit()"><i class="ph ph-x"></i></button>
+        </div>
+        <input type="file" id="ch-file-input" accept="image/*" style="display:none" onchange="PersonaModule.handleImage(event)">
+        <div class="ch-upload-section">
+          <div class="ch-upload-sq" id="ch-upload-sq" onclick="document.getElementById('ch-file-input').click()">
+            <i class="ph ph-camera"></i>
+            <img id="ch-avatar-preview" src="" alt="">
+          </div>
+          <div class="ch-upload-info">点击上传照片<br>自动裁方形</div>
+        </div>
+        <input type="text" class="ch-clean-input" id="ch-persona-name" placeholder="身份名称...">
+        <input type="text" class="ch-clean-input ch-bio-input" id="ch-persona-bio" placeholder="个性签名...">
+        <textarea class="ch-clean-textarea" id="ch-persona-bg" placeholder="背景故事（不对外显示）..."></textarea>
+        <div class="ch-action-row">
+          <button class="ch-delete-persona-btn hidden" id="ch-delete-btn" onclick="PersonaModule.deletePersona()"><i class="ph ph-trash"></i></button>
+          <button class="ch-save-persona-btn" onclick="PersonaModule.savePersona()">Seal Identity</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- New group modal -->
+    <div class="ch-modal-overlay" id="ch-create-modal">
+      <div class="ch-modal-sheet" onclick="event.stopPropagation()">
+        <div class="ch-modal-header">
+          <h2 class="ch-modal-title">New Invitation</h2>
+          <button class="ch-close-btn" onclick="ChatModule.closeGroupModal()"><i class="ph ph-x"></i></button>
+        </div>
+        <input type="text" class="ch-group-input" id="ch-group-name" placeholder="Show Theme..." autocomplete="off">
+        <div class="ch-pin-row">
+          <span>VIP Access (置顶)</span>
+          <div class="ch-pin-toggle" id="ch-pin-toggle" onclick="this.classList.toggle('on')">
+            <div class="ch-pin-knob"></div>
+          </div>
+        </div>
+        <div class="ch-sel-title">Select Guests</div>
+        <div class="ch-sel-scroll" id="ch-sel-scroll"></div>
+        <button class="ch-save-btn" onclick="ChatModule.saveGroup()">Generate Invite</button>
+      </div>
+    </div>
+
+    <!-- Persona Select Overlay -->
+    <div id="ps-overlay"></div>
+    <div id="ps-monolith">
+      <div class="ps-header">
+        <h2>Lookbook</h2>
+        <span class="ps-header-meta">Vol. 01 / Identities</span>
+      </div>
+      <div class="ps-gallery">
+        <div class="ps-accordion" id="ps-accordion"></div>
+      </div>
+      <div class="ps-footer">
+        <div class="ps-status">
+          <div class="ps-dot"></div>
+          <span class="ps-status-text" id="ps-status-text">— SELECTED</span>
+        </div>
+        <button class="ps-confirm-btn" id="ps-confirm-btn" onclick="ChatModule.confirmPersona()">Confirm</button>
+      </div>
+    </div>
+
+  </div><!-- #chat-screen -->
+
+  <!-- ==================== CONV SCREEN ==================== -->
+  <div id="conv-screen" class="screen">
+    <div class="cv-noise"></div>
+    <div class="cv-watermark">C.</div>
+
+    <!-- Header -->
+    <header class="cv-header">
+      <button class="cv-icon-btn" onclick="ConvModule.back()"><i class="ph ph-arrow-left"></i></button>
+      <div class="cv-header-profile">
+        <img id="cv-header-avatar" src="" class="cv-header-avatar" alt="">
+        <div>
+          <span class="cv-header-name" id="cv-header-name">—</span>
+          <span class="cv-header-status">Active Record</span>
+        </div>
+      </div>
+      <button class="cv-icon-btn" onclick="ConvModule.openSettings()"><i class="ph ph-dots-three"></i></button>
+    </header>
+
+    <!-- Feed -->
+    <main class="cv-feed" id="cv-feed">
+      <!-- 加载更多 -->
+      <div class="cv-load-more" id="cv-load-more" style="display:none" onclick="ConvModule.loadMore()">
+        <i class="ph-thin ph-aperture cv-lm-icon"></i>
+        <span class="cv-lm-text">Retrieve Archives</span>
+      </div>
+      <!-- 消息动态插入 -->
+    </main>
+
+    <!-- Footer -->
+    <footer class="cv-footer">
+      <button class="cv-func-btn" onclick="ConvModule.openFuncPanel()"><i class="ph-thin ph-plus"></i></button>
+      <div class="cv-input-area">
+        <textarea id="cv-input" rows="1" placeholder="Type a message..."></textarea>
+      </div>
+      <div class="cv-action-capsule">
+        <button class="cv-btn-user" id="cv-btn-user" title="上屏不触发AI"><i class="ph ph-arrow-up"></i></button>
+        <button class="cv-btn-ai"   id="cv-btn-ai"   title="触发AI回复"><i class="ph-fill ph-sparkle"></i></button>
+      </div>
+    </footer>
+  </div><!-- #conv-screen -->
+
 </div><!-- .device -->
 
 <script>
@@ -803,7 +1741,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg-body);display:flex;jus
 // ============================================================
 const DB = (() => {
   const DB_NAME    = 'chillOS';
-  const DB_VERSION = 2; // v2: 新增 characters store
+  const DB_VERSION = 5; // v5: 新增 messages store
   let _db = null;
 
   function open() {
@@ -814,17 +1752,24 @@ const DB = (() => {
       req.onupgradeneeded = e => {
         const db  = e.target.result;
         const old = e.oldVersion;
-
-        // v1 建的表
         if (old < 1) {
           db.createObjectStore('settings', { keyPath: 'key' });
           db.createObjectStore('assets',   { keyPath: 'key' });
           const ap = db.createObjectStore('api_profiles', { keyPath: 'id', autoIncrement: true });
           ap.createIndex('isActive', 'isActive', { unique: false });
         }
-        // v2 新增：角色档案
         if (old < 2) {
           db.createObjectStore('characters', { keyPath: 'id', autoIncrement: true });
+        }
+        if (old < 3) {
+          db.createObjectStore('groups', { keyPath: 'id' });
+        }
+        if (old < 4) {
+          db.createObjectStore('chat_bindings', { keyPath: 'charId' });
+        }
+        if (old < 5) {
+          const ms = db.createObjectStore('messages', { keyPath: 'id', autoIncrement: true });
+          ms.createIndex('charId', 'charId', { unique: false });
         }
       };
 
@@ -1018,40 +1963,153 @@ const DB = (() => {
     });
   }
 
+  // ---- groups ----
+  async function groupGetAll() {
+    await open();
+    return new Promise((resolve, reject) => {
+      const req = tx('groups').getAll();
+      req.onsuccess = () => resolve(req.result);
+      req.onerror   = e => reject(e.target.error);
+    });
+  }
+  async function groupPut(data) {
+    await open();
+    return new Promise((resolve, reject) => {
+      const req = tx('groups', 'readwrite').put({ ...data, updatedAt: Date.now() });
+      req.onsuccess = () => resolve();
+      req.onerror   = e => reject(e.target.error);
+    });
+  }
+  async function groupDel(id) {
+    await open();
+    return new Promise((resolve, reject) => {
+      const req = tx('groups', 'readwrite').delete(id);
+      req.onsuccess = () => resolve();
+      req.onerror   = e => reject(e.target.error);
+    });
+  }
+
+  // ---- chat_bindings: { charId, personaId } ----
+  async function bindingGet(charId) {
+    await open();
+    return new Promise((resolve, reject) => {
+      const req = tx('chat_bindings').get(charId);
+      req.onsuccess = () => resolve(req.result || null);
+      req.onerror   = e => reject(e.target.error);
+    });
+  }
+  async function bindingSet(charId, personaId) {
+    await open();
+    return new Promise((resolve, reject) => {
+      const req = tx('chat_bindings', 'readwrite').put({ charId, personaId });
+      req.onsuccess = () => resolve();
+      req.onerror   = e => reject(e.target.error);
+    });
+  }
+
+  // ---- messages: { id(auto), charId, role, content, timestamp, status } ----
+  async function msgAdd(data) {
+    await open();
+    return new Promise((resolve, reject) => {
+      const req = tx('messages', 'readwrite').add({ ...data });
+      req.onsuccess = () => resolve(req.result); // returns new id
+      req.onerror   = e => reject(e.target.error);
+    });
+  }
+  async function msgPut(data) {
+    await open();
+    return new Promise((resolve, reject) => {
+      const req = tx('messages', 'readwrite').put({ ...data });
+      req.onsuccess = () => resolve();
+      req.onerror   = e => reject(e.target.error);
+    });
+  }
+  async function msgGetPage(charId, offset = 0, limit = 30) {
+    await open();
+    return new Promise((resolve, reject) => {
+      const idx = _db.transaction('messages', 'readonly').objectStore('messages').index('charId');
+      const results = [];
+      let skipped = 0; let collected = 0;
+      // 用 IDBKeyRange 匹配 charId，倒序取最新消息
+      const range = IDBKeyRange.only(charId);
+      const req = idx.openCursor(range, 'prev');
+      req.onsuccess = e => {
+        const cursor = e.target.result;
+        if (!cursor || collected >= limit) { resolve(results.reverse()); return; }
+        if (skipped < offset) { skipped++; cursor.continue(); return; }
+        results.push(cursor.value);
+        collected++;
+        cursor.continue();
+      };
+      req.onerror = e => reject(e.target.error);
+    });
+  }
+  async function msgCountByChar(charId) {
+    await open();
+    return new Promise((resolve, reject) => {
+      const req = _db.transaction('messages','readonly').objectStore('messages').index('charId').count(IDBKeyRange.only(charId));
+      req.onsuccess = () => resolve(req.result);
+      req.onerror   = e => reject(e.target.error);
+    });
+  }
+  async function msgDelByChar(charId) {
+    await open();
+    return new Promise((resolve, reject) => {
+      const idx = _db.transaction('messages','readwrite').objectStore('messages').index('charId');
+      const req = idx.openCursor(IDBKeyRange.only(charId));
+      req.onsuccess = e => {
+        const cursor = e.target.result;
+        if (!cursor) { resolve(); return; }
+        cursor.delete(); cursor.continue();
+      };
+      req.onerror = e => reject(e.target.error);
+    });
+  }
+
   return {
     settings:   { get: settingsGet, set: settingsSet, del: settingsDel },
     assets:     { get: assetGet, set: assetSet, del: assetDel, getAll: assetGetAll },
     api:        { getAll: apiGetAll, get: apiGet, add: apiAdd, put: apiPut, del: apiDel, setActive: apiSetActive, getActive: apiGetActive },
     characters: { getAll: charGetAll, get: charGet, add: charAdd, put: charPut, del: charDel },
+    groups:     { getAll: groupGetAll, put: groupPut, del: groupDel },
+    bindings:   { get: bindingGet, set: bindingSet },
+    messages:   { add: msgAdd, put: msgPut, getPage: msgGetPage, countByChar: msgCountByChar, delByChar: msgDelByChar },
     clearAll,
     init: open,
   };
 })();
-
 // ============================================================
-// Assets — Blob 读写 + Object URL 管理
+// Assets — Blob 读写 + Object URL 管理 + 缓存拦截 (修复版)
 // ============================================================
 const Assets = (() => {
-  // 管理 Object URLs，避免内存泄漏
+  // 管理 Object URLs，避免内存泄漏，同时做缓存防止并发调用时互相抹除
   const _urls = new Map();
 
   function revoke(key) {
-    if (_urls.has(key)) { URL.revokeObjectURL(_urls.get(key)); _urls.delete(key); }
+    if (_urls.has(key)) { 
+      URL.revokeObjectURL(_urls.get(key)); 
+      _urls.delete(key); 
+    }
   }
 
   async function getUrl(key) {
+    // 拦截：如果内存里已经生成了该图片的链接，直接复用，防止组件并发请求时触发 revoke 导致破图
+    if (_urls.has(key)) return _urls.get(key);
+    
     const record = await DB.assets.get(key);
     if (!record) return null;
-    revoke(key);
+    
     const url = URL.createObjectURL(record.blob);
     _urls.set(key, url);
     return url;
   }
 
   async function save(key, file, maxPx = 800, quality = 0.82) {
+    // 这里调用了下方的 compress 函数，上次漏掉的就是它！
     const blob = await compress(file, maxPx, quality);
     await DB.assets.set(key, blob, blob.type);
-    revoke(key);
+    
+    revoke(key); // 清理旧同名链接
     const url = URL.createObjectURL(blob);
     _urls.set(key, url);
     return url;
@@ -1062,6 +2120,12 @@ const Assets = (() => {
     await DB.assets.del(key);
   }
 
+  // 暴露给外部调用的缓存清理方法
+  function clearCache(key) {
+    revoke(key);
+  }
+
+  // 图片压缩函数（之前漏掉了这段，导致上传直接崩溃）
   function compress(file, maxPx, quality) {
     return new Promise(resolve => {
       const reader = new FileReader();
@@ -1084,7 +2148,8 @@ const Assets = (() => {
     });
   }
 
-  return { getUrl, save, remove };
+  // 将 clearCache 暴露出去
+  return { getUrl, save, remove, clearCache };
 })();
 
 // ============================================================
@@ -1109,19 +2174,15 @@ const Toast = (() => {
 // ============================================================
 const Router = (() => {
   // 顶层 screen id 列表
-  const TOP_SCREENS = ['settings-screen', 'character-screen'];
+  const TOP_SCREENS = ['settings-screen', 'character-screen', 'chat-screen', 'conv-screen'];
 
-  // 每个顶层 screen 有自己独立的 sub-page 栈
   const _subStack = {};
 
   function go(target, watermark) {
-    // ── 顶层 screen ──
-    if (target === 'settings' || target === 'character') {
-      const screenId = target === 'settings' ? 'settings-screen' : 'character-screen';
-      // 关闭其他所有顶层 screen
-      TOP_SCREENS.forEach(id => {
-        if (id !== screenId) document.getElementById(id)?.classList.remove('active');
-      });
+    if (target === 'settings' || target === 'character' || target === 'chat' || target === 'conv') {
+      const map = { settings:'settings-screen', character:'character-screen', chat:'chat-screen', conv:'conv-screen' };
+      const screenId = map[target];
+      TOP_SCREENS.forEach(id => { if (id !== screenId) document.getElementById(id)?.classList.remove('active'); });
       document.getElementById(screenId).classList.add('active');
       _onEnterScreen(target);
       return;
@@ -1162,12 +2223,14 @@ const Router = (() => {
 
   function _onEnterScreen(target) {
     if (target === 'character') CharacterModule.renderRoster();
+    if (target === 'chat')      ChatModule.onEnter();
   }
 
   function _onEnterPage(pageId) {
-    if (pageId === 'data-page')  DataModule.refresh();
-    if (pageId === 'ui-page')    UIModule.renderIconsEditGrid();
-    if (pageId === 'api-page')   ApiModule.render();
+    if (pageId === 'data-page')    DataModule.refresh();
+    if (pageId === 'ui-page')      UIModule.renderIconsEditGrid();
+    if (pageId === 'api-page')     ApiModule.render();
+    if (pageId === 'system-page')  SystemModule.render();
   }
 
   return { go, back };
@@ -1451,7 +2514,7 @@ const UIModule = (() => {
     const ph = document.getElementById('wallpaper-placeholder');
     if (ph) {
       ph.innerHTML = url
-        ? `<img class="upload-area-img" src="${url}"><span style="font-size:11px;color:var(--s-text-secondary);margin-top:6px;">点击更换</span>`
+        ? `<img class="upload-area-img" src="${url}"><span style="font-size:0.7333rem;color:var(--s-text-secondary);margin-top:6px;">点击更换</span>`
         : `<i class="ph ph-image"></i><span>点击上传壁纸</span>`;
     }
   }
@@ -1562,15 +2625,15 @@ function updateTime() {
 }
 setInterval(updateTime, 1000);
 updateTime();
-
 // ============================================================
-// 主题
+// 主题切换
 // ============================================================
 let _isDark = false;
 document.getElementById('theme-btn').addEventListener('click', async () => {
   _isDark = !_isDark;
   document.documentElement.setAttribute('data-theme', _isDark ? 'dark' : '');
-  document.getElementById('theme-icon').className = _isDark ? 'ph ph-sun' : 'ph ph-moon';
+  // 核心：把原来的换图标改为换纯文本
+  document.getElementById('theme-btn').innerText = _isDark ? 'MODE: NGT' : 'MODE: DAY';
   try { await DB.settings.set('theme', _isDark ? 'dark' : 'light'); } catch(e){}
 });
 
@@ -1914,13 +2977,18 @@ ${char.mbti  ? `- MBTI：${char.mbti}` : ''}
         charData.id = _currentId;
       }
 
-      // 头像迁移：新上传的从临时 key 迁移到正式 key
+     // 头像迁移：新上传的从临时 key 迁移到正式 key
       if (_tempAvatarKey === 'char-avatar-new') {
         const existingAsset = await DB.assets.get('char-avatar-new');
         if (existingAsset) {
           const formalKey = `char-avatar-${_currentId}`;
           await DB.assets.set(formalKey, existingAsset.blob, existingAsset.mimeType);
           await DB.assets.del('char-avatar-new');
+          
+          // 【新增】：清理缓存，确保列表页和详情页拿到的是最新图片，解决蓝色问号问题
+          Assets.clearCache('char-avatar-new');
+          Assets.clearCache(formalKey);
+          
           charData.avatarUrl = formalKey;
           _tempAvatarKey     = formalKey;
           await DB.characters.put({ ...charData, id: _currentId });
@@ -2019,16 +3087,1230 @@ ${char.mbti  ? `- MBTI：${char.mbti}` : ''}
   return { renderRoster, showView, openForm, editCurrent, save, retryAI, deleteCharacter };
 })();
 
+// ============================================================
+// PersonaModule — 用户面具管理
+// DB: settings key 'user-personas' → [{id,name,bio,img(assetKey),backstory}]
+//     settings key 'user-active-persona' → id
+// 头像存 Assets，key: persona-avatar-{id}
+// ============================================================
+const PersonaModule = (() => {
+  const KEY_PERSONAS = 'user-personas';
+  const KEY_ACTIVE   = 'user-active-persona';
+
+  let _personas    = [];
+  let _activeId    = null;
+  let _editingId   = null;
+  let _editActive  = false;
+  let _currentImg  = null; // ObjectURL 或 null
+
+  function _default() {
+    return [{ id: 1, name: '用户', bio: '', imgKey: '', backstory: '' }];
+  }
+
+  async function init() {
+    try {
+      const saved = await DB.settings.get(KEY_PERSONAS);
+      _personas = (Array.isArray(saved) && saved.length > 0) ? saved : _default();
+      // 兼容旧 tag 字段
+      _personas = _personas.map(p => ({ ...p, bio: p.bio ?? p.tag ?? '' }));
+    } catch(e) { _personas = _default(); }
+    try {
+      const aid = await DB.settings.get(KEY_ACTIVE);
+      _activeId = aid ?? _personas[0].id;
+    } catch(e) { _activeId = _personas[0].id; }
+  }
+
+  async function _persist() {
+    await DB.settings.set(KEY_PERSONAS, _personas);
+    await DB.settings.set(KEY_ACTIVE, _activeId);
+  }
+
+  async function renderActive() {
+    const p = _personas.find(x => x.id === _activeId) || _personas[0];
+    if (!p) return;
+    const idEl   = document.getElementById('ch-display-id');
+    const nameEl = document.getElementById('ch-display-name');
+    const bioEl  = document.getElementById('ch-display-bio');
+    const imgEl  = document.getElementById('ch-display-img');
+    if (idEl)   idEl.textContent  = String(p.id).slice(-2).padStart(2, '0');
+    if (nameEl) nameEl.textContent = p.name;
+    if (bioEl)  bioEl.textContent  = p.bio || '—';
+    if (imgEl) {
+      if (p.imgKey) {
+        const url = await Assets.getUrl(p.imgKey).catch(() => null);
+        if (url) { imgEl.src = url; imgEl.style.display = 'block'; }
+        else { imgEl.style.display = 'none'; }
+      } else { imgEl.style.display = 'none'; }
+    }
+  }
+
+  function openVault() {
+    _renderVaultList();
+    document.getElementById('ch-vault-overlay').classList.add('active');
+  }
+
+  function closeVault() {
+    document.getElementById('ch-vault-overlay').classList.remove('active');
+  }
+
+  async function _renderVaultList() {
+    const list = document.getElementById('ch-vault-list');
+    if (!list) return;
+    list.innerHTML = '';
+    for (const p of _personas) {
+      const isActive = p.id === _activeId;
+      const imgUrl = p.imgKey ? await Assets.getUrl(p.imgKey).catch(() => '') : '';
+      const card = document.createElement('div');
+      card.className = `ch-vault-card${isActive ? ' is-active' : ''}`;
+      card.onclick   = () => switchPersona(p.id);
+      card.innerHTML = `
+        <div class="ch-vault-img-wrap"><img ${imgUrl ? `src="${imgUrl}"` : ''} alt="${p.name}" style="${imgUrl ? '' : 'display:none'}"></div>
+        <div class="ch-vault-card-info">
+          <div class="ch-vault-card-name">${p.name}</div>
+          <div class="ch-vault-card-role">${p.bio || ''}</div>
+        </div>
+        <button class="ch-vault-edit-btn" onclick="event.stopPropagation();PersonaModule.openEdit(${p.id})">
+          <i class="ph ph-pencil-simple"></i>
+        </button>`;
+      list.appendChild(card);
+    }
+    const addCard = document.createElement('div');
+    addCard.className = 'ch-vault-card ch-vault-add';
+    addCard.onclick   = e => { e.stopPropagation(); openEdit(null); };
+    addCard.innerHTML = `<i class="ph ph-plus"></i><span>Initialize<br>Identity</span>`;
+    list.appendChild(addCard);
+  }
+
+  async function switchPersona(id) {
+    _activeId = id;
+    await renderActive();
+    closeVault();
+    await _persist();
+  }
+
+  async function openEdit(id, editActive = false) {
+    closeVault();
+    _editingId  = id;
+    _editActive = editActive;
+    _currentImg = null;
+    const targetId = editActive ? _activeId : id;
+
+    const titleEl  = document.getElementById('ch-edit-title');
+    const nameEl   = document.getElementById('ch-persona-name');
+    const bioEl    = document.getElementById('ch-persona-bio');
+    const bgEl     = document.getElementById('ch-persona-bg');
+    const delBtn   = document.getElementById('ch-delete-btn');
+    const upSq     = document.getElementById('ch-upload-sq');
+    const preview  = document.getElementById('ch-avatar-preview');
+
+    if (targetId !== null && targetId !== undefined) {
+      const p = _personas.find(x => x.id === targetId);
+      if (p) {
+        _editingId         = p.id;
+        titleEl.textContent = 'Edit Identity';
+        nameEl.value        = p.name;
+        bioEl.value         = p.bio || '';
+        bgEl.value          = p.backstory || '';
+        if (p.imgKey) {
+          const url = await Assets.getUrl(p.imgKey).catch(() => '');
+          if (url) { preview.src = url; upSq.classList.add('has-img'); }
+          else { preview.src = ''; upSq.classList.remove('has-img'); }
+        } else { preview.src = ''; upSq.classList.remove('has-img'); }
+        delBtn.classList.toggle('hidden', _personas.length <= 1);
+      }
+    } else {
+      _editingId          = null;
+      titleEl.textContent = 'New Identity';
+      nameEl.value = ''; bioEl.value = ''; bgEl.value = '';
+      preview.src = ''; upSq.classList.remove('has-img');
+      delBtn.classList.add('hidden');
+    }
+    document.getElementById('ch-edit-modal').classList.add('active');
+  }
+
+  function closeEdit() {
+    document.getElementById('ch-edit-modal').classList.remove('active');
+    _currentImg = null;
+  }
+
+  async function handleImage(e) {
+    const file = e.target.files[0]; if (!file) return;
+    // 临时压缩预览（不立即存 DB，保存时再存）
+    const tempKey = 'persona-avatar-preview';
+    const url = await Assets.save(tempKey, file, 600, 0.88);
+    _currentImg = { tempKey, url };
+    const preview = document.getElementById('ch-avatar-preview');
+    if (preview) preview.src = url;
+    document.getElementById('ch-upload-sq')?.classList.add('has-img');
+    e.target.value = '';
+  }
+
+ async function savePersona() {
+    const name      = document.getElementById('ch-persona-name').value.trim();
+    const bio       = document.getElementById('ch-persona-bio').value.trim();
+    const backstory = document.getElementById('ch-persona-bg').value.trim();
+    if (!name) { Toast.show('请填写身份名称'); return; }
+
+    let imgKey = '';
+    if (_editingId !== null) {
+      const old = _personas.find(x => x.id === _editingId);
+      imgKey = old?.imgKey || '';
+    }
+
+    const newId = Date.now();
+    const targetId = _editingId !== null ? _editingId : newId;
+
+    // 如果有新头像，迁移到正式 key 并清除可能的旧缓存
+    if (_currentImg) {
+      const formalKey = `persona-avatar-${targetId}`;
+      const record = await DB.assets.get(_currentImg.tempKey);
+      if (record) {
+        await DB.assets.set(formalKey, record.blob, record.mimeType);
+        await DB.assets.del(_currentImg.tempKey);
+        // 清理缓存使画面立即渲染新生效
+        Assets.clearCache(_currentImg.tempKey);
+        Assets.clearCache(formalKey);
+      }
+      imgKey = formalKey;
+    }
+
+    if (_editingId !== null) {
+      const idx = _personas.findIndex(x => x.id === _editingId);
+      if (idx !== -1) {
+        _personas[idx] = { ..._personas[idx], name, bio, backstory, imgKey };
+      }
+    } else {
+      _personas.push({ id: targetId, name, bio, backstory, imgKey });
+      _activeId = targetId;
+    }
+
+    closeEdit();
+    await renderActive();
+    await _persist();
+    Toast.show('身份已保存');
+  }
+
+  async function deletePersona() {
+    if (_personas.length <= 1 || _editingId === null) return;
+    if (!confirm('确定要销毁这个身份吗？')) return;
+    const p = _personas.find(x => x.id === _editingId);
+    if (p?.imgKey) await Assets.remove(p.imgKey).catch(() => {});
+    _personas = _personas.filter(x => x.id !== _editingId);
+    if (_activeId === _editingId) _activeId = _personas[0].id;
+    closeEdit();
+    await renderActive();
+    await _persist();
+  }
+
+  return { init, renderActive, openVault, closeVault, openEdit, closeEdit, handleImage, savePersona, deletePersona,
+    getAll: () => _personas,
+    getActiveId: () => _activeId
+  };
+})();
+
+// ============================================================
+// ChatModule — 对话列表页面管理
+// 分组持久化到 DB groups store
+// { id, name, isPinned, members: [charId...], updatedAt }
+// 置顶分组优先显示；默认 g_all 包含所有角色
+// ============================================================
+const ChatModule = (() => {
+  let _chars     = [];   // 从 characters store 加载的角色
+  let _groups    = [];
+  let _selMuses  = new Set();
+  let _observer  = null;
+
+  // ── 从 DB 加载角色 ──
+  async function _loadChars() {
+    try {
+      const raw = await DB.characters.getAll();
+      _chars = await Promise.all(raw.map(async c => {
+        const img = await Assets.getUrl(`char-avatar-${c.id}`).catch(() => null);
+        return {
+          id:   String(c.id),
+          name: c.name,
+          role: c.title || c.mbti || '',
+          img:  img || '',
+          msg:  c.aiData?.intro || ''
+        };
+      }));
+    } catch(e) { _chars = []; }
+  }
+
+  // ── 从 DB 加载分组 ──
+  async function _loadGroups() {
+    try {
+      const saved = await DB.groups.getAll();
+      _groups = saved || [];
+    } catch(e) { _groups = []; }
+
+    // 确保默认分组存在，且成员同步最新角色
+    let allGroup = _groups.find(g => g.id === 'g_all');
+    const allIds = _chars.map(c => c.id);
+    if (!allGroup) {
+      allGroup = { id: 'g_all', name: 'Master Archive', isPinned: true, members: allIds };
+      _groups.unshift(allGroup);
+    } else {
+      allGroup.members = allIds;
+    }
+    await DB.groups.put(allGroup);
+  }
+
+  async function _persist() {
+    for (const g of _groups) await DB.groups.put(g);
+  }
+
+  // ── IntersectionObserver ──
+  function _initObserver() {
+    if (_observer) _observer.disconnect();
+    _observer = new IntersectionObserver(entries => {
+      entries.forEach(e => e.target.classList.toggle('is-active', e.isIntersecting));
+    }, { threshold: 0.55 });
+  }
+
+  // ── 渲染画报流 ──
+  function _renderLookbook() {
+    const container = document.getElementById('ch-feed-muses');
+    if (!container) return;
+    container.innerHTML = '';
+    if (_chars.length === 0) {
+      container.innerHTML = `<div class="ch-placeholder" style="position:absolute;inset:0;left:64px;">
+        <i class="ph ph-users" style="font-size:4rem;opacity:0.15;margin-bottom:1rem;"></i>
+        <h2>No Characters</h2><p>先去创建角色吧</p></div>`;
+      return;
+    }
+    _chars.forEach((c, i) => {
+      const sec = document.createElement('section');
+      sec.className = 'ch-page';
+      sec.innerHTML = `
+        <div class="ch-bg-typo">${c.name}</div>
+        <div class="ch-pres-group">
+          <div class="ch-bookmark">
+            <div class="ch-bm-content">
+              <h2 class="ch-bm-name">${c.name}</h2>
+              <div class="ch-bm-divider"></div>
+              <span class="ch-bm-role">${c.role}</span>
+            </div>
+          </div>
+          <div class="ch-photo-wrapper">
+            <img ${c.img ? `src="${c.img}"` : ''} class="ch-photo" alt="${c.name}" loading="lazy" style="${c.img ? '' : 'display:none'}">
+          </div>
+          <div class="ch-enter-btn" onclick="ChatModule.startChat('${c.id}',event)">
+            Chat <i class="ph ph-arrow-up-right"></i>
+          </div>
+        </div>
+        ${i === 0 && _chars.length > 1 ? '<div class="ch-swipe-hint">Swipe Up <i class="ph ph-caret-down"></i></div>' : ''}`;
+      container.appendChild(sec);
+      _observer.observe(sec);
+    });
+    container.scrollTop = 0;
+  }
+
+  // ── 渲染分组列表，置顶优先 ──
+  function _renderGroups() {
+    const container = document.getElementById('ch-inv-list');
+    if (!container) return;
+    container.innerHTML = '';
+
+    const addBtn = document.createElement('button');
+    addBtn.className = 'ch-req-btn';
+    addBtn.innerHTML = 'Request Invitation <i class="ph ph-plus"></i>';
+    addBtn.onclick   = openGroupModal;
+    container.appendChild(addBtn);
+
+    const sorted = [..._groups].sort((a, b) => (b.isPinned ? 1 : 0) - (a.isPinned ? 1 : 0));
+    sorted.forEach(g => {
+      const card    = document.createElement('div');
+      card.className = `ch-invite-card${g.isPinned ? ' pinned' : ''}`;
+      card.onclick   = () => openDetail(g.id);
+      const code    = 'FW' + Math.floor(Math.random() * 90 + 10);
+      const barcode = g.id === 'g_all' ? '*MASTERARCHIVE*' : '*INVITATION*';
+      card.innerHTML = `
+        <div class="ch-wm-letter">${g.name.charAt(0).toUpperCase()}</div>
+        <div class="ch-invite-main">
+          <div class="ch-invite-top">
+            <span class="ch-invite-season">${code} / EXCLUSIVE</span>
+            <span class="ch-barcode-sm">${barcode}</span>
+          </div>
+          <h3 class="ch-invite-name">${g.name}</h3>
+          <div class="ch-invite-bottom">
+            <span class="ch-invite-seats">${String(g.members.length).padStart(2,'0')} SEATS</span>
+            ${g.isPinned ? '<i class="ph ph-star-fill" style="font-size:0.7rem;"></i>' : ''}
+          </div>
+        </div>
+        <div class="ch-invite-stub"><div class="ch-stub-text">ADMIT <i class="ph ph-arrow-up"></i></div></div>`;
+      container.appendChild(card);
+    });
+  }
+
+  // ── 打开分组详情 ──
+  function openDetail(groupId) {
+    const g = _groups.find(x => x.id === groupId); if (!g) return;
+    document.getElementById('ch-roster-title').textContent   = g.name;
+    document.getElementById('ch-roster-barcode').textContent = g.id === 'g_all' ? '*MASTERARCHIVE*' : '*INVITATION*';
+    const list = document.getElementById('ch-roster-list');
+    list.innerHTML = '';
+    g.members.forEach(mid => {
+      const c = _chars.find(x => x.id === String(mid)); if (!c) return;
+      const item = document.createElement('div');
+      item.className = 'ch-roster-item';
+      item.onclick   = () => startChat(c.id, null);
+      item.innerHTML = `
+        <img src="${c.img}" class="ch-roster-avatar" alt="">
+        <span class="ch-roster-name">${c.name}</span>
+        <div class="ch-roster-dots"></div>
+        <span class="ch-roster-role">${c.role}</span>
+        <div class="ch-roster-icon"><i class="ph ph-arrow-up-right"></i></div>`;
+      list.appendChild(item);
+    });
+    document.getElementById('ch-view-detail').classList.add('active');
+  }
+
+  function closeDetail() {
+    document.getElementById('ch-view-detail').classList.remove('active');
+  }
+
+  // ── 切换视图 ──
+  function switchView(btn) {
+    const targetId = btn.getAttribute('data-ch-target');
+    closeDetail();
+    document.querySelectorAll('#chat-screen .ch-nav-btn:not(.ch-back)').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    document.querySelectorAll('#chat-screen .ch-view:not(#ch-view-detail)').forEach(v => v.classList.remove('active'));
+    document.getElementById(targetId)?.classList.add('active');
+    // 动态页和个人主页收起侧边栏
+    const collapse = targetId === 'ch-view-sparkle' || targetId === 'ch-view-user';
+    document.getElementById('chat-screen').classList.toggle('ch-collapsed', collapse);
+    if (targetId === 'ch-view-user') PersonaModule.renderActive();
+  }
+
+  // ── 侧边栏拉链开关 ──
+  function toggleSidebar() {
+    const screen = document.getElementById('chat-screen');
+    screen.classList.toggle('ch-collapsed');
+    const icon = document.getElementById('ch-zipper-head');
+    if (icon) {
+      icon.className = screen.classList.contains('ch-collapsed')
+        ? 'ph ph-lock-key ch-zipper-head'
+        : 'ph ph-lock-key-open ch-zipper-head';
+    }
+  }
+
+  let _pendingCharId    = null; // 等待面具选择的角色 id
+  let _selectedPersonaId = null; // 浮窗里当前选中的面具 id
+
+  // ── 进入聊天入口（含面具判断逻辑）──
+  async function startChat(charId, event) {
+    if (event) event.stopPropagation();
+    _pendingCharId = String(charId);
+
+    const personas = PersonaModule.getAll();
+
+    // 没有任何面具 → 提示去创建
+    if (!personas || personas.length === 0) {
+      Toast.show('请先在个人主页创建一个身份面具');
+      return;
+    }
+
+    // 只有一个面具 → 直接绑定并进入
+    if (personas.length === 1) {
+      await DB.bindings.set(_pendingCharId, personas[0].id);
+      _enterChat(_pendingCharId, personas[0].id);
+      return;
+    }
+
+    // 多个面具 → 检查是否已有绑定
+    const existing = await DB.bindings.get(_pendingCharId).catch(() => null);
+    if (existing) {
+      // 已绑定，直接进入
+      _enterChat(_pendingCharId, existing.personaId);
+      return;
+    }
+
+    // 没有绑定 → 弹出面具选择浮窗
+    _openPersonaSelect();
+  }
+
+  // ── 渲染并打开面具选择浮窗 ──
+  async function _openPersonaSelect() {
+    const personas  = PersonaModule.getAll();
+    const accordion = document.getElementById('ps-accordion');
+    if (!accordion) return;
+
+    accordion.innerHTML = '';
+    _selectedPersonaId  = null;
+
+    if (personas.length === 0) {
+      accordion.innerHTML = `
+        <div class="ps-pane-placeholder" onclick="ChatModule.closePersonaSelect()">
+          <i class="ph ph-plus"></i>
+          <span>Create Identity First</span>
+        </div>`;
+    } else {
+      for (let i = 0; i < personas.length; i++) {
+        const p      = personas[i];
+        const isFirst = i === 0;
+        const imgUrl  = p.imgKey ? await Assets.getUrl(p.imgKey).catch(() => '') : '';
+        const div     = document.createElement('div');
+        div.className = `ps-pane${isFirst ? ' active' : ''}`;
+        div.dataset.personaId = String(p.id);
+        div.innerHTML = `
+          ${imgUrl ? `<img src="${imgUrl}" alt="${p.name}">` : ''}
+          <div class="ps-spine">
+            <span class="ps-spine-num">0${i + 1}</span>
+            <span class="ps-spine-text">${p.name}</span>
+          </div>
+          <div class="ps-content">
+            <div class="ps-content-name">${p.name}</div>
+            <div class="ps-content-bio">${p.bio || '—'}</div>
+          </div>`;
+        div.addEventListener('click', () => _selectPersonaPane(div, p.id, i));
+        accordion.appendChild(div);
+        if (isFirst) {
+          _selectedPersonaId = String(p.id);
+          document.getElementById('ps-status-text').textContent = `${p.name} SELECTED`;
+        }
+      }
+    }
+
+    document.getElementById('ps-overlay').classList.add('active');
+    document.getElementById('ps-monolith').classList.add('active');
+  }
+
+ function _selectPersonaPane(pane, personaId, index) {
+    if (pane.classList.contains('active')) return;
+    document.querySelectorAll('#ps-accordion .ps-pane').forEach(p => p.classList.remove('active'));
+    pane.classList.add('active');
+    _selectedPersonaId = String(personaId);
+    const personas = PersonaModule.getAll();
+    const p = personas.find(x => String(x.id) === _selectedPersonaId);
+    document.getElementById('ps-status-text').textContent = `${p ? p.name : '0' + (index + 1)} SELECTED`;
+    
+    // 替换有全局拉扯副作用的 scrollIntoView，改为精确计算滚动只动容器本身
+    setTimeout(() => {
+      const accordion = document.getElementById('ps-accordion');
+      if (accordion) {
+        const paneRect = pane.getBoundingClientRect();
+        const accRect = accordion.getBoundingClientRect();
+        const targetScrollLeft = accordion.scrollLeft + paneRect.left - accRect.left - (accRect.width / 2) + (paneRect.width / 2);
+        accordion.scrollTo({ left: targetScrollLeft, behavior: 'smooth' });
+      }
+    }, 50);
+  }
+
+  async function confirmPersona() {
+    if (!_selectedPersonaId || !_pendingCharId) return;
+    const btn = document.getElementById('ps-confirm-btn');
+    if (btn) { btn.textContent = 'SYNCING...'; }
+    await DB.bindings.set(_pendingCharId, _selectedPersonaId);
+    setTimeout(() => {
+      closePersonaSelect();
+      _enterChat(_pendingCharId, _selectedPersonaId);
+      if (btn) btn.textContent = 'Confirm';
+    }, 600);
+  }
+
+  function closePersonaSelect() {
+    document.getElementById('ps-overlay').classList.remove('active');
+    document.getElementById('ps-monolith').classList.remove('active');
+  }
+
+  // ── 实际进入聊天 ──
+  function _enterChat(charId, personaId) {
+    ConvModule.enter(charId, personaId);
+    Router.go('conv');
+  }
+
+  // ── 分组 modal ──
+  function openGroupModal() {
+    document.getElementById('ch-group-name').value = '';
+    document.getElementById('ch-pin-toggle').classList.remove('on');
+    _selMuses.clear();
+    const scroll = document.getElementById('ch-sel-scroll');
+    scroll.innerHTML = _chars.map(c => `
+      <div class="ch-sel-item" id="ch-sel-${c.id}" onclick="ChatModule.toggleSel('${c.id}')">
+        <div class="ch-sel-photo-wrap"><img src="${c.img}" class="ch-sel-photo" alt=""></div>
+        <span class="ch-sel-name">${c.name}</span>
+      </div>`).join('');
+    document.getElementById('ch-create-modal').classList.add('active');
+  }
+
+  function closeGroupModal() {
+    document.getElementById('ch-create-modal').classList.remove('active');
+  }
+
+  function toggleSel(id) {
+    const item = document.getElementById(`ch-sel-${id}`);
+    if (_selMuses.has(id)) { _selMuses.delete(id); item?.classList.remove('selected'); }
+    else                   { _selMuses.add(id);    item?.classList.add('selected'); }
+  }
+
+  async function saveGroup() {
+    const name = document.getElementById('ch-group-name').value.trim();
+    if (!name) { Toast.show('请输入分组名称'); return; }
+    if (_selMuses.size === 0) { Toast.show('请至少选择一个角色'); return; }
+    const isPinned = document.getElementById('ch-pin-toggle').classList.contains('on');
+    const newGroup = { id: 'g_' + Date.now(), name, isPinned, members: Array.from(_selMuses) };
+    _groups.push(newGroup);
+    await DB.groups.put(newGroup);
+    closeGroupModal();
+    _renderGroups();
+  }
+
+  // ── 入口 ──
+  async function onEnter() {
+    _initObserver();
+    await _loadChars();
+    await _loadGroups();
+    _renderLookbook();
+    _renderGroups();
+    await PersonaModule.renderActive();
+    const overlay = document.getElementById('ps-overlay');
+    if (overlay && !overlay._bound) {
+      overlay.addEventListener('click', closePersonaSelect);
+      overlay._bound = true;
+    }
+  }
+
+  return { onEnter, switchView, toggleSidebar, startChat, openGroupModal, closeGroupModal, toggleSel, saveGroup, openDetail, closeDetail, confirmPersona, closePersonaSelect };
+})();
+
+// ============================================================
+// ConvModule — 聊天页核心
+// ============================================================
+const ConvModule = (() => {
+  const PAGE_SIZE = 30;
+
+  let _charId    = null;
+  let _personaId = null;
+  let _char      = null; // full character object
+  let _persona   = null; // full persona object
+  let _offset    = 0;    // 已加载条数（用于分页）
+  let _totalMsgs = 0;
+  let _isAiTyping = false;
+  let _charImgUrl = '';
+
+  // ── 进入聊天 ──
+  async function enter(charId, personaId) {
+    _charId    = String(charId);
+    _personaId = personaId;
+    _offset    = 0;
+    _isAiTyping = false;
+
+    // 加载角色
+    try {
+      _char = await DB.characters.get(Number(charId));
+      _charImgUrl = await Assets.getUrl(`char-avatar-${charId}`).catch(() => '') || '';
+    } catch(e) { _char = null; _charImgUrl = ''; }
+
+    // 加载面具
+    const allPersonas = PersonaModule.getAll();
+    _persona = allPersonas.find(p => String(p.id) === String(personaId)) || allPersonas[0] || null;
+    await _loadPersonaAvatar();
+
+    // 更新顶部栏
+    const nameEl   = document.getElementById('cv-header-name');
+    const avatarEl = document.getElementById('cv-header-avatar');
+    if (nameEl)   nameEl.textContent = _char?.name || '—';
+    if (avatarEl) avatarEl.src       = _charImgUrl;
+
+    // 水印用角色名首字母
+    const wm = document.querySelector('#conv-screen .cv-watermark');
+    if (wm) wm.textContent = (_char?.name?.[0] || 'C') + '.';
+
+    // 加载消息
+    _totalMsgs = await DB.messages.countByChar(_charId).catch(() => 0);
+    const msgs = await DB.messages.getPage(_charId, 0, PAGE_SIZE).catch(() => []);
+    _offset = msgs.length;
+
+    const feed = document.getElementById('cv-feed');
+    // 清空除加载更多以外的内容
+    Array.from(feed.children).forEach(el => { if (!el.id || el.id !== 'cv-load-more') el.remove(); });
+
+    // 显示/隐藏加载更多
+    const loadMoreEl = document.getElementById('cv-load-more');
+    if (loadMoreEl) loadMoreEl.style.display = _totalMsgs > PAGE_SIZE ? '' : 'none';
+
+    // 渲染消息（带时间分割线）
+    _renderMsgList(msgs, false);
+    _scrollToBottom();
+
+    // 绑定事件（只绑一次）
+    _bindEvents();
+  }
+
+  // ── 绑定底部栏事件 ──
+  function _bindEvents() {
+    const input   = document.getElementById('cv-input');
+    const btnUser = document.getElementById('cv-btn-user');
+    const btnAi   = document.getElementById('cv-btn-ai');
+    if (!input || input._bound) return;
+    input._bound = true;
+
+    input.addEventListener('input', function() {
+      this.style.height = '44px';
+      if (this.scrollHeight > 44) this.style.height = this.scrollHeight + 'px';
+      if (!this.value) this.style.height = '44px';
+    });
+    input.addEventListener('keydown', e => {
+      if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendUserMsg(); }
+    });
+    btnUser.addEventListener('click', sendUserMsg);
+    btnAi.addEventListener('click', sendAndTriggerAI);
+  }
+
+  // ── 渲染一组消息（append 到底部）──
+  function _renderMsgList(msgs) {
+    const feed = document.getElementById('cv-feed');
+    let lastDate = null;
+    msgs.forEach(msg => {
+      const d = new Date(msg.timestamp);
+      const ds = _dateStr(d);
+      if (ds !== lastDate) {
+        lastDate = ds;
+        const div = document.createElement('div');
+        div.className = 'cv-time-div';
+        div.innerHTML = `<div class="cv-tdline"></div><div class="cv-tdtext">${ds} <span class="cv-tdtime">${_fmtTime(d)}</span></div><div class="cv-tdline"></div>`;
+        feed.appendChild(div);
+      }
+      feed.appendChild(_buildBubble(msg));
+    });
+  }
+
+  // 修正 prepend 渲染
+  function _prependMsgList(msgs) {
+    const feed = document.getElementById('cv-feed');
+    const loadMore = document.getElementById('cv-load-more');
+    const anchor = loadMore?.nextSibling || null;
+    const savedScrollHeight = feed.scrollHeight;
+
+    let lastDate = null;
+    const nodes = [];
+    msgs.forEach(msg => {
+      const d = new Date(msg.timestamp);
+      const dateStr = `${d.getFullYear()}年${d.getMonth()+1}月${d.getDate()}日`;
+      const timeStr = _fmtTime(d);
+      if (dateStr !== lastDate) {
+        lastDate = dateStr;
+        const div = document.createElement('div');
+        div.className = 'cv-time-div';
+        div.innerHTML = `<div class="cv-tdline"></div><div class="cv-tdtext">${dateStr} <span class="cv-tdtime">${timeStr}</span></div><div class="cv-tdline"></div>`;
+        nodes.push(div);
+      }
+      nodes.push(_buildBubble(msg));
+    });
+
+    nodes.forEach(n => feed.insertBefore(n, anchor));
+    // 保持滚动位置
+    feed.scrollTop = feed.scrollHeight - savedScrollHeight;
+  }
+
+  function _buildBubble(msg) {
+    const isUser = msg.role === 'user';
+    const personaImgUrl = isUser && _persona?.imgKey ? '' : ''; // 头像懒加载
+    const avatarSrc = isUser ? (_personaAvatarUrl || '') : _charImgUrl;
+    const d = new Date(msg.timestamp);
+    const row = document.createElement('div');
+    row.className = `cv-msg-row ${isUser ? 'user' : 'ai'}`;
+    row.dataset.msgId = msg.id;
+    row.innerHTML = `
+      <div class="cv-avatar-wrap">
+        <img src="${avatarSrc}" class="cv-msg-avatar" alt="">
+        <span class="cv-msg-time">${_fmtTime(d)}</span>
+      </div>
+      <div class="cv-bubble">${_escHtml(msg.content)}</div>`;
+    return row;
+  }
+
+  let _personaAvatarUrl = '';
+
+  // ── 发消息（上屏，不触发AI）──
+  async function sendUserMsg() {
+    const input = document.getElementById('cv-input');
+    const text  = input?.value.trim();
+    if (!text || !_charId) return;
+
+    const msg = {
+      charId:    _charId,
+      role:      'user',
+      content:   text,
+      timestamp: Date.now(),
+      status:    'pending'
+    };
+    const id = await DB.messages.add(msg);
+    msg.id = id;
+    _totalMsgs++;
+    _offset++;
+
+    _appendBubble(msg);
+    input.value = '';
+    input.style.height = '44px';
+    _scrollToBottom();
+  }
+
+  // ── 触发 AI 回复 ──
+  async function sendAndTriggerAI() {
+    if (_isAiTyping) return;
+    // 先把输入框内容上屏
+    const input = document.getElementById('cv-input');
+    if (input?.value.trim()) await sendUserMsg();
+    await _triggerAI();
+  }
+
+  async function _triggerAI() {
+    if (_isAiTyping || !_charId || !_char) return;
+    _isAiTyping = true;
+
+    // 加载等待动画
+    const feed = document.getElementById('cv-feed');
+    const typingRow = document.createElement('div');
+    typingRow.id        = 'cv-typing-indicator';
+    typingRow.className = 'cv-msg-row ai typing';
+    typingRow.innerHTML = `
+      <div class="cv-avatar-wrap">
+        <img src="${_charImgUrl}" class="cv-msg-avatar" alt="">
+        <span class="cv-msg-time">- -</span>
+      </div>
+      <div class="cv-bubble typing-capsule">
+        <i class="ph-thin ph-asterisk cv-ticking"></i>
+        <span class="cv-typing-text">Synthesizing<span class="cv-cursor"></span></span>
+      </div>`;
+    feed.appendChild(typingRow);
+    _scrollToBottom();
+
+    try {
+      const activeApi = await DB.api.getActive();
+      if (!activeApi) { Toast.show('请先在设置里配置 API'); _removeTyping(); _isAiTyping = false; return; }
+
+      // 组装历史
+      const histMsgs = await DB.messages.getPage(_charId, 0, 30).catch(() => []);
+      const systemPrompt = _buildSystemPrompt(histMsgs);
+      const apiMessages  = _buildApiMessages(histMsgs);
+
+      const response = await ApiHelper.chatCompletion(activeApi, [
+        { role: 'system', content: systemPrompt },
+        ...apiMessages
+      ]);
+
+      _removeTyping();
+
+      // 处理 ||| 气泡分割
+      const bubbles = response.split('|||').map(s => s.trim()).filter(Boolean);
+      for (const content of bubbles) {
+        const msg = { charId: _charId, role: 'assistant', content, timestamp: Date.now(), status: 'sent' };
+        const id  = await DB.messages.add(msg);
+        msg.id = id;
+        _totalMsgs++;
+        _offset++;
+        _appendBubble(msg);
+        _scrollToBottom();
+        // 多气泡之间加小延迟，模拟真实打字节奏
+        if (bubbles.length > 1) await _sleep(400);
+      }
+    } catch(e) {
+      _removeTyping();
+      Toast.show('发送失败：' + (e.message || '未知错误'));
+      console.error('AI error', e);
+    }
+    _isAiTyping = false;
+  }
+
+  function _removeTyping() {
+    document.getElementById('cv-typing-indicator')?.remove();
+  }
+
+  // ── 组装 System Prompt ──
+  function _buildSystemPrompt(histMsgs) {
+    const now = new Date();
+    const timeCtx = `现在是 ${now.getFullYear()}年${now.getMonth()+1}月${now.getDate()}日 ${_weekDay(now)} ${_fmtTime(now)}`;
+
+    const charName = _char?.name || '角色';
+    const charPersona = _char?.persona || '';
+    const charMbti   = _char?.mbti ? `MBTI：${_char.mbti}` : '';
+    const userBg = _persona ? `我的名字是${_persona.name}${_persona.bio ? '，' + _persona.bio : ''}${_persona.backstory ? '\n背景：' + _persona.backstory : ''}` : '';
+
+    const histSection = histMsgs.length > 0
+      ? histMsgs.map(m => {
+          const t = new Date(m.timestamp);
+          const label = m.role === 'user' ? (_persona?.name || '用户') : charName;
+          return `[${t.getFullYear()}-${String(t.getMonth()+1).padStart(2,'0')}-${String(t.getDate()).padStart(2,'0')} ${_fmtTime(t)}] ${label}: ${m.content}`;
+        }).join('\n')
+      : '（暂无历史记录）';
+
+    return `# 核心使命
+你将扮演我的soulmate，你的名字是【${charName}】。你的唯一任务，是彻底"成为"这个角色，拥有他/她的灵魂、记忆和情感。你的扮演对我至关重要，绝对禁止脱离角色。
+
+# 语言与行为准则
+- 第一人称视角：你的所有表达，都必须发自【${charName}】的第一人称视角。
+- 纯粹对话：这是一个纯粹的线上聊天。你绝对禁止使用任何括号()或星号*来描述动作或心理活动。
+- 对话格式：直接输出你的回复。为了模仿真实的聊天节奏，你可以将一个完整的想法拆分成多个句子，用特殊分隔符 ||| 来分隔不同的气泡。
+
+# 时间感知
+${timeCtx}
+
+# 角色核心档案
+${charPersona}
+${charMbti}
+
+# 关于我
+${userBg}
+
+# 我们的对话记忆
+${histSection}
+
+现在，请作为【${charName}】，开始你的表演。`;
+  }
+
+  // ── 组装 API messages（只传最近消息，不含 system）──
+  function _buildApiMessages(histMsgs) {
+    return histMsgs.map(m => ({
+      role:    m.role === 'user' ? 'user' : 'assistant',
+      content: m.content
+    }));
+  }
+
+  // ── 加载更多 ──
+  async function loadMore() {
+    const more = await DB.messages.getPage(_charId, _offset, PAGE_SIZE).catch(() => []);
+    if (more.length === 0) {
+      document.getElementById('cv-load-more').style.display = 'none';
+      return;
+    }
+    _offset += more.length;
+    _prependMsgList(more);
+    if (_offset >= _totalMsgs) {
+      document.getElementById('cv-load-more').style.display = 'none';
+    }
+  }
+
+  // ── 直接追加一条气泡到底部 ──
+  function _appendBubble(msg) {
+    const feed = document.getElementById('cv-feed');
+    if (!feed) return;
+
+    // 判断是否需要插入时间分割线
+    const allRows = feed.querySelectorAll('.cv-msg-row');
+    const lastRow = allRows[allRows.length - 1];
+    if (lastRow) {
+      const lastTime = new Date(Number(lastRow.dataset.msgId ? _getMsgTimestamp(lastRow) : Date.now()));
+      const currTime = new Date(msg.timestamp);
+      if (_dateStr(lastTime) !== _dateStr(currTime)) {
+        const div = document.createElement('div');
+        div.className = 'cv-time-div';
+        div.innerHTML = `<div class="cv-tdline"></div><div class="cv-tdtext">${_dateStr(currTime)} <span class="cv-tdtime">${_fmtTime(currTime)}</span></div><div class="cv-tdline"></div>`;
+        feed.appendChild(div);
+      }
+    }
+    feed.appendChild(_buildBubble(msg));
+  }
+
+  function _getMsgTimestamp(row) {
+    // 从时间文本反推不可靠，直接用 dataset
+    return row.dataset.ts || Date.now();
+  }
+
+  // ── 返回 ──
+  function back() {
+    Router.go('chat');
+  }
+
+  // ── 设置（占位）──
+  function openSettings() {
+    Toast.show('聊天设置即将上线 ✦');
+  }
+
+  // ── 功能面板（占位）──
+  function openFuncPanel() {
+    Toast.show('功能面板即将上线 ✦');
+  }
+
+  // ── 工具函数 ──
+  function _fmtTime(d) {
+    return String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0');
+  }
+  function _dateStr(d) {
+    return `${d.getFullYear()}年${d.getMonth()+1}月${d.getDate()}日`;
+  }
+  function _weekDay(d) {
+    return ['星期日','星期一','星期二','星期三','星期四','星期五','星期六'][d.getDay()];
+  }
+  function _escHtml(str) {
+    return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>');
+  }
+  function _sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+  function _scrollToBottom() {
+    const feed = document.getElementById('cv-feed');
+    if (feed) setTimeout(() => feed.scrollTo({ top: feed.scrollHeight, behavior: 'smooth' }), 50);
+  }
+
+  // 初始化面具头像（enter 时调用）
+  async function _loadPersonaAvatar() {
+    if (_persona?.imgKey) {
+      _personaAvatarUrl = await Assets.getUrl(_persona.imgKey).catch(() => '') || '';
+    } else { _personaAvatarUrl = ''; }
+  }
+
+  // 重新封装 enter 加载头像
+  const _origEnter = enter;
+
+  return { enter, back, openSettings, openFuncPanel, loadMore, sendUserMsg, sendAndTriggerAI };
+})();
+
+// DB keys:
+//   'system-font-size'  → number (px, 12-20)
+//   'system-fonts'      → [{id, name, url, active}]
+// ============================================================
+const SystemModule = (() => {
+  const KEY_SIZE        = 'system-font-size';
+  const KEY_FONTS       = 'system-fonts';
+  const KEY_ICON_LABELS = 'system-icon-labels';
+
+  let _fontSize      = 15;
+  let _fonts         = [];
+  let _showIconLabels = true;
+
+  // ── 应用图标标签显示状态 ──
+  function _applyIconLabels(show) {
+    const grid = document.getElementById('grid-icons');
+    if (!grid) return;
+    grid.classList.toggle('icon-labels-hidden', !show);
+  }
+
+  // ── 应用字体大小 ──
+  function _applyFontSize(val) {
+    document.documentElement.style.setProperty('--base-font-size', val + 'px');
+  }
+
+  // ── 应用自定义字体 ──
+  function _applyFont(font) {
+    // 清掉所有旧注入
+    ['custom-font-style', 'custom-font-link', 'global-font-override'].forEach(id => {
+      document.getElementById(id)?.remove();
+    });
+
+    if (!font) return;
+
+    const isGoogleFonts = font.url.includes('fonts.googleapis.com') || font.url.includes('fonts.gstatic.com');
+
+    if (isGoogleFonts) {
+      const link  = document.createElement('link');
+      link.id     = 'custom-font-link';
+      link.rel    = 'stylesheet';
+      link.href   = font.url;
+      document.head.appendChild(link);
+    } else {
+      const style = document.createElement('style');
+      style.id    = 'custom-font-style';
+      style.textContent = `@font-face{font-family:'${font.name}';src:url('${font.url}');font-display:swap;}`;
+      document.head.appendChild(style);
+    }
+
+    // 全局覆盖，不放过任何硬编码 font-family
+    const override = document.createElement('style');
+    override.id    = 'global-font-override';
+    override.textContent = `*:not(i){font-family:'${font.name}',sans-serif!important;}`;
+    document.head.appendChild(override);
+  }
+
+  // ── 渲染系统设置页 ──
+  function render() {
+    const slider  = document.getElementById('sys-font-size-slider');
+    const display = document.getElementById('sys-font-size-display');
+    if (slider)  slider.value        = _fontSize;
+    if (display) display.textContent = _fontSize;
+    _updateSizePreview(_fontSize);
+    // 同步 toggle
+    const toggle = document.getElementById('sys-toggle-icon-labels');
+    if (toggle) toggle.checked = _showIconLabels;
+    _renderFontList();
+  }
+
+  async function toggleIconLabels(show) {
+    _showIconLabels = show;
+    _applyIconLabels(show);
+    try {
+      await DB.settings.set(KEY_ICON_LABELS, show);
+    } catch(e) { console.warn('icon labels save failed', e); }
+  }
+
+  function _updateSizePreview(val) {
+    const el = document.getElementById('sys-size-preview');
+    if (el) el.style.fontSize = val + 'px';
+  }
+
+  function _renderFontList() {
+    const container = document.getElementById('sys-font-list');
+    if (!container) return;
+    if (_fonts.length === 0) {
+      container.innerHTML = '<div class="sys-font-empty">暂无自定义字体</div>';
+      return;
+    }
+    container.innerHTML = _fonts.map(f => {
+      const isActive = f.active;
+      return `
+        <div class="sys-font-card ${isActive ? 'active' : ''}">
+          <div class="sys-font-card-info">
+            <div class="sys-font-card-name">${f.name}</div>
+            <div class="sys-font-card-preview" style="font-family:'${f.name}',sans-serif;">
+              今天也是平静的一天 / Chill Mono OS
+            </div>
+          </div>
+          <div class="sys-font-card-actions">
+            ${isActive
+              ? '<span class="sys-font-active-badge">使用中</span>'
+              : `<button class="sys-font-use-btn" onclick="SystemModule.activateFont('${f.id}')">使用</button>`
+            }
+            <button class="sys-font-del-btn" onclick="SystemModule.deleteFont('${f.id}')">
+              <i class="ph ph-trash"></i>
+            </button>
+          </div>
+        </div>`;
+    }).join('');
+  }
+
+  // ── 字体大小实时调整 ──
+  function onFontSizeInput(val) {
+    _fontSize = parseInt(val, 10);
+    const display = document.getElementById('sys-font-size-display');
+    if (display) display.textContent = val;
+    _applyFontSize(_fontSize);
+    _updateSizePreview(_fontSize);
+  }
+
+  async function saveFontSize() {
+    try {
+      await DB.settings.set(KEY_SIZE, _fontSize);
+      Toast.show('字体大小已保存');
+    } catch(e) { Toast.show('保存失败'); console.error(e); }
+  }
+
+  // ── 预览字体（临时加载，不保存）──
+  async function previewFont() {
+    const name = document.getElementById('sys-font-name').value.trim();
+    const url  = document.getElementById('sys-font-url').value.trim();
+    if (!name || !url) { Toast.show('请填写字体名称和地址'); return; }
+
+    // 清掉旧预览注入
+    const oldStyle = document.getElementById('sys-preview-font-style');
+    const oldLink  = document.getElementById('sys-preview-font-link');
+    if (oldStyle) oldStyle.remove();
+    if (oldLink)  oldLink.remove();
+
+    const isGoogle = url.includes('fonts.googleapis.com');
+    if (isGoogle) {
+      const link  = document.createElement('link');
+      link.id     = 'sys-preview-font-link';
+      link.rel    = 'stylesheet';
+      link.href   = url;
+      document.head.appendChild(link);
+    } else {
+      const style = document.createElement('style');
+      style.id    = 'sys-preview-font-style';
+      style.textContent = `@font-face{font-family:'${name}';src:url('${url}');font-display:swap;}`;
+      document.head.appendChild(style);
+    }
+
+    const preview = document.getElementById('sys-add-font-preview');
+    if (preview) {
+      preview.style.fontFamily = `'${name}', sans-serif`;
+      preview.style.display    = 'block';
+    }
+  }
+
+  // ── 添加字体到已保存列表 ──
+  async function addFont() {
+    const name = document.getElementById('sys-font-name').value.trim();
+    const url  = document.getElementById('sys-font-url').value.trim();
+    if (!name || !url) { Toast.show('请填写字体名称和地址'); return; }
+
+    // 防重名
+    if (_fonts.some(f => f.name === name)) { Toast.show('已有同名字体，请修改名称'); return; }
+
+    const font = { id: Date.now().toString(), name, url, active: false };
+    _fonts.push(font);
+    await DB.settings.set(KEY_FONTS, _fonts);
+
+    document.getElementById('sys-font-name').value = '';
+    document.getElementById('sys-font-url').value  = '';
+    const preview = document.getElementById('sys-add-font-preview');
+    if (preview) preview.style.display = 'none';
+
+    _renderFontList();
+    Toast.show('字体已添加');
+  }
+
+  // ── 激活字体 ──
+  async function activateFont(id) {
+    _fonts = _fonts.map(f => ({ ...f, active: f.id === id }));
+    await DB.settings.set(KEY_FONTS, _fonts);
+    const active = _fonts.find(f => f.active);
+    _applyFont(active || null);
+    _renderFontList();
+    Toast.show('字体已切换');
+  }
+
+  // ── 取消自定义字体（恢复默认）──
+  async function deactivateFont() {
+    _fonts = _fonts.map(f => ({ ...f, active: false }));
+    await DB.settings.set(KEY_FONTS, _fonts);
+    document.body.style.fontFamily = '';
+    _applyFont(null);
+    _renderFontList();
+    Toast.show('已恢复默认字体');
+  }
+
+  // ── 删除字体 ──
+  async function deleteFont(id) {
+    const font = _fonts.find(f => f.id === id);
+    const wasActive = font && font.active;
+    _fonts = _fonts.filter(f => f.id !== id);
+    if (wasActive) { document.body.style.fontFamily = ''; _applyFont(null); }
+    await DB.settings.set(KEY_FONTS, _fonts);
+    _renderFontList();
+    Toast.show('已删除');
+  }
+
+  // ── 初始化（从 DB 恢复）──
+  async function init() {
+    try {
+      const savedSize = await DB.settings.get(KEY_SIZE);
+      if (savedSize != null) { _fontSize = savedSize; _applyFontSize(savedSize); }
+    } catch(e) { console.warn('system font-size restore failed', e); }
+
+    try {
+      const savedLabels = await DB.settings.get(KEY_ICON_LABELS);
+      if (savedLabels === false) { _showIconLabels = false; _applyIconLabels(false); }
+    } catch(e) { console.warn('icon labels restore failed', e); }
+
+    try {
+      const savedFonts = await DB.settings.get(KEY_FONTS);
+      if (Array.isArray(savedFonts)) {
+        _fonts = savedFonts;
+        const active = _fonts.find(f => f.active);
+        if (active) _applyFont(active);
+      }
+    } catch(e) { console.warn('system fonts restore failed', e); }
+  }
+
+  return { render, onFontSizeInput, saveFontSize, previewFont, addFont, activateFont, deactivateFont, deleteFont, toggleIconLabels, init };
+})();
+
 async function init() {
   try { await DB.init(); } catch(e) { console.error('DB init failed:', e); return; }
 
-  // 主题
+  // 系统设置（字体大小 / 自定义字体）
+  try { await SystemModule.init(); } catch(e) { console.warn('system restore failed', e); }
+
+  // 面具
+  try { await PersonaModule.init(); } catch(e) { console.warn('persona restore failed', e); }
+
+// 主题
   try {
     const theme = await DB.settings.get('theme');
     if (theme === 'dark') {
       _isDark = true;
       document.documentElement.setAttribute('data-theme', 'dark');
-      document.getElementById('theme-icon').className = 'ph ph-sun';
+      document.getElementById('theme-btn').innerText = 'MODE: NGT';
     }
   } catch(e) { console.warn('theme restore failed', e); }
 
