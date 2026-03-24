@@ -909,7 +909,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg-body);display:flex;jus
 #conv-screen .cv-watermark { position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-family:'Playfair Display',serif;font-size:280px;font-style:italic;font-weight:300;color:rgba(0,0,0,0.025);pointer-events:none;z-index:0;line-height:1; }
 
 /* Header */
-#conv-screen .cv-header { position:absolute;top:20px;left:16px;right:16px;display:flex;justify-content:space-between;align-items:center;padding:12px 16px;background:rgba(239,236,231,0.7);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);border:1px solid rgba(255,255,255,0.4);border-radius:28px;box-shadow:0 10px 30px rgba(0,0,0,0.06);z-index:20; }
+#conv-screen .cv-header { position:absolute;top:calc(env(safe-area-inset-top, 20px) + 10px);left:16px;right:16px;display:flex;justify-content:space-between;align-items:center;padding:12px 16px;background:rgba(239,236,231,0.7);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);border:1px solid rgba(255,255,255,0.4);border-radius:28px;box-shadow:0 10px 30px rgba(0,0,0,0.06);z-index:20; }
 #conv-screen .cv-icon-btn { width:40px;height:40px;border-radius:50%;background:#fff;border:1px solid rgba(18,18,18,0.05);color:#121212;font-size:1.2rem;display:flex;justify-content:center;align-items:center;cursor:pointer;transition:0.2s;box-shadow:0 2px 10px rgba(0,0,0,0.03); }
 #conv-screen .cv-icon-btn:active { transform:scale(0.9); }
 #conv-screen .cv-header-profile { display:flex;align-items:center;gap:12px; }
@@ -918,7 +918,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg-body);display:flex;jus
 #conv-screen .cv-header-status { font-family:'Space Mono',monospace;font-size:0.5rem;letter-spacing:2px;color:#888;margin-top:4px;text-transform:uppercase;display:block; }
 
 /* Feed */
-#conv-screen .cv-feed { height:100%;overflow-y:auto;padding:110px 20px 130px;display:flex;flex-direction:column;gap:28px;position:relative;scroll-behavior:smooth;z-index:10; }
+#conv-screen .cv-feed { height:100%;overflow-y:auto;padding:calc(env(safe-area-inset-top, 20px) + 90px) 20px 130px;display:flex;flex-direction:column;gap:28px;position:relative;scroll-behavior:smooth;z-index:10; }
 #conv-screen .cv-feed::-webkit-scrollbar { display:none; }
 
 /* Load more */
@@ -3320,21 +3320,45 @@ const ChatModule = (() => {
   let _selMuses  = new Set();
   let _observer  = null;
 
-  // ── 从 DB 加载角色 ──
+ // ── 从 DB 加载角色（按最新活跃时间排序） ──
   async function _loadChars() {
     try {
       const raw = await DB.characters.getAll();
-      _chars = await Promise.all(raw.map(async c => {
+      // 创建一个Promise数组，为每个角色异步获取数据
+      const charPromises = raw.map(async c => {
         const img = await Assets.getUrl(`char-avatar-${c.id}`).catch(() => null);
+        
+        // 1. 获取该角色的最新一条消息的时间戳
+        let lastActiveTime = c.updatedAt || c.createdAt || 0; // 兜底：如果没有聊天，就用角色创建/更新时间
+        try {
+          // getPage(charId, offset, limit)，取最新的1条
+          const latestMsg = await DB.messages.getPage(String(c.id), 0, 1);
+          if (latestMsg && latestMsg.length > 0) {
+            lastActiveTime = latestMsg[0].timestamp;
+          }
+        } catch(e) {
+          console.warn(`获取角色 ${c.id} 最新消息失败`, e);
+        }
+
         return {
           id:   String(c.id),
           name: c.name,
           role: c.title || c.mbti || '',
           img:  img || '',
-          msg:  c.aiData?.intro || ''
+          msg:  c.aiData?.intro || '',
+          _lastActive: lastActiveTime // 存入一个临时属性用于后续排序
         };
-      }));
-    } catch(e) { _chars = []; }
+      });
+      
+      _chars = await Promise.all(charPromises);
+      
+      // 2. 按最新活跃时间降序排序（时间戳越大的排在越前面）
+      _chars.sort((a, b) => b._lastActive - a._lastActive);
+
+    } catch(e) {
+      console.error('加载并排序角色列表失败:', e);
+      _chars = []; // 如果出错，清空列表
+    }
   }
 
   // ── 从 DB 加载分组 ──
