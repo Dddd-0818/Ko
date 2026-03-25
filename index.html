@@ -130,7 +130,8 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg-body);display:flex;jus
 .stack-card:nth-child(1){z-index:3;transform:translateY(0) scale(1);}
 .stack-card:nth-child(2){z-index:2;transform:translateY(14px) scale(.92);}
 .stack-card:nth-child(3){z-index:1;transform:translateY(28px) scale(.84);opacity:.6;}
-.notify-icon{width:40px;height:40px;border-radius:12px;background:var(--bg-card);border:1px solid var(--border-line);display:flex;align-items:center;justify-content:center;font-size:1.2rem;color:var(--text-main);flex-shrink:0;}
+.notify-icon{width:40px;height:40px;border-radius:12px;background:var(--bg-card);border:1px solid var(--border-line);display:flex;align-items:center;justify-content:center;font-size:1.2rem;color:var(--text-main);flex-shrink:0;overflow:hidden;}
+.notify-icon img{width:100%;height:100%;object-fit:cover;border-radius:12px;}
 .notify-content{flex:1;min-width:0;}
 .notify-header{display:flex;justify-content:space-between;margin-bottom:2px;}
 .notify-app{font-size:0.6667rem;font-weight:700;text-transform:uppercase;color:var(--text-sub);}
@@ -958,9 +959,45 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg-body);display:flex;jus
 @keyframes cv-blink { 0%,100%{opacity:1;}50%{opacity:0;} }
 
 /* Footer */
-#conv-screen .cv-footer { position:absolute;bottom:24px;left:16px;right:16px;padding:8px 12px;background:rgba(239,236,231,0.85);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);border:1px solid rgba(255,255,255,0.4);border-radius:36px;box-shadow:0 15px 40px rgba(0,0,0,0.08),inset 0 1px 0 rgba(255,255,255,0.6);display:flex;align-items:flex-end;gap:12px;z-index:20; }
+/* Footer */
+#conv-screen .cv-footer { position:absolute;bottom:24px;left:16px;right:16px;padding:8px 12px;background:rgba(239,236,231,0.85);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);border:1px solid rgba(255,255,255,0.4);border-radius:36px;box-shadow:0 15px 40px rgba(0,0,0,0.08),inset 0 1px 0 rgba(255,255,255,0.6);display:flex;flex-direction:column;z-index:20;transition:all 0.5s cubic-bezier(0.19,1,0.22,1); }
+#conv-screen .cv-footer.expanded { border-radius:24px; }
+/* Action panel grid */
+#conv-screen .cv-action-panel { width:100%;display:grid;grid-template-rows:0fr;transition:grid-template-rows 0.6s cubic-bezier(0.16,1,0.3,1); }
+#conv-screen .cv-footer.expanded .cv-action-panel { grid-template-rows:1fr; }
+#conv-screen .cv-panel-inner { min-height:0;overflow:hidden;display:grid;grid-template-columns:repeat(4,1fr);gap:8px;padding-top:0;padding-bottom:0;transition:padding 0.6s cubic-bezier(0.16,1,0.3,1); }
+#conv-screen .cv-footer.expanded .cv-panel-inner { padding-top:6px;padding-bottom:16px; }
+/* Panel cards */
+#conv-screen .cv-panel-card { position:relative;height:78px;padding:10px 12px;background:rgba(255,255,255,0.55);border:0.5px solid rgba(18,18,18,0.06);border-radius:14px;cursor:pointer;display:flex;flex-direction:column;justify-content:space-between;overflow:hidden;opacity:0;transform:translateY(24px) scale(0.92);filter:blur(4px);transition:all 0.5s cubic-bezier(0.16,1,0.3,1); }
+#conv-screen .cv-panel-card:active { transform:scale(0.95)!important;transition-duration:0.1s; }
+#conv-screen .cv-panel-card:hover { background:#121212;border-color:#121212;box-shadow:0 10px 25px rgba(0,0,0,0.12); }
+#conv-screen .cv-pc-wide { grid-column:span 2; }
+#conv-screen .cv-pc-sq   { grid-column:span 1; }
+#conv-screen .cv-pc-top  { display:flex;justify-content:space-between;align-items:flex-start;z-index:2;position:relative; }
+#conv-screen .cv-pc-idx  { font-family:'Space Mono',monospace;font-size:8px;font-weight:700;color:#888;letter-spacing:1px;transition:color 0.3s; }
+#conv-screen .cv-pc-top i { font-size:1.2rem;color:#121212;transition:color 0.3s; }
+#conv-screen .cv-pc-bottom { display:flex;flex-direction:column;z-index:2;position:relative; }
+#conv-screen .cv-pc-en { font-family:'Playfair Display',serif;font-size:13px;font-style:italic;color:#121212;font-weight:600;line-height:1;margin-bottom:3px;transition:color 0.3s; }
+#conv-screen .cv-pc-cn { font-family:'Inter','Noto Sans SC',sans-serif;font-size:8px;font-weight:900;color:#999;letter-spacing:2px;text-transform:uppercase;transition:color 0.3s; }
+#conv-screen .cv-panel-card:hover .cv-pc-idx { color:rgba(255,255,255,0.4); }
+#conv-screen .cv-panel-card:hover .cv-pc-top i,
+#conv-screen .cv-panel-card:hover .cv-pc-en { color:#fff; }
+#conv-screen .cv-panel-card:hover .cv-pc-cn { color:rgba(255,255,255,0.6); }
+#conv-screen .cv-card-wm { position:absolute;right:-10px;bottom:-15px;font-size:64px;color:#121212;opacity:0.03;transform:rotate(-15deg);transition:all 0.6s cubic-bezier(0.16,1,0.3,1);z-index:1;pointer-events:none; }
+#conv-screen .cv-panel-card:hover .cv-card-wm { color:#fff;opacity:0.12;transform:rotate(0deg) scale(1.1); }
+#conv-screen .cv-footer.expanded .cv-panel-card { opacity:1;transform:translateY(0) scale(1);filter:blur(0); }
+#conv-screen .cv-footer.expanded .cv-panel-card:nth-child(1){transition-delay:0.00s}
+#conv-screen .cv-footer.expanded .cv-panel-card:nth-child(2){transition-delay:0.04s}
+#conv-screen .cv-footer.expanded .cv-panel-card:nth-child(3){transition-delay:0.08s}
+#conv-screen .cv-footer.expanded .cv-panel-card:nth-child(4){transition-delay:0.06s}
+#conv-screen .cv-footer.expanded .cv-panel-card:nth-child(5){transition-delay:0.10s}
+#conv-screen .cv-footer.expanded .cv-panel-card:nth-child(6){transition-delay:0.14s}
+/* Footer base row */
+#conv-screen .cv-footer-base { display:flex;align-items:flex-end;gap:12px;width:100%; }
 #conv-screen .cv-func-btn { width:44px;height:44px;border-radius:50%;background:#fff;border:1px solid rgba(18,18,18,0.05);color:#121212;font-size:1.4rem;display:flex;justify-content:center;align-items:center;cursor:pointer;flex-shrink:0;margin-bottom:2px;box-shadow:0 2px 10px rgba(0,0,0,0.03); }
 #conv-screen .cv-func-btn:active { transform:scale(0.9); }
+#conv-screen .cv-plus-icon { transition:transform 0.5s cubic-bezier(0.19,1,0.22,1); }
+#conv-screen .cv-footer.expanded .cv-plus-icon { transform:rotate(135deg); }
 #conv-screen .cv-input-area { flex:1;background:transparent; }
 #conv-screen .cv-input-area textarea { width:100%;background:transparent;border:none;font-family:'Inter','Noto Sans SC',sans-serif;font-size:0.95rem;color:#121212;resize:none;max-height:120px;line-height:1.5;padding:12px 4px;height:44px; }
 #conv-screen .cv-input-area textarea::placeholder { color:#A0A0A0;font-family:'Playfair Display',serif;font-style:italic; }
@@ -969,6 +1006,52 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg-body);display:flex;jus
 #conv-screen .cv-btn-user:active { opacity:0.5; }
 #conv-screen .cv-btn-ai { width:40px;height:40px;border-radius:50%;background:#fff;border:none;color:#121212;font-size:1.2rem;display:flex;justify-content:center;align-items:center;cursor:pointer;transition:0.2s;box-shadow:0 2px 8px rgba(0,0,0,0.2); }
 #conv-screen .cv-btn-ai:active { transform:scale(0.9); }
+
+/* API Modal */
+#conv-screen .cv-api-overlay { position:absolute;inset:0;z-index:100;background:rgba(239,236,231,0.5);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);display:flex;justify-content:center;align-items:center;padding:20px;opacity:0;pointer-events:none;transition:all 0.5s cubic-bezier(0.16,1,0.3,1); }
+#conv-screen .cv-api-overlay.active { opacity:1;pointer-events:auto; }
+#conv-screen .cv-api-modal { width:100%;max-width:360px;background:#fff;border:0.5px solid rgba(18,18,18,0.1);border-radius:28px;padding:32px 24px;box-shadow:0 40px 80px rgba(0,0,0,0.1),0 10px 20px rgba(0,0,0,0.05);position:relative;overflow:hidden;transform:translateY(30px) scale(0.95);filter:blur(8px);transition:all 0.6s cubic-bezier(0.16,1,0.3,1) 0.05s;max-height:80vh;overflow-y:auto; }
+#conv-screen .cv-api-modal::-webkit-scrollbar { display:none; }
+#conv-screen .cv-api-overlay.active .cv-api-modal { transform:translateY(0) scale(1);filter:blur(0); }
+#conv-screen .cv-modal-bg-letter { position:absolute;top:-20px;right:-20px;font-family:'Playfair Display',serif;font-size:180px;font-style:italic;font-weight:300;color:rgba(0,0,0,0.02);line-height:1;pointer-events:none;z-index:0; }
+#conv-screen .cv-modal-header { display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:28px;position:relative;z-index:1; }
+#conv-screen .cv-mh-title { font-family:'Playfair Display',serif;font-size:2.2rem;font-weight:500;font-style:italic;color:#121212;line-height:1; }
+#conv-screen .cv-mh-sub { font-family:'Space Mono',monospace;font-size:0.55rem;font-weight:700;letter-spacing:3px;color:#999;text-transform:uppercase;margin-top:4px; }
+#conv-screen .cv-btn-close { width:36px;height:36px;border-radius:50%;border:0.5px solid rgba(18,18,18,0.1);background:transparent;display:flex;justify-content:center;align-items:center;font-size:1rem;color:#121212;cursor:pointer;transition:0.3s; }
+#conv-screen .cv-btn-close:active { transform:scale(0.9);background:#121212;color:#fff; }
+#conv-screen .cv-api-list { display:flex;flex-direction:column;gap:0;position:relative;z-index:1;margin-bottom:32px; }
+#conv-screen .cv-api-item { border-bottom:0.5px solid rgba(18,18,18,0.08);padding:18px 0;cursor:pointer;position:relative; }
+#conv-screen .cv-api-item:first-child { border-top:0.5px solid rgba(18,18,18,0.08); }
+#conv-screen .cv-api-item-header { display:flex;justify-content:space-between;align-items:center; }
+#conv-screen .cv-aih-left { display:flex;align-items:baseline;gap:12px; }
+#conv-screen .cv-aih-num { font-family:'Space Mono',monospace;font-size:0.65rem;color:#999;font-weight:400; }
+#conv-screen .cv-aih-name { font-family:'Inter','Noto Sans SC',sans-serif;font-size:1rem;font-weight:600;color:#121212;transition:0.3s; }
+#conv-screen .cv-aih-status { font-family:'Space Mono',monospace;font-size:0.55rem;letter-spacing:1px;text-transform:uppercase;padding:4px 8px;border-radius:100px;font-weight:700;transition:0.3s; }
+#conv-screen .cv-aih-status.active { background:#121212;color:#fff; }
+#conv-screen .cv-aih-status.idle { border:0.5px solid #888;color:#888; }
+#conv-screen .cv-api-item:hover .cv-aih-name { padding-left:4px; }
+#conv-screen .cv-api-item-body { display:grid;grid-template-rows:0fr;transition:grid-template-rows 0.5s cubic-bezier(0.16,1,0.3,1); }
+#conv-screen .cv-api-item.expanded .cv-api-item-body { grid-template-rows:1fr; }
+#conv-screen .cv-aib-inner { min-height:0;overflow:hidden;padding-top:0;transition:padding 0.5s cubic-bezier(0.16,1,0.3,1); }
+#conv-screen .cv-api-item.expanded .cv-aib-inner { padding-top:16px;padding-bottom:4px; }
+#conv-screen .cv-model-card { background:rgba(239,236,231,0.4);border-radius:12px;padding:12px 14px;display:flex;justify-content:space-between;align-items:center;border:0.5px solid rgba(18,18,18,0.05); }
+#conv-screen .cv-mc-label { font-family:'Space Mono',monospace;font-size:0.5rem;letter-spacing:1px;color:#999;text-transform:uppercase; }
+#conv-screen .cv-mc-value { font-family:'Playfair Display',serif;font-size:1.05rem;font-style:italic;font-weight:600;color:#121212; }
+#conv-screen .cv-btn-switch { background:transparent;border:none;display:flex;align-items:center;gap:6px;font-family:'Space Mono',monospace;font-size:0.6rem;font-weight:700;color:#121212;letter-spacing:1px;text-transform:uppercase;cursor:pointer;transition:0.2s; }
+#conv-screen .cv-btn-switch i { font-size:1rem;transition:transform 0.4s cubic-bezier(0.16,1,0.3,1); }
+#conv-screen .cv-btn-switch.open i { transform:rotate(180deg); }
+#conv-screen .cv-model-list-wrap { display:grid;grid-template-rows:0fr;transition:grid-template-rows 0.4s cubic-bezier(0.16,1,0.3,1); }
+#conv-screen .cv-model-list-wrap.open { grid-template-rows:1fr; }
+#conv-screen .cv-model-list-inner { min-height:0;overflow:hidden;display:flex;flex-direction:column;gap:6px;padding-top:0;transition:padding 0.4s cubic-bezier(0.16,1,0.3,1); }
+#conv-screen .cv-model-list-wrap.open .cv-model-list-inner { padding-top:8px; }
+#conv-screen .cv-ml-item { font-family:'Space Mono',monospace;font-size:0.75rem;padding:10px 14px;border-radius:8px;border:0.5px solid rgba(18,18,18,0.08);cursor:pointer;transition:all 0.2s;color:#888;display:flex;justify-content:space-between;align-items:center; }
+#conv-screen .cv-ml-item:hover { background:rgba(18,18,18,0.03);color:#121212; }
+#conv-screen .cv-ml-item.selected { background:#121212;color:#fff;border-color:#121212;font-weight:700; }
+#conv-screen .cv-ml-item i { font-size:0.9rem;opacity:0;transition:0.2s; }
+#conv-screen .cv-ml-item.selected i { opacity:1; }
+#conv-screen .cv-api-loading { font-family:'Space Mono',monospace;font-size:0.6rem;letter-spacing:2px;color:#999;text-align:center;padding:12px 0;text-transform:uppercase; }
+#conv-screen .cv-btn-confirm { width:100%;padding:16px;background:#121212;color:#fff;border:none;border-radius:100px;font-family:'Inter',sans-serif;font-size:0.85rem;font-weight:600;letter-spacing:2px;text-transform:uppercase;cursor:pointer;position:relative;z-index:1;box-shadow:0 10px 20px rgba(0,0,0,0.1);transition:0.3s; }
+#conv-screen .cv-btn-confirm:active { transform:scale(0.96); }
 
 </style>
 </head>
@@ -1024,16 +1107,24 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg-body);display:flex;jus
         <div class="profile-edit-btn" id="profile-edit-btn"><i class="ph ph-pencil-simple"></i></div>
       </div>
 
-      <div class="stack-label"><span>Updates</span><span>3</span></div>
-      <div class="stack-container" onclick="openPanel()">
-        <div class="stack-card">
-          <div class="notify-icon"><i class="ph ph-instagram-logo"></i></div>
+      <div class="stack-label"><span>Updates</span><span id="notif-count" style="display:none">0</span></div>
+      <div class="stack-container" onclick="openPanel()" id="stack-container">
+        <!-- 最上面那张：动态内容 -->
+        <div class="stack-card" id="stack-card-top">
+          <div class="notify-icon" id="stack-icon">
+            <i class="ph ph-chat-circle-dots"></i>
+          </div>
           <div class="notify-content">
-            <div class="notify-header"><span class="notify-app">Instagram</span><span>2m</span></div>
-            <div class="notify-msg">Lisa tagged you in a story.</div>
+            <div class="notify-header">
+              <span class="notify-app" id="stack-name">—</span>
+              <span id="stack-time"></span>
+            </div>
+            <div class="notify-msg" id="stack-msg">暂无新消息</div>
           </div>
         </div>
-        <div class="stack-card"></div><div class="stack-card"></div>
+        <!-- 下面两张纯视觉叠牌 -->
+        <div class="stack-card"></div>
+        <div class="stack-card"></div>
       </div>
 
       <div class="bento-grid">
@@ -1100,22 +1191,9 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg-body);display:flex;jus
     <div class="overlay" id="overlay" onclick="closePanel()"></div>
     <div class="details-panel" id="panel">
       <div class="panel-handle" onclick="closePanel()"></div>
-      <div class="panel-title">Notifications</div>
-      <div class="panel-list">
-        <div class="panel-item">
-          <div class="notify-icon"><i class="ph ph-instagram-logo"></i></div>
-          <div class="notify-content">
-            <div class="notify-header"><span class="notify-app">Instagram</span><span>2m ago</span></div>
-            <div class="notify-msg">Lisa tagged you in a story.</div>
-          </div>
-        </div>
-        <div class="panel-item">
-          <div class="notify-icon"><i class="ph ph-wallet"></i></div>
-          <div class="notify-content">
-            <div class="notify-header"><span class="notify-app">Wallet</span><span>1h ago</span></div>
-            <div class="notify-msg">Payment received ($450.00).</div>
-          </div>
-        </div>
+      <div class="panel-title">Updates</div>
+      <div class="panel-list" id="notif-panel-list">
+        <!-- 动态渲染 -->
       </div>
     </div>
 
@@ -1714,16 +1792,68 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg-body);display:flex;jus
     </main>
 
     <!-- Footer -->
-    <footer class="cv-footer">
-      <button class="cv-func-btn" onclick="ConvModule.openFuncPanel()"><i class="ph-thin ph-plus"></i></button>
-      <div class="cv-input-area">
-        <textarea id="cv-input" rows="1" placeholder="Type a message..."></textarea>
+    <footer class="cv-footer" id="cv-footer">
+      <!-- 功能面板 -->
+      <div class="cv-action-panel">
+        <div class="cv-panel-inner">
+          <div class="cv-panel-card cv-pc-wide" id="cv-btn-api-node">
+            <div class="cv-pc-top"><span class="cv-pc-idx">N°.01</span><i class="ph-thin ph-share-network"></i></div>
+            <div class="cv-pc-bottom"><span class="cv-pc-en">API Node</span><span class="cv-pc-cn">接口接入</span></div>
+            <i class="ph-fill ph-cpu cv-card-wm"></i>
+          </div>
+          <div class="cv-panel-card cv-pc-sq">
+            <div class="cv-pc-top"><span class="cv-pc-idx">N°.02</span><i class="ph-thin ph-smiley"></i></div>
+            <div class="cv-pc-bottom"><span class="cv-pc-en">Emote</span><span class="cv-pc-cn">情绪拟态</span></div>
+          </div>
+          <div class="cv-panel-card cv-pc-sq">
+            <div class="cv-pc-top"><span class="cv-pc-idx">N°.03</span><i class="ph-thin ph-aperture"></i></div>
+            <div class="cv-pc-bottom"><span class="cv-pc-en">Lens</span><span class="cv-pc-cn">视觉捕获</span></div>
+          </div>
+          <div class="cv-panel-card cv-pc-sq">
+            <div class="cv-pc-top"><span class="cv-pc-idx">N°.04</span><i class="ph-thin ph-waveform"></i></div>
+            <div class="cv-pc-bottom"><span class="cv-pc-en">Audio</span><span class="cv-pc-cn">声纹特征</span></div>
+          </div>
+          <div class="cv-panel-card cv-pc-sq">
+            <div class="cv-pc-top"><span class="cv-pc-idx">N°.05</span><i class="ph-thin ph-video-camera"></i></div>
+            <div class="cv-pc-bottom"><span class="cv-pc-en">Live</span><span class="cv-pc-cn">视讯链路</span></div>
+          </div>
+          <div class="cv-panel-card cv-pc-wide">
+            <div class="cv-pc-top"><span class="cv-pc-idx">N°.06</span><i class="ph-thin ph-wallet"></i></div>
+            <div class="cv-pc-bottom"><span class="cv-pc-en">Ledger</span><span class="cv-pc-cn">资产流转</span></div>
+            <i class="ph-fill ph-circles-three cv-card-wm"></i>
+          </div>
+        </div>
       </div>
-      <div class="cv-action-capsule">
-        <button class="cv-btn-user" id="cv-btn-user" title="上屏不触发AI"><i class="ph ph-arrow-up"></i></button>
-        <button class="cv-btn-ai"   id="cv-btn-ai"   title="触发AI回复"><i class="ph-fill ph-sparkle"></i></button>
+      <!-- 基础输入区 -->
+      <div class="cv-footer-base">
+        <button class="cv-func-btn" id="cv-btn-plus"><i class="ph-thin ph-plus cv-plus-icon"></i></button>
+        <div class="cv-input-area">
+          <textarea id="cv-input" rows="1" placeholder="Type a message..."></textarea>
+        </div>
+        <div class="cv-action-capsule">
+          <button class="cv-btn-user" id="cv-btn-user" title="上屏不触发AI"><i class="ph ph-arrow-up"></i></button>
+          <button class="cv-btn-ai"   id="cv-btn-ai"   title="触发AI回复"><i class="ph-fill ph-sparkle"></i></button>
+        </div>
       </div>
     </footer>
+
+    <!-- API Node 浮窗 -->
+    <div class="cv-api-overlay" id="cv-api-overlay">
+      <div class="cv-api-modal" id="cv-api-modal">
+        <div class="cv-modal-bg-letter">N</div>
+        <div class="cv-modal-header">
+          <div>
+            <div class="cv-mh-title">Node Index</div>
+            <div class="cv-mh-sub">Available Connections</div>
+          </div>
+          <button class="cv-btn-close" id="cv-api-close"><i class="ph ph-x"></i></button>
+        </div>
+        <div class="cv-api-list" id="cv-api-list">
+          <!-- 动态渲染 -->
+        </div>
+        <button class="cv-btn-confirm" id="cv-api-confirm">Confirm Setup</button>
+      </div>
+    </div>
   </div><!-- #conv-screen -->
 
 </div><!-- .device -->
@@ -3700,6 +3830,131 @@ const ChatModule = (() => {
 })();
 
 // ============================================================
+// NotifModule — 桌面堆叠通知
+// 逻辑：查 messages store，找 24h 内有消息的角色，
+//       最新一条显示在堆叠卡片顶部，浮窗显示完整列表
+// ============================================================
+const NotifModule = (() => {
+  const ONE_DAY = 24 * 60 * 60 * 1000;
+
+  // ── 刷新通知 ──
+  async function refresh() {
+    console.log('[NotifModule] refresh');
+    const chars = await DB.characters.getAll().catch(() => []);
+    if (!chars.length) { _renderEmpty(); return; }
+
+    const now = Date.now();
+    const items = []; // { char, lastMsg, imgUrl }
+
+    for (const c of chars) {
+      try {
+        const msgs = await DB.messages.getPage(String(c.id), 0, 1);
+        if (!msgs.length) continue;
+        const last = msgs[msgs.length - 1];
+        if (now - last.timestamp > ONE_DAY) continue;
+        const imgUrl = await Assets.getUrl(`char-avatar-${c.id}`).catch(() => '') || '';
+        items.push({ char: c, lastMsg: last, imgUrl });
+      } catch(e) { /* skip */ }
+    }
+
+    // 按最新消息时间降序
+    items.sort((a, b) => b.lastMsg.timestamp - a.lastMsg.timestamp);
+    console.log(`[NotifModule] 24h内有消息的角色: ${items.length}`);
+
+    _renderStack(items);
+    _renderPanel(items);
+  }
+
+  function _renderStack(items) {
+    const countEl = document.getElementById('notif-count');
+    const iconEl  = document.getElementById('stack-icon');
+    const nameEl  = document.getElementById('stack-name');
+    const timeEl  = document.getElementById('stack-time');
+    const msgEl   = document.getElementById('stack-msg');
+
+    if (!countEl) return;
+
+    if (!items.length) {
+      countEl.style.display = 'none';
+      if (iconEl)  iconEl.innerHTML  = '<i class="ph ph-chat-circle-dots"></i>';
+      if (nameEl)  nameEl.textContent = '—';
+      if (timeEl)  timeEl.textContent = '';
+      if (msgEl)   msgEl.textContent  = '暂无新消息';
+      return;
+    }
+
+    // 数字
+    countEl.style.display = '';
+    countEl.textContent   = items.length;
+
+    // 最新一条
+    const top = items[0];
+    if (iconEl) {
+      iconEl.innerHTML = top.imgUrl
+        ? `<img src="${top.imgUrl}" alt="">`
+        : '<i class="ph ph-chat-circle-dots"></i>';
+    }
+    if (nameEl) nameEl.textContent = top.char.name;
+    if (timeEl) timeEl.textContent = _relativeTime(top.lastMsg.timestamp);
+    if (msgEl)  msgEl.textContent  = _truncate(top.lastMsg.content, 28);
+  }
+
+  function _renderPanel(items) {
+    const list = document.getElementById('notif-panel-list');
+    if (!list) return;
+
+    if (!items.length) {
+      list.innerHTML = `<div style="text-align:center;padding:40px 0;color:var(--text-sub);font-size:0.8rem;">暂无最近消息</div>`;
+      return;
+    }
+
+    list.innerHTML = items.map(item => `
+      <div class="panel-item" style="cursor:pointer;" onclick="NotifModule.enterChat('${item.char.id}')">
+        <div class="notify-icon">
+          ${item.imgUrl ? `<img src="${item.imgUrl}" alt="">` : '<i class="ph ph-user"></i>'}
+        </div>
+        <div class="notify-content">
+          <div class="notify-header">
+            <span class="notify-app">${item.char.name}</span>
+            <span>${_relativeTime(item.lastMsg.timestamp)}</span>
+          </div>
+          <div class="notify-msg">${_truncate(item.lastMsg.content, 32)}</div>
+        </div>
+      </div>`).join('');
+  }
+
+  function _renderEmpty() {
+    _renderStack([]);
+    _renderPanel([]);
+  }
+
+  // ── 点击进入聊天 ──
+  async function enterChat(charId) {
+    closePanel();
+    const binding = await DB.bindings.get(String(charId)).catch(() => null);
+    if (!binding) { Toast.show('请先在对话列表开始聊天'); return; }
+    ConvModule.enter(charId, binding.personaId);
+    Router.go('conv');
+  }
+
+  // ── 工具 ──
+  function _relativeTime(ts) {
+    const diff = Date.now() - ts;
+    const m = Math.floor(diff / 60000);
+    if (m < 1)   return '刚刚';
+    if (m < 60)  return `${m}m`;
+    const h = Math.floor(m / 60);
+    if (h < 24)  return `${h}h`;
+    return `${Math.floor(h / 24)}d`;
+  }
+  function _truncate(str, len) {
+    return str.length > len ? str.slice(0, len) + '…' : str;
+  }
+
+  return { refresh, enterChat };
+})();
+
+// ============================================================
 // ConvModule — 聊天页核心
 // ============================================================
 const ConvModule = (() => {
@@ -3721,16 +3976,20 @@ const ConvModule = (() => {
     _offset    = 0;
     _isAiTyping = false;
 
+    console.log(`[ConvModule] enter — charId: ${charId}, personaId: ${personaId}`);
+
     // 加载角色
     try {
       _char = await DB.characters.get(Number(charId));
       _charImgUrl = await Assets.getUrl(`char-avatar-${charId}`).catch(() => '') || '';
-    } catch(e) { _char = null; _charImgUrl = ''; }
+      console.log(`[ConvModule] 角色加载成功 — name: ${_char?.name}, imgUrl: ${_charImgUrl ? '✓' : '✗'}`);
+    } catch(e) { _char = null; _charImgUrl = ''; console.warn('[ConvModule] 角色加载失败', e); }
 
     // 加载面具
     const allPersonas = PersonaModule.getAll();
     _persona = allPersonas.find(p => String(p.id) === String(personaId)) || allPersonas[0] || null;
     await _loadPersonaAvatar();
+    console.log(`[ConvModule] 面具加载 — name: ${_persona?.name}, avatarUrl: ${_personaAvatarUrl ? '✓' : '✗'}`);
 
     // 更新顶部栏
     const nameEl   = document.getElementById('cv-header-name');
@@ -3746,6 +4005,7 @@ const ConvModule = (() => {
     _totalMsgs = await DB.messages.countByChar(_charId).catch(() => 0);
     const msgs = await DB.messages.getPage(_charId, 0, PAGE_SIZE).catch(() => []);
     _offset = msgs.length;
+    console.log(`[ConvModule] 消息加载 — 总数: ${_totalMsgs}, 本次渲染: ${msgs.length}`);
 
     const feed = document.getElementById('cv-feed');
     // 清空除加载更多以外的内容
@@ -3768,9 +4028,14 @@ const ConvModule = (() => {
     const input   = document.getElementById('cv-input');
     const btnUser = document.getElementById('cv-btn-user');
     const btnAi   = document.getElementById('cv-btn-ai');
+    const btnPlus = document.getElementById('cv-btn-plus');
+    const footer  = document.getElementById('cv-footer');
+    const apiNode = document.getElementById('cv-btn-api-node');
+
     if (!input || input._bound) return;
     input._bound = true;
 
+    // 输入框自适应
     input.addEventListener('input', function() {
       this.style.height = '44px';
       if (this.scrollHeight > 44) this.style.height = this.scrollHeight + 'px';
@@ -3781,6 +4046,41 @@ const ConvModule = (() => {
     });
     btnUser.addEventListener('click', sendUserMsg);
     btnAi.addEventListener('click', sendAndTriggerAI);
+
+    // + 按钮展开/收起面板
+    btnPlus.addEventListener('click', e => {
+      e.stopPropagation();
+      footer.classList.toggle('expanded');
+    });
+
+    // 点击空白收起面板
+    document.getElementById('conv-screen').addEventListener('click', e => {
+      if (footer.classList.contains('expanded')) {
+        if (!footer.contains(e.target)) footer.classList.remove('expanded');
+      }
+    });
+
+    // API Node 卡片
+    apiNode.addEventListener('click', e => {
+      e.stopPropagation();
+      footer.classList.remove('expanded');
+      setTimeout(() => openApiModal(), 200);
+    });
+
+    // 占位卡片
+    document.querySelectorAll('#cv-footer .cv-panel-card:not(#cv-btn-api-node)').forEach(card => {
+      card.addEventListener('click', e => {
+        e.stopPropagation();
+        Toast.show('功能即将上线 ✦');
+      });
+    });
+
+    // API modal 关闭
+    document.getElementById('cv-api-close').addEventListener('click', closeApiModal);
+    document.getElementById('cv-api-overlay').addEventListener('click', e => {
+      if (e.target === document.getElementById('cv-api-overlay')) closeApiModal();
+    });
+    document.getElementById('cv-api-confirm').addEventListener('click', confirmApi);
   }
 
   // ── 渲染一组消息（append 到底部）──
@@ -3854,6 +4154,8 @@ const ConvModule = (() => {
     const text  = input?.value.trim();
     if (!text || !_charId) return;
 
+    console.log(`[ConvModule] ↑ 用户消息上屏 — "${text.slice(0, 30)}${text.length > 30 ? '…' : ''}"`);
+
     const msg = {
       charId:    _charId,
       role:      'user',
@@ -3865,6 +4167,7 @@ const ConvModule = (() => {
     msg.id = id;
     _totalMsgs++;
     _offset++;
+    console.log(`[ConvModule] 消息已存 DB — id: ${id}`);
 
     _appendBubble(msg);
     input.value = '';
@@ -3884,6 +4187,7 @@ const ConvModule = (() => {
   async function _triggerAI() {
     if (_isAiTyping || !_charId || !_char) return;
     _isAiTyping = true;
+    console.log(`[ConvModule] ✦ 触发 AI — char: ${_char.name}`);
 
     // 加载等待动画
     const feed = document.getElementById('cv-feed');
@@ -3905,21 +4209,26 @@ const ConvModule = (() => {
     try {
       const activeApi = await DB.api.getActive();
       if (!activeApi) { Toast.show('请先在设置里配置 API'); _removeTyping(); _isAiTyping = false; return; }
+      console.log(`[ConvModule] API 配置 — name: ${activeApi.name}, model: ${activeApi.model}`);
 
       // 组装历史
       const histMsgs = await DB.messages.getPage(_charId, 0, 30).catch(() => []);
       const systemPrompt = _buildSystemPrompt(histMsgs);
       const apiMessages  = _buildApiMessages(histMsgs);
+      console.log(`[ConvModule] 历史消息数: ${histMsgs.length}`);
+      console.log(`[ConvModule] System Prompt:\n`, systemPrompt);
 
       const response = await ApiHelper.chatCompletion(activeApi, [
         { role: 'system', content: systemPrompt },
         ...apiMessages
       ]);
+      console.log(`[ConvModule] AI 原始回复:\n`, response);
 
       _removeTyping();
 
       // 处理 ||| 气泡分割
       const bubbles = response.split('|||').map(s => s.trim()).filter(Boolean);
+      console.log(`[ConvModule] 气泡数量: ${bubbles.length}`);
       for (const content of bubbles) {
         const msg = { charId: _charId, role: 'assistant', content, timestamp: Date.now(), status: 'sent' };
         const id  = await DB.messages.add(msg);
@@ -3995,6 +4304,7 @@ ${histSection}
 
   // ── 加载更多 ──
   async function loadMore() {
+    console.log(`[ConvModule] 加载更多 — offset: ${_offset}, total: ${_totalMsgs}`);
     const more = await DB.messages.getPage(_charId, _offset, PAGE_SIZE).catch(() => []);
     if (more.length === 0) {
       document.getElementById('cv-load-more').style.display = 'none';
@@ -4036,6 +4346,7 @@ ${histSection}
   // ── 返回 ──
   function back() {
     Router.go('chat');
+    NotifModule.refresh();
   }
 
   // ── 设置（占位）──
@@ -4043,9 +4354,155 @@ ${histSection}
     Toast.show('聊天设置即将上线 ✦');
   }
 
-  // ── 功能面板（占位）──
-  function openFuncPanel() {
-    Toast.show('功能面板即将上线 ✦');
+  // ── 功能面板（由 _bindEvents 处理，此处保留兼容）──
+  function openFuncPanel() {}
+
+  // ── API Node 浮窗 ──
+  let _pendingApiId    = null; // 待确认切换的 API id
+  let _pendingModelMap = {};   // { apiId: selectedModel }
+
+  async function openApiModal() {
+    console.log('[ConvModule] openApiModal');
+    const overlay = document.getElementById('cv-api-overlay');
+    const list    = document.getElementById('cv-api-list');
+    if (!overlay || !list) return;
+
+    const apis = await DB.api.getAll().catch(() => []);
+    const active = apis.find(a => a.isActive);
+    _pendingApiId    = active?.id ?? null;
+    _pendingModelMap = {};
+
+    list.innerHTML = '';
+    if (!apis.length) {
+      list.innerHTML = '<div style="text-align:center;padding:24px 0;font-family:Space Mono,monospace;font-size:0.65rem;color:#999;letter-spacing:2px;">NO API CONFIGURED</div>';
+    } else {
+      apis.forEach((api, i) => {
+        _pendingModelMap[api.id] = api.model || '';
+        const isActive = api.isActive;
+        const item = document.createElement('div');
+        item.className = `cv-api-item${isActive ? ' expanded' : ''}`;
+        item.dataset.apiId = api.id;
+        item.innerHTML = `
+          <div class="cv-api-item-header">
+            <div class="cv-aih-left">
+              <span class="cv-aih-num">0${i+1}</span>
+              <span class="cv-aih-name">${api.name}</span>
+            </div>
+            <span class="cv-aih-status ${isActive ? 'active' : 'idle'}">${isActive ? 'Active' : 'Standby'}</span>
+          </div>
+          <div class="cv-api-item-body">
+            <div class="cv-aib-inner">
+              <div class="cv-model-card">
+                <div class="cv-mc-info">
+                  <span class="cv-mc-label">Engine Kernel</span>
+                  <span class="cv-mc-value" id="cv-model-val-${api.id}">${api.model || '—'}</span>
+                </div>
+                <button class="cv-btn-switch" data-api-id="${api.id}">
+                  <i class="ph ph-caret-down"></i> Switch
+                </button>
+              </div>
+              <div class="cv-model-list-wrap" id="cv-model-list-${api.id}">
+                <div class="cv-model-list-inner" id="cv-model-inner-${api.id}">
+                  <div class="cv-api-loading">
+                    <span style="cursor:pointer;text-decoration:underline" onclick="ConvModule.fetchModels('${api.id}')">— Tap to fetch models —</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>`;
+        list.appendChild(item);
+
+        // 手风琴展开
+        item.querySelector('.cv-api-item-header').addEventListener('click', () => {
+          const wasExpanded = item.classList.contains('expanded');
+          list.querySelectorAll('.cv-api-item').forEach(el => el.classList.remove('expanded'));
+          if (!wasExpanded) item.classList.add('expanded');
+          _pendingApiId = wasExpanded ? _pendingApiId : api.id;
+        });
+
+        // Switch 按钮展开模型列表
+        item.querySelector('.cv-btn-switch').addEventListener('click', e => {
+          e.stopPropagation();
+          const btn  = e.currentTarget;
+          const wrap = document.getElementById(`cv-model-list-${api.id}`);
+          btn.classList.toggle('open');
+          wrap.classList.toggle('open');
+        });
+      });
+    }
+
+    overlay.classList.add('active');
+  }
+
+  async function fetchModels(apiId) {
+    const inner = document.getElementById(`cv-model-inner-${apiId}`);
+    if (!inner) return;
+    inner.innerHTML = '<div class="cv-api-loading">Fetching...</div>';
+    try {
+      const api = (await DB.api.getAll()).find(a => String(a.id) === String(apiId));
+      if (!api) throw new Error('API not found');
+      const models = await ApiHelper.fetchModels(api.url, api.key);
+      if (!models.length) { inner.innerHTML = '<div class="cv-api-loading">No models found</div>'; return; }
+      _renderModelList(apiId, models, _pendingModelMap[apiId] || api.model || '');
+    } catch(e) {
+      inner.innerHTML = `<div class="cv-api-loading">Error: ${e.message}</div>`;
+    }
+  }
+
+  function _renderModelList(apiId, models, currentModel) {
+    const inner = document.getElementById(`cv-model-inner-${apiId}`);
+    if (!inner) return;
+    inner.innerHTML = models.map(m => `
+      <div class="cv-ml-item${m === currentModel ? ' selected' : ''}" data-model="${m}">
+        ${m} <i class="ph-bold ph-check"></i>
+      </div>`).join('');
+    inner.querySelectorAll('.cv-ml-item').forEach(el => {
+      el.addEventListener('click', e => {
+        e.stopPropagation();
+        inner.querySelectorAll('.cv-ml-item').forEach(x => x.classList.remove('selected'));
+        el.classList.add('selected');
+        const model = el.dataset.model;
+        _pendingModelMap[apiId] = model;
+        const valEl = document.getElementById(`cv-model-val-${apiId}`);
+        if (valEl) valEl.textContent = model;
+        // 收起列表
+        const wrap = document.getElementById(`cv-model-list-${apiId}`);
+        const btn  = document.querySelector(`[data-api-id="${apiId}"].cv-btn-switch`);
+        wrap?.classList.remove('open');
+        btn?.classList.remove('open');
+      });
+    });
+  }
+
+  async function confirmApi() {
+    if (!_pendingApiId) { closeApiModal(); return; }
+    const btn = document.getElementById('cv-api-confirm');
+    if (btn) btn.textContent = 'Syncing...';
+    try {
+      // 保存各 API 选中的模型
+      const apis = await DB.api.getAll();
+      for (const api of apis) {
+        const model = _pendingModelMap[api.id];
+        if (model && model !== api.model) {
+          await DB.api.put({ ...api, model });
+        }
+      }
+      // 设为 active
+      await DB.api.setActive(_pendingApiId);
+      // 同步设置页（如果已渲染）
+      try { ApiModule.render(); } catch(e) {}
+      console.log(`[ConvModule] API 已切换 — id: ${_pendingApiId}, model: ${_pendingModelMap[_pendingApiId]}`);
+      Toast.show('API 已切换');
+    } catch(e) {
+      Toast.show('切换失败：' + e.message);
+      console.error('[ConvModule] confirmApi error', e);
+    }
+    if (btn) btn.textContent = 'Confirm Setup';
+    closeApiModal();
+  }
+
+  function closeApiModal() {
+    document.getElementById('cv-api-overlay')?.classList.remove('active');
   }
 
   // ── 工具函数 ──
@@ -4077,7 +4534,7 @@ ${histSection}
   // 重新封装 enter 加载头像
   const _origEnter = enter;
 
-  return { enter, back, openSettings, openFuncPanel, loadMore, sendUserMsg, sendAndTriggerAI };
+  return { enter, back, openSettings, openFuncPanel, loadMore, sendUserMsg, sendAndTriggerAI, fetchModels, closeApiModal, confirmApi };
 })();
 
 // DB keys:
@@ -4377,6 +4834,9 @@ async function init() {
       if (box) box.innerHTML = `<img class="icon-custom" src="${url}" alt="">`;
     } catch(e) { /* 单个图标失败不影响其他 */ }
   }
+
+  // 通知刷新
+  try { await NotifModule.refresh(); } catch(e) { console.warn('notif refresh failed', e); }
 }
 
 init();
