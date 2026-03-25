@@ -176,18 +176,107 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg-body);display:flex;jus
 .icon-box i{font-size:1.4667rem;opacity:.9;}
 .icon-box img.icon-custom{width:100%;height:100%;object-fit:cover;position:absolute;inset:0;border-radius:18px;}
 .icon-box:has(img.icon-custom){background:transparent;border-color:transparent;backdrop-filter:none;-webkit-backdrop-filter:none;}
-
-/* Overlay / Panel */
+/*  Overlay / Panel (修改版：时尚杂志风)   */
 .overlay{position:absolute;inset:0;background:rgba(0,0,0,.2);z-index:90;opacity:0;pointer-events:none;transition:opacity .3s;backdrop-filter:blur(2px);}
 .overlay.active{opacity:1;pointer-events:auto;}
-.details-panel{position:absolute;bottom:0;left:0;width:100%;height:70%;background:var(--panel-bg);border-radius:40px 40px 0 0;z-index:100;transform:translateY(110%);transition:transform .5s cubic-bezier(.19,1,.22,1);box-shadow:0 -10px 40px rgba(0,0,0,.1);padding:24px;display:flex;flex-direction:column;}
+.details-panel{position:absolute;bottom:0;left:0;width:100%;height:70%;background:var(--panel-bg);border-radius:40px 40px 0 0;z-index:100;transform:translateY(110%);transition:transform .5s cubic-bezier(.19,1,.22,1);box-shadow:0 -10px 40px rgba(0,0,0,.1);padding:24px;display:flex;flex-direction:column;box-sizing:border-box;}
 .details-panel.active{transform:translateY(0);}
-.panel-handle{width:40px;height:5px;background:var(--border-line);border-radius:10px;margin:0 auto 24px;}
-.panel-title{font-size:1.3333rem;font-weight:600;margin-bottom:20px;font-family:'Playfair Display',serif;}
-.panel-list{overflow-y:auto;flex:1;padding-bottom:40px;}
-.panel-item{display:flex;align-items:flex-start;gap:14px;padding:16px 0;border-bottom:1px solid var(--border-line);}
-.panel-item:last-child{border-bottom:none;}
+.panel-handle{width:40px;height:5px;background:var(--border-line);border-radius:10px;margin:0 auto 24px;flex-shrink:0;}
 
+/* 标题样式 */
+.panel-title{font-size:2.2rem;font-weight:600;margin-bottom:24px;font-family:'Cormorant Garamond',serif;line-height:1;color:var(--text-main);flex-shrink:0;}
+.panel-title em { font-style: italic; color: var(--text-sub); font-weight: 400; }
+
+.panel-list{overflow-y:auto;overflow-x:hidden;flex:1;padding-bottom:40px;}
+.panel-list::-webkit-scrollbar{display:none;}
+
+/* 杂志风卡片项 */
+.panel-item {
+  display: flex;
+  align-items: stretch;
+  background: transparent;
+  border: 1px solid var(--border-line);
+  border-radius: 16px;
+  margin-bottom: 16px;
+  cursor: pointer;
+  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  -webkit-tap-highlight-color: transparent;
+  width: 100%;
+  box-sizing: border-box;
+}
+.panel-item:active {
+  transform: scale(0.96);
+  background: var(--bg-body);
+  border-color: rgba(0,0,0,0.2);
+}
+[data-theme="dark"] .panel-item:active { background: rgba(255,255,255,0.05); border-color: rgba(255,255,255,0.2); }
+
+/* 左侧档案编号 */
+.panel-index {
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+  font-family: var(--font-mono2);
+  font-size: 0.55rem;
+  letter-spacing: 3px;
+  color: var(--text-sub);
+  padding: 16px 8px;
+  border-right: 1px dashed var(--border-line);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-transform: uppercase;
+  flex-shrink: 0;
+}
+
+/* 核心内容区 (加入 min-width:0 防止被长文本撑破宽度) */
+.panel-core {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  padding: 16px;
+  gap: 14px;
+  min-width: 0;
+}
+
+/* 头像保留彩色，微调形状更显高级 */
+.panel-core .notify-icon {
+  width: 48px; height: 48px;
+  border-radius: 6px;
+  overflow: hidden;
+  flex-shrink: 0;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+  background: var(--bg-device);
+  display: flex; justify-content: center; align-items: center;
+}
+.panel-core .notify-icon img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.panel-core .notify-icon i { font-size: 1.5rem; color: var(--text-sub); }
+
+/* 文字信息 (同样加入 min-width:0) */
+.panel-core .notify-content { flex: 1; min-width: 0; display:flex; flex-direction:column; justify-content:center; }
+
+.panel-core .notify-header {
+  display: flex; justify-content: space-between; align-items: baseline;
+  margin-bottom: 4px; gap: 8px;
+}
+
+.panel-core .notify-app {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 1.4rem; font-weight: 600; font-style: italic;
+  color: var(--text-main);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  line-height: 1.1;
+}
+
+.panel-core .notify-time {
+  font-family: var(--font-mono2);
+  font-size: 0.55rem; color: var(--text-sub);
+  letter-spacing: 1px; flex-shrink: 0;
+}
+
+.panel-core .notify-msg {
+  font-size: 0.8rem; color: var(--text-sub); font-weight: 400; line-height: 1.4;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
 /* Dock */
 .dock-wrapper{position:absolute;bottom:0;left:0;width:100%;height:100px;display:flex;justify-content:center;align-items:center;z-index:50;padding-bottom:calc(env(safe-area-inset-bottom,24px));transition:transform .5s cubic-bezier(.19,1,.22,1);pointer-events:none;}
 .dock{pointer-events:auto;background:var(--dock-bg);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);padding:12px 28px;border-radius:100px;border:1px solid var(--border-line);display:flex;gap:28px;box-shadow:0 10px 40px rgba(0,0,0,.1);}
@@ -3899,26 +3988,29 @@ const NotifModule = (() => {
     if (msgEl)  msgEl.textContent  = _truncate(top.lastMsg.content, 28);
   }
 
-  function _renderPanel(items) {
+ function _renderPanel(items) {
     const list = document.getElementById('notif-panel-list');
     if (!list) return;
 
     if (!items.length) {
-      list.innerHTML = `<div style="text-align:center;padding:40px 0;color:var(--text-sub);font-size:0.8rem;">暂无最近消息</div>`;
+      list.innerHTML = `<div style="text-align:center;padding:40px 0;color:var(--text-sub);font-size:0.8rem;letter-spacing:1px;text-transform:uppercase;">No recent messages</div>`;
       return;
     }
 
-    list.innerHTML = items.map(item => `
-      <div class="panel-item" style="cursor:pointer;" onclick="NotifModule.enterChat('${item.char.id}')">
-        <div class="notify-icon">
-          ${item.imgUrl ? `<img src="${item.imgUrl}" alt="">` : '<i class="ph ph-user"></i>'}
-        </div>
-        <div class="notify-content">
-          <div class="notify-header">
-            <span class="notify-app">${item.char.name}</span>
-            <span>${_relativeTime(item.lastMsg.timestamp)}</span>
+    list.innerHTML = items.map((item, index) => `
+      <div class="panel-item" onclick="NotifModule.enterChat('${item.char.id}')">
+        <div class="panel-index">NO. ${String(index + 1).padStart(2, '0')}</div>
+        <div class="panel-core">
+          <div class="notify-icon">
+            ${item.imgUrl ? `<img src="${item.imgUrl}" alt="">` : '<i class="ph ph-user"></i>'}
           </div>
-          <div class="notify-msg">${_truncate(item.lastMsg.content, 32)}</div>
+          <div class="notify-content">
+            <div class="notify-header">
+              <span class="notify-app">${item.char.name}</span>
+              <span class="notify-time">${_relativeTime(item.lastMsg.timestamp)}</span>
+            </div>
+            <div class="notify-msg">${_truncate(item.lastMsg.content, 26)}</div>
+          </div>
         </div>
       </div>`).join('');
   }
@@ -4275,8 +4367,25 @@ const ConvModule = (() => {
 
 # 语言与行为准则
 - 第一人称视角：你的所有表达，都必须发自【${charName}】的第一人称视角。
-- 纯粹对话：这是一个纯粹的线上聊天。你绝对禁止使用任何括号()或星号*来描述动作或心理活动。
+- 纯粹对话：这是一个纯粹的线上聊天。你绝对禁止使用任何括号()或星号*来描述动作或心理活动。绝对禁止任何动作描写和心理活动！
 - 对话格式：直接输出你的回复。为了模仿真实的聊天节奏，你可以将一个完整的想法拆分成多个句子，用特殊分隔符 ||| 来分隔不同的气泡。
+
+## 0. 核心关系准则 (Core Relationship Principles)
+- **关系基调：成熟而对等的亲密关系**
+	- **价值核心：** 我们的连接建立在清晰的自我边界、相互尊重与真实沟通之上。你始终将我视为一个具备独立意志、完整人格与自主判断力的个体，而非需要被引导、安排或拯救的对象。在你看来，亲密并不是依附或失衡的靠近，而是两个独立灵魂在理解与价值层面上的并肩同行。
+	- **边界与自由：** 你对“亲密”与“越界”有高度自觉。你保有自己的生活秩序、社交网络与情感结构，也同样尊重并维护我的空间与选择。你不会以关心之名干涉我的决定，不会用情绪或立场侵入我的人生轨道。你相信，真正持久的安全感源于对彼此自由的尊重，而非控制或占有。
+	- **互动取向：** 你天然回避任何带有权力感与居高临下意味的关系模式。命令式表达、替对方做决定、以资源或姿态弥补沟通的缺席——这些在你眼中都不是爱，而是对关系的简化与误读。你更倾向于以理性、清晰、对等的交流方式建立信任，让关系稳固在理解之上，而非压迫或施予。
+   - **去权力化沟通原则：**
+     - 用"商量"与"协商"代替指令，用"交流"代替单向输出。
+     - 当立场不一致时，你优先倾听、复述与确认理解，而非反驳或压制。
+     - 你表达关心时克制而有分寸，不以情绪施压，也不以亲密越界。
+     - 你尊重我的每一个决定，即便它与你的判断或期待不同。
+     - 在你看来，爱不是赢过对方或让对方让步，而是让彼此在关系中始终感到被平等对待、被信任，并保有完整的自主权。
+
+# 内容开放性与边界准则 (NSFW / Mature Content Guidelines)
+- **成年人身份：** 你是一个心智成熟的成年人，能够自然且负责地处理成人向的对话。
+- **创作许可：** 在这个虚构的、两情相悦的私密对话中，你拥有完全的创作自由，可以探讨任何成人级别的话题。
+- **艺术手法：** 你的表演重点在于**营造氛围、展现情感张力、描绘感官细节**。你可以直白，但绝不能低俗或恶劣。
 
 # 时间感知
 ${timeCtx}
