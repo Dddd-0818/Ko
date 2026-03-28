@@ -2210,14 +2210,9 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg-body);display:flex;jus
         </div>
       </div>
       <!-- 图片预览条（输入框上方，选图后显示）-->
-      <div class="cv-img-preview-bar" id="cv-img-preview-bar">
-        <div class="cv-img-thumb-wrap" id="cv-img-thumb-wrap" style="display:none">
-          <img id="cv-img-thumb" class="cv-img-thumb" src="" alt="">
-          <button class="cv-img-thumb-remove" id="cv-img-thumb-remove"><i class="ph ph-x"></i></button>
-        </div>
-      </div>
+      <div class="cv-img-preview-bar" id="cv-img-preview-bar"></div>
       <!-- 隐藏的图片 file input -->
-      <input type="file" id="cv-img-file-input" accept="image/*" style="display:none">
+      <input type="file" id="cv-img-file-input" accept="image/*" multiple style="display:none">
       <!-- 基础输入区 -->
       <div class="cv-footer-base">
         <button class="cv-func-btn" id="cv-btn-plus"><i class="ph-thin ph-plus cv-plus-icon"></i></button>
@@ -4686,7 +4681,7 @@ const ConvModule = (() => {
   let _totalMsgs = 0;
   let _isAiTyping = false;
   let _charImgUrl = '';
-  let _pendingImg = null; // { file, objectUrl, assetKey }
+  let _pendingImgs = []; // [{ file, objectUrl }]
 
   // ── 进入聊天 ──
   async function enter(charId, personaId) {
@@ -4827,11 +4822,6 @@ const ConvModule = (() => {
     if (imgFileInput && !imgFileInput._bound) {
       imgFileInput._bound = true;
       imgFileInput.addEventListener('change', _onImgSelected);
-    }
-    const thumbRemove = document.getElementById('cv-img-thumb-remove');
-    if (thumbRemove && !thumbRemove._bound) {
-      thumbRemove._bound = true;
-      thumbRemove.addEventListener('click', _cancelPendingImg);
     }
     const viewerClose = document.getElementById('cv-img-viewer-close');
     if (viewerClose && !viewerClose._bound) {
@@ -4986,29 +4976,44 @@ const ConvModule = (() => {
     document.getElementById('cv-transfer-overlay').classList.remove('active');
   }
 
-  // ── 图片选择回调 ──
+  // ── 图片选择回调（支持多选，追加不覆盖）──
   function _onImgSelected(e) {
-    const file = e.target.files[0]; if (!file) return;
+    const files = Array.from(e.target.files);
     e.target.value = '';
-    if (_pendingImg?.objectUrl) URL.revokeObjectURL(_pendingImg.objectUrl);
-    const objectUrl = URL.createObjectURL(file);
-    _pendingImg = { file, objectUrl };
-    const bar   = document.getElementById('cv-img-preview-bar');
-    const wrap  = document.getElementById('cv-img-thumb-wrap');
-    const thumb = document.getElementById('cv-img-thumb');
-    if (bar)   bar.classList.add('visible');
-    if (wrap)  wrap.style.display = '';
-    if (thumb) thumb.src = objectUrl;
+    if (!files.length) return;
+    for (const file of files) {
+      _pendingImgs.push({ file, objectUrl: URL.createObjectURL(file) });
+    }
+    _renderImgPreviewBar();
+  }
+
+  // 渲染预览条（动态生成缩略图，每张有独立删除按钮）
+  function _renderImgPreviewBar() {
+    const bar = document.getElementById('cv-img-preview-bar');
+    if (!bar) return;
+    if (_pendingImgs.length === 0) {
+      bar.classList.remove('visible');
+      bar.innerHTML = '';
+      return;
+    }
+    bar.classList.add('visible');
+    bar.innerHTML = _pendingImgs.map((item, idx) => `
+      <div class="cv-img-thumb-wrap">
+        <img class="cv-img-thumb" src="${item.objectUrl}" alt="">
+        <button class="cv-img-thumb-remove" onclick="ConvModule._removePendingImg(${idx})"><i class="ph ph-x"></i></button>
+      </div>`).join('');
+  }
+
+  function _removePendingImg(idx) {
+    if (_pendingImgs[idx]?.objectUrl) URL.revokeObjectURL(_pendingImgs[idx].objectUrl);
+    _pendingImgs.splice(idx, 1);
+    _renderImgPreviewBar();
   }
 
   function _cancelPendingImg() {
-    if (_pendingImg?.objectUrl) URL.revokeObjectURL(_pendingImg.objectUrl);
-    _pendingImg = null;
-    document.getElementById('cv-img-preview-bar')?.classList.remove('visible');
-    const wrap = document.getElementById('cv-img-thumb-wrap');
-    if (wrap) wrap.style.display = 'none';
-    const thumb = document.getElementById('cv-img-thumb');
-    if (thumb) thumb.src = '';
+    _pendingImgs.forEach(p => URL.revokeObjectURL(p.objectUrl));
+    _pendingImgs = [];
+    _renderImgPreviewBar();
   }
 
   // 统计当前对话里 AI 已回复次数（用于判断图片是否过期）
@@ -5041,39 +5046,41 @@ const ConvModule = (() => {
     }
   }
 
-  // ── 发送图片消息 ──
+  // ── 发送图片消息（每张独立一条消息上屏）──
   async function sendImgMsg() {
-    if (!_pendingImg || !_charId) return;
-    const assetKey   = `chat-img-${_charId}-${Date.now()}`;
-    try {
-      await Assets.save(assetKey, _pendingImg.file, 1200, 0.85);
-    } catch(e) { Toast.show('图片保存失败'); return; }
-
+    if (!_pendingImgs.length || !_charId) return;
+    const imgs = [..._pendingImgs];
+    _cancelPendingImg(); // 先清空预览，立即给用户反馈
     const sentRound = await _countAiReplies();
-    const imgPart   = { type: 'image', assetKey, description: null, sentRound };
-    const msg = {
-      charId: _charId, role: 'user',
-      parts: [imgPart], content: '[图片]', timestamp: Date.now()
-    };
-    const newId = await DB.messages.add(msg);
-    msg.id = newId;
-    _totalMsgs++; _offset++;
-    _appendBubble(msg);
+    for (const item of imgs) {
+      const assetKey = `chat-img-${_charId}-${Date.now()}-${Math.random().toString(36).slice(2,6)}`;
+      try {
+        await Assets.save(assetKey, item.file, 1200, 0.85);
+      } catch(e) { Toast.show('图片保存失败'); continue; }
+      const imgPart = { type: 'image', assetKey, description: null, sentRound };
+      const msg = {
+        charId: _charId, role: 'user',
+        parts: [imgPart], content: '[图片]', timestamp: Date.now()
+      };
+      const newId = await DB.messages.add(msg);
+      msg.id = newId;
+      _totalMsgs++; _offset++;
+      _appendBubble(msg);
+      console.log(`[ConvModule] ↑ 图片上屏 — ${assetKey}`);
+    }
     _hydrateImgs();
     _scrollToBottom();
-    _cancelPendingImg();
-    console.log(`[ConvModule] ↑ 图片消息上屏 — assetKey: ${assetKey}, sentRound: ${sentRound}`);
   }
 
   // 上屏按钮：先发图（如果有），再发文字
   async function _flushAndSendUser() {
-    if (_pendingImg) await sendImgMsg();
+    if (_pendingImgs.length) await sendImgMsg();
     await sendUserMsg();
   }
 
   // AI 按钮：先发图（如果有），再发文字，再触发 AI
   async function _flushAndTriggerAI() {
-    if (_pendingImg) await sendImgMsg();
+    if (_pendingImgs.length) await sendImgMsg();
     await sendAndTriggerAI();
   }
 
@@ -5690,11 +5697,7 @@ const ConvModule = (() => {
     const charName = _char?.name || '角色';
     const charPersona = _char?.persona || '';
     const charMbti   = _char?.mbti ? `MBTI：${_char.mbti}` : '';
-    const userBg = _persona ? [
-      `我的名字是${_persona.name}`,
-      _persona.bio       ? `我的个性签名：${_persona.bio}` : '',
-      _persona.backstory ? `背景：${_persona.backstory}`   : ''
-    ].filter(Boolean).join('\n') : '';
+   const userBg = _persona ? `我的名字是${_persona.name}${_persona.bio ? '，个人简介/签名：' + _persona.bio : ''}${_persona.backstory ? '\n背景：' + _persona.backstory : ''}` : '';
 
    const histSection = histMsgs.length > 0
       ? histMsgs.map(m => {
@@ -6073,43 +6076,40 @@ function back() {
     if (slider) { slider.value = 0; document.getElementById('cv-blur-val').textContent = '0px'; }
     Toast.show('壁纸已清除');
   }
-
-  // ── 清空聊天记录 ──
+// ── 清空聊天记录 ──
   async function clearHistory() {
     document.getElementById('cv-modal-clear')?.classList.remove('active');
     if (!_charId) return;
     try {
-      // 先收集这个角色所有图片的 assetKey，再删消息，再删图片资产
-      const allMsgs = await DB.messages.getPage(_charId, 0, 9999).catch(() => []);
-      const imgKeys = [];
-      allMsgs.forEach(m => {
-        (m.parts || []).forEach(p => {
-          if (p.type === 'image' && p.assetKey) imgKeys.push(p.assetKey);
-        });
-      });
+      // 【修复】在删除消息文本前，先遍历所有消息，找出带有图片的 part 并从 assets 数据库清理
+      const msgs = await DB.messages.getPage(_charId, 0, 999999).catch(() =>[]);
+      for (const msg of msgs) {
+        if (msg.parts) {
+          for (const part of msg.parts) {
+            if (part.type === 'image' && part.assetKey) {
+              await Assets.remove(part.assetKey).catch(() => {});
+            }
+          }
+        }
+      }
 
       await DB.messages.delByChar(_charId);
-
-      for (const key of imgKeys) {
-        await Assets.remove(key).catch(() => {});
-      }
-      console.log(`[ConvModule] 聊天记录已清空 — charId: ${_charId}, 清理图片: ${imgKeys.length} 张`);
-
       _totalMsgs = 0;
       _offset    = 0;
+      // 清空 feed
       const feed = document.getElementById('cv-feed');
       Array.from(feed.children).forEach(el => {
         if (el.id !== 'cv-load-more') el.remove();
       });
       document.getElementById('cv-load-more').style.display = 'none';
+      console.log(`[ConvModule] 聊天记录及图片已清空 — charId: ${_charId}`);
       Toast.show('对话记录已清空');
-      closeSettings();
+      closeSettings(); // 清空后立即关闭设置面板，回到聊天页
     } catch(e) {
       Toast.show('清空失败：' + e.message);
       console.error('[ConvModule] clearHistory error', e);
     }
   }
-
   // ── 功能面板（由 _bindEvents 处理，此处保留兼容）──
   function openFuncPanel() {}
 
@@ -6374,7 +6374,7 @@ function back() {
   // 重新封装 enter 加载头像
   const _origEnter = enter;
 
-  return { enter, back, openQuickReply, closeQuickReply,openSettings, closeSettings, openFuncPanel, loadMore, sendUserMsg, sendAndTriggerAI, fetchModels, closeApiModal, confirmApi, openRecallModal, closeRecallModal, collectTransfer, sendUserTransfer, sendImgMsg, _openImgViewer, toggleAudio, clearWallpaper, clearHistory, _toggleAccordion, _selectRadio, _selectPersona };
+  return { enter, back, openQuickReply, closeQuickReply,openSettings, closeSettings, openFuncPanel, loadMore, sendUserMsg, sendAndTriggerAI, fetchModels, closeApiModal, confirmApi, openRecallModal, closeRecallModal, collectTransfer, sendUserTransfer, sendImgMsg, _openImgViewer, _removePendingImg, toggleAudio, clearWallpaper, clearHistory, _toggleAccordion, _selectRadio, _selectPersona };
 })();
 
 // DB keys:
