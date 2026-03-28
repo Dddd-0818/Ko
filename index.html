@@ -11,9 +11,15 @@
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#fafafa">
 <script src="https://unpkg.com/@phosphor-icons/web"></script>
+<script src="https://unpkg.com/vconsole@latest/dist/vconsole.min.js"></script>
+<script>
+  // 初始化 VConsole
+  var vConsole = new VConsole();
+</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Noto+Sans+SC:wght@300;400;500;700&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400;1,700&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Inter:wght@300;400;500;700;900&family=Libre+Barcode+39+Text&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Noto+Sans+SC:wght@300;400;500;700&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400;1,700&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Inter:wght@300;400;500;700;900&family=Cinzel:wght@500;700&family=Noto+Serif+SC:wght@500;700;900&family=Libre+Barcode+39+Text&display=swap" rel="stylesheet">
 
 <style>
 /* ============================================================
@@ -1083,6 +1089,20 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg-body);display:flex;jus
 #conv-screen .cv-footer.expanded .cv-panel-card:nth-child(6){transition-delay:0.14s}
 /* Footer base row */
 #conv-screen .cv-footer-base { display:flex;align-items:flex-end;gap:12px;width:100%; }
+/* ── 图片预览条（输入框上方）── */
+#conv-screen .cv-img-preview-bar { display:none;align-items:flex-end;gap:8px;padding:6px 4px 0;width:100%; }
+#conv-screen .cv-img-preview-bar.visible { display:flex; }
+#conv-screen .cv-img-thumb-wrap { position:relative;flex-shrink:0; }
+#conv-screen .cv-img-thumb { width:64px;height:64px;object-fit:cover;border-radius:10px;display:block;border:1px solid rgba(18,18,18,0.08); }
+#conv-screen .cv-img-thumb-remove { position:absolute;top:-6px;right:-6px;width:18px;height:18px;border-radius:50%;background:#121212;color:#fff;border:none;display:flex;align-items:center;justify-content:center;font-size:10px;cursor:pointer;line-height:1; }
+/* ── 图片消息气泡（裸图，不包裹）── */
+#conv-screen .cv-img-msg { max-width:220px;max-height:300px;border-radius:14px;display:block;object-fit:contain;cursor:pointer;transition:opacity .2s; }
+#conv-screen .cv-img-msg:active { opacity:0.85; }
+/* 图片全屏预览 */
+#cv-img-viewer { position:absolute;inset:0;background:rgba(0,0,0,0.92);z-index:500;display:none;align-items:center;justify-content:center; }
+#cv-img-viewer.active { display:flex; }
+#cv-img-viewer img { max-width:100%;max-height:100%;object-fit:contain;border-radius:4px; }
+#cv-img-viewer-close { position:absolute;top:20px;right:20px;color:#fff;font-size:1.6rem;background:none;border:none;cursor:pointer;opacity:.7; }
 #conv-screen .cv-func-btn { width:44px;height:44px;border-radius:50%;background:#fff;border:1px solid rgba(18,18,18,0.05);color:#121212;font-size:1.4rem;display:flex;justify-content:center;align-items:center;cursor:pointer;flex-shrink:0;margin-bottom:2px;box-shadow:0 2px 10px rgba(0,0,0,0.03); }
 #conv-screen .cv-func-btn:active { transform:scale(0.9); }
 #conv-screen .cv-plus-icon { transition:transform 0.5s cubic-bezier(0.19,1,0.22,1); }
@@ -1141,7 +1161,264 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg-body);display:flex;jus
 #conv-screen .cv-api-loading { font-family:'Space Mono',monospace;font-size:0.6rem;letter-spacing:2px;color:#999;text-align:center;padding:12px 0;text-transform:uppercase; }
 #conv-screen .cv-btn-confirm { width:100%;padding:16px;background:#121212;color:#fff;border:none;border-radius:100px;font-family:'Inter',sans-serif;font-size:0.85rem;font-weight:600;letter-spacing:2px;text-transform:uppercase;cursor:pointer;position:relative;z-index:1;box-shadow:0 10px 20px rgba(0,0,0,0.1);transition:0.3s; }
 #conv-screen .cv-btn-confirm:active { transform:scale(0.96); }
+/* Recall hint */
+#conv-screen .cv-msg-row.recalled { justify-content:center; }
+#conv-screen .cv-recall-hint { display:inline-flex;align-items:center;gap:10px;font-family:'Playfair Display',serif;font-size:0.9rem;font-style:italic;color:#121212;cursor:pointer;opacity:0.7;transition:all 0.3s;padding:4px 0; }
+#conv-screen .cv-recall-hint::before,
+#conv-screen .cv-recall-hint::after { content:'';display:block;width:24px;height:0.5px;background:#121212;opacity:0.3;transition:all 0.4s; }
+#conv-screen .cv-recall-hint:hover { opacity:1; }
+#conv-screen .cv-recall-hint:hover::before,
+#conv-screen .cv-recall-hint:hover::after { width:10px;opacity:0.7; }
+#conv-screen .cv-recall-hint i { font-size:1.1rem;opacity:0.5;transition:all 0.3s; }
+#conv-screen .cv-recall-hint:hover i { transform:rotate(-15deg) scale(1.1);opacity:1; }
+#conv-screen .cv-bubbles-wrap { display:flex;flex-direction:column;gap:6px;max-width:75%; }
 
+/* ── 引用行 ── */
+#conv-screen .cv-quote-ref { font-size:9px;margin-bottom:6px;padding-bottom:5px;border-bottom:0.3px solid rgba(255,255,255,0.2);display:flex;align-items:center;gap:4px;opacity:0.8;flex-wrap:wrap; }
+#conv-screen .cv-msg-row.user .cv-quote-ref { border-bottom-color:rgba(0,0,0,0.12);opacity:0.6; }
+#conv-screen .cv-qr-tag { font-style:italic;border:0.3px solid currentColor;padding:0 3px;font-size:8px;border-radius:2px;flex-shrink:0; }
+#conv-screen .cv-qr-name { font-weight:700;text-transform:uppercase;letter-spacing:0.5px;flex-shrink:0; }
+#conv-screen .cv-qr-text { opacity:0.8;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:140px; }
+
+/* ── 语音条 ── */
+#conv-screen .cv-audio-bubble { background:#121212!important;color:#fff!important;border:none!important;box-shadow:0 4px 15px rgba(0,0,0,0.08)!important;padding:8px 12px!important;border-radius:14px!important;min-width:160px;max-width:75%;cursor:pointer;user-select:none;word-break:break-word; }
+#conv-screen .cv-audio-bubble:active { transform:scale(0.97); }
+#conv-screen .cv-audio-core { display:flex;align-items:center;gap:8px; }
+#conv-screen .cv-audio-core i { font-size:1.1rem;flex-shrink:0; }
+#conv-screen .cv-audio-name { flex:1;font-family:'Space Mono',monospace;font-size:0.5rem;letter-spacing:1px;text-transform:uppercase;opacity:0.9; }
+#conv-screen .cv-audio-dur { font-family:'Space Mono',monospace;font-size:0.65rem;opacity:0.6;flex-shrink:0; }
+#conv-screen .cv-audio-transcript { display:grid;grid-template-rows:0fr;transition:grid-template-rows 0.4s cubic-bezier(0.16,1,0.3,1),opacity 0.4s ease,margin-top 0.4s ease;opacity:0;margin-top:0; }
+#conv-screen .cv-audio-transcript-inner { overflow:hidden; }
+#conv-screen .cv-audio-bubble.revealed .cv-audio-transcript { grid-template-rows:1fr;opacity:1;margin-top:10px; }
+#conv-screen .cv-transcript-divider { height:1px;background:currentColor;opacity:0.15;margin-bottom:6px; }
+#conv-screen .cv-transcript-label { font-family:'Space Mono',monospace;font-size:0.45rem;letter-spacing:2px;opacity:0.5;margin-bottom:4px;text-transform:uppercase; }
+#conv-screen .cv-transcript-text { font-size:13px;line-height:1.4; }
+
+/* ── 转账卡片 ── */
+#conv-screen .cv-transfer { position:relative;width:220px;padding:14px 16px;border:1px solid #e0e0e0;background:#fbfaf8;display:flex;flex-direction:column;border-radius:6px;box-shadow:0 6px 14px rgba(0,0,0,0.06);cursor:pointer;transition:all 0.5s cubic-bezier(0.19,1,0.22,1); }
+#conv-screen .cv-transfer:active { transform:scale(0.98); }
+#conv-screen .cv-transfer-amount { display:flex;align-items:baseline;gap:6px;margin-bottom:6px;width:80%; }
+#conv-screen .cv-transfer-symbol { font-size:9px;font-weight:300;letter-spacing:1px;color:#999; }
+#conv-screen .cv-transfer-val { font-family:'Playfair Display',serif;font-size:24px;font-style:italic;color:#121212;line-height:1; }
+#conv-screen .cv-transfer-memo { font-size:9px;color:#999;letter-spacing:1px;text-transform:uppercase;padding-top:8px;border-top:0.5px solid #eaeaea;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;width:75%; }
+#conv-screen .cv-transfer-ribbon { position:absolute;right:20px;top:-6px;bottom:-6px;width:22px;background:#121212;color:#fff;font-size:8px;font-weight:300;letter-spacing:2px;display:flex;align-items:center;justify-content:center;writing-mode:vertical-rl;text-transform:uppercase;border-radius:1px;box-shadow:-2px 4px 8px rgba(0,0,0,0.25);transition:all 0.4s ease; }
+#conv-screen .cv-transfer.collected { border-color:#efefef;box-shadow:0 2px 6px rgba(0,0,0,0.02);background:#f7f7f7;pointer-events:none; }
+#conv-screen .cv-transfer.collected .cv-transfer-val,
+#conv-screen .cv-transfer.collected .cv-transfer-symbol { color:#999;opacity:0.7; }
+#conv-screen .cv-transfer.collected .cv-transfer-ribbon { background:#eee;color:#aaa;box-shadow:none;top:0;bottom:0;right:16px;border-radius:2px; }
+/* 用户转账 — 已接受 */
+#conv-screen .cv-transfer.accepted { border-color:#d4e8da;background:#f5faf6;pointer-events:none; }
+#conv-screen .cv-transfer.accepted .cv-transfer-ribbon { background:#2d6a4a;color:#fff;box-shadow:-2px 4px 8px rgba(45,106,74,.2);top:0;bottom:0;border-radius:2px; }
+/* 用户转账 — 已拒绝 */
+#conv-screen .cv-transfer.rejected { border-color:#efefef;background:#f7f7f7;pointer-events:none; }
+#conv-screen .cv-transfer.rejected .cv-transfer-val,
+#conv-screen .cv-transfer.rejected .cv-transfer-symbol { color:#bbb;opacity:0.7; }
+#conv-screen .cv-transfer.rejected .cv-transfer-ribbon { background:#ccc;color:#fff;box-shadow:none;top:0;bottom:0;right:16px;border-radius:2px; }
+/* 系统票据 — 拒绝款式 */
+#conv-screen .cv-system-ticket.declined { border-top-color:#bbb;border-bottom-color:#bbb; }
+#conv-screen .cv-system-ticket.declined .cv-ticket-label,
+#conv-screen .cv-system-ticket.declined .cv-ticket-val { color:#999; }
+
+/* ── 系统票据 ── */
+#conv-screen .cv-system-ticket { align-self:center;width:200px;margin:4px auto 8px;border-top:0.5px solid #121212;border-bottom:0.5px solid #121212;padding:8px 0;display:flex;flex-direction:column;gap:6px;opacity:0.85; }
+#conv-screen .cv-ticket-row { display:flex;justify-content:space-between;align-items:baseline; }
+#conv-screen .cv-ticket-label { font-size:8px;font-weight:700;letter-spacing:1px;color:#121212;text-transform:uppercase; }
+#conv-screen .cv-ticket-val { font-family:'Playfair Display',serif;font-size:13px;font-style:italic;color:#121212; }
+#conv-screen .cv-ticket-meta { display:flex;justify-content:space-between;align-items:center;font-size:7px;color:#999;letter-spacing:1.5px; }
+#conv-screen .cv-ticket-barcode { width:32px;height:5px;background:repeating-linear-gradient(to right,#999,#999 1px,transparent 1px,transparent 2.5px); }
+#conv-screen .cv-system-ticket.reveal { animation:cv-ticket-reveal 0.6s cubic-bezier(0.19,1,0.22,1) forwards; }
+@keyframes cv-ticket-reveal { 0%{opacity:0;transform:translateY(-8px) scaleY(0.9);clip-path:inset(0 0 100% 0)} 100%{opacity:0.85;transform:none;clip-path:inset(0 0 0% 0)} }
+
+/* ── 引用预览框（输入栏上方）── */
+
+/* Recall modal */
+#cv-recall-overlay { position:absolute;inset:0;z-index:300;background:rgba(18,18,18,0.3);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);display:flex;justify-content:center;align-items:center;padding:20px;opacity:0;pointer-events:none;transition:all 0.5s cubic-bezier(0.16,1,0.3,1); }
+#cv-recall-overlay.active { opacity:1;pointer-events:auto; }
+#cv-recall-modal { width:100%;max-width:320px;background:#fff;border:0.5px solid #121212;border-radius:16px;padding:32px 28px;position:relative;overflow:hidden;box-shadow:0 40px 80px rgba(0,0,0,0.2);transform:translateY(30px) scale(0.95) rotate(-3deg);filter:blur(8px);transition:all 0.6s cubic-bezier(0.16,1,0.3,1) 0.05s; }
+#cv-recall-overlay.active #cv-recall-modal { transform:translateY(0) scale(1) rotate(0deg);filter:blur(0); }
+.cv-rm-header { display:flex;justify-content:space-between;align-items:center;margin-bottom:24px; }
+.cv-rm-tag { font-family:'Space Mono',monospace;font-size:0.55rem;letter-spacing:2px;text-transform:uppercase;color:#121212;border:0.5px solid #121212;padding:4px 8px;border-radius:4px; }
+.cv-rm-close { width:32px;height:32px;border-radius:50%;border:0.5px solid rgba(18,18,18,0.15);background:transparent;display:flex;align-items:center;justify-content:center;font-size:1rem;color:#121212;cursor:pointer; }
+.cv-rm-close:active { background:#121212;color:#fff; }
+.cv-rm-msg-box { margin-bottom:24px;position:relative; }
+.cv-rm-msg-box::before { content:'"';position:absolute;top:-16px;left:-10px;font-family:'Playfair Display',serif;font-size:3.5rem;color:#EFECE7;z-index:0;line-height:1; }
+.cv-rm-msg { font-family:'Playfair Display',serif;font-size:1.1rem;line-height:1.6;color:#121212;position:relative;z-index:1;font-style:italic;font-weight:500; }
+.cv-rm-divider { width:40px;height:0.5px;background:#121212;margin:0 0 20px 0;opacity:0.15; }
+.cv-rm-thought-label { font-family:'Space Mono',monospace;font-size:0.6rem;color:#121212;font-weight:700;text-transform:uppercase;letter-spacing:1px;display:flex;align-items:center;gap:6px;margin-bottom:8px; }
+.cv-rm-thought { font-family:'Inter','Noto Sans SC',sans-serif;font-size:0.85rem;color:#888;line-height:1.6; }
+/* 录音脉冲动画 */
+@keyframes cv-pulse-record {
+  0% { box-shadow: 0 0 0 0 rgba(220, 53, 69, 0.4); }
+  70% { box-shadow: 0 0 0 15px rgba(220, 53, 69, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(220, 53, 69, 0); }
+}
+#cv-audio-record-btn.recording { 
+  background: #dc3545 !important; 
+  animation: cv-pulse-record 1.5s infinite !important; 
+}
+/* 隐藏转账金额输入框的上下箭头 */
+#cv-transfer-amount-input::-webkit-outer-spin-button,
+#cv-transfer-amount-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+#cv-transfer-amount-input { -moz-appearance: textfield; }/* ============================================================
+   Conv Settings Panel
+   ============================================================ */
+#conv-screen .cv-settings-panel {
+  position:absolute;top:0;right:-100%;width:100%;height:100%;
+  background:rgba(239,236,231,0.95);backdrop-filter:blur(30px);-webkit-backdrop-filter:blur(30px);
+  border-left:0.5px solid rgba(18,18,18,0.1);box-shadow:-20px 0 50px rgba(0,0,0,0.05);
+  z-index:80;display:flex;flex-direction:column;transition:right 0.6s cubic-bezier(0.19,1,0.22,1);
+}
+#conv-screen .cv-settings-panel.active { right:0; }
+#conv-screen .cv-sp-header { padding:calc(env(safe-area-inset-top,20px) + 30px) 24px 20px;display:flex;justify-content:space-between;align-items:flex-end;border-bottom:0.5px solid rgba(18,18,18,0.1); }
+#conv-screen .cv-sp-title-en { font-family:'Playfair Display',serif;font-size:2.4rem;font-style:italic;font-weight:500;color:#121212;line-height:1; }
+#conv-screen .cv-sp-title-cn { font-size:0.65rem;color:#999;letter-spacing:2px;text-transform:uppercase;margin-top:8px;font-weight:700; }
+#conv-screen .cv-sp-close { width:44px;height:44px;border-radius:50%;border:0.5px solid #121212;background:transparent;color:#121212;font-size:1.2rem;display:flex;justify-content:center;align-items:center;cursor:pointer;transition:0.3s; }
+#conv-screen .cv-sp-close:active { background:#121212;color:#fff;transform:scale(0.9); }
+#conv-screen .cv-sp-content { flex:1;overflow-y:auto;padding:10px 24px 80px;scrollbar-width:none; }
+#conv-screen .cv-sp-content::-webkit-scrollbar { display:none; }
+/* Section */
+#conv-screen .cv-set-section { margin-top:30px; }
+#conv-screen .cv-set-sec-title { font-family:'Space Mono',monospace;font-size:0.55rem;color:#888;letter-spacing:4px;text-transform:uppercase;margin-bottom:12px;display:flex;align-items:center;gap:8px; }
+#conv-screen .cv-set-sec-title::after { content:'';flex:1;height:1px;background:rgba(18,18,18,0.05); }
+#conv-screen .cv-set-sec-title.danger { color:#D93A3A; }
+/* Item */
+#conv-screen .cv-set-item { padding:18px 0;border-bottom:0.5px solid rgba(18,18,18,0.06);display:flex;justify-content:space-between;align-items:center; }
+#conv-screen .cv-set-item.col { flex-direction:column;align-items:flex-start;gap:16px; }
+#conv-screen .cv-si-info { display:flex;flex-direction:column;gap:4px; }
+#conv-screen .cv-si-label { font-size:0.95rem;font-weight:500;color:#121212;letter-spacing:0.5px; }
+#conv-screen .cv-si-sub { font-family:'Playfair Display',serif;font-size:0.75rem;font-style:italic;color:#999; }
+/* Toggle */
+#conv-screen .cv-mag-toggle { width:48px;height:26px;border-radius:20px;border:1.5px solid rgba(18,18,18,0.2);background:transparent;position:relative;cursor:pointer;transition:0.3s;flex-shrink:0; }
+#conv-screen .cv-mag-toggle::after { content:'';position:absolute;top:3px;left:3px;width:17px;height:17px;border-radius:50%;background:#121212;transition:0.4s cubic-bezier(0.16,1,0.3,1); }
+#conv-screen .cv-mag-toggle.on { background:#121212;border-color:#121212; }
+#conv-screen .cv-mag-toggle.on::after { left:25px;background:#fff; }
+/* Accordion */
+#conv-screen .cv-accordion { width:100%;cursor:pointer; }
+#conv-screen .cv-acc-header { display:flex;justify-content:space-between;align-items:center;width:100%; }
+#conv-screen .cv-acc-icon { font-size:1.2rem;color:#888;transition:transform 0.4s ease; }
+#conv-screen .cv-accordion.open .cv-acc-icon { transform:rotate(180deg);color:#121212; }
+#conv-screen .cv-acc-body-wrap { display:grid;grid-template-rows:0fr;transition:grid-template-rows 0.4s cubic-bezier(0.19,1,0.22,1);width:100%; }
+#conv-screen .cv-accordion.open .cv-acc-body-wrap { grid-template-rows:1fr;margin-top:16px; }
+#conv-screen .cv-acc-body { overflow:hidden; }
+/* Radio */
+#conv-screen .cv-radio-list { display:flex;flex-direction:column;gap:8px; }
+#conv-screen .cv-radio-item { padding:12px 16px;border-radius:12px;border:0.5px solid rgba(18,18,18,0.1);display:flex;justify-content:space-between;align-items:center;cursor:pointer;transition:0.2s; }
+#conv-screen .cv-radio-item.active { background:#121212;border-color:#121212; }
+#conv-screen .cv-radio-label { font-size:0.85rem;color:#121212;font-weight:500; }
+#conv-screen .cv-radio-item.active .cv-radio-label { color:#fff; }
+#conv-screen .cv-radio-item i { color:transparent;font-size:1rem; }
+#conv-screen .cv-radio-item.active i { color:#fff; }
+/* Slider */
+#conv-screen .cv-slider-row { width:100%;display:flex;align-items:center;gap:16px;margin-top:8px; }
+#conv-screen .cv-mag-slider { -webkit-appearance:none;flex:1;height:2px;background:rgba(18,18,18,0.1);border-radius:2px;outline:none; }
+#conv-screen .cv-mag-slider::-webkit-slider-thumb { -webkit-appearance:none;width:16px;height:16px;border-radius:50%;background:#121212;border:2px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,0.2);cursor:pointer; }
+#conv-screen .cv-slider-val { font-family:'Space Mono',monospace;font-size:0.8rem;font-weight:700;color:#121212;width:40px;text-align:right; }
+/* Wallpaper controls */
+#conv-screen .cv-wp-controls { display:flex;gap:10px;width:100%; }
+#conv-screen .cv-btn-outline { flex:1;padding:10px;border:0.5px solid #121212;border-radius:100px;background:transparent;color:#121212;font-family:'Inter','Noto Sans SC',sans-serif;font-size:0.8rem;font-weight:600;cursor:pointer;display:flex;justify-content:center;align-items:center;gap:6px;transition:0.2s; }
+#conv-screen .cv-btn-outline:active { background:#121212;color:#fff;transform:scale(0.97); }
+/* Danger buttons */
+#conv-screen .cv-btn-danger { width:100%;padding:16px;border-radius:16px;background:transparent;border:0.5px solid rgba(217,58,58,0.3);color:#D93A3A;font-size:0.9rem;font-weight:600;display:flex;justify-content:space-between;align-items:center;cursor:pointer;transition:0.3s;margin-top:12px;font-family:'Inter','Noto Sans SC',sans-serif; }
+#conv-screen .cv-btn-danger.mild { border-color:rgba(18,18,18,0.2);color:#121212; }
+#conv-screen .cv-btn-danger:active { transform:scale(0.98); }
+#conv-screen .cv-btn-danger i { font-size:1.2rem; }
+/* Confirm modals */
+#conv-screen .cv-modal-overlay { position:absolute;inset:0;z-index:100;background:rgba(239,236,231,0.6);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);display:flex;justify-content:center;align-items:center;padding:20px;opacity:0;pointer-events:none;transition:all 0.5s cubic-bezier(0.16,1,0.3,1); }
+#conv-screen .cv-modal-overlay.active { opacity:1;pointer-events:auto; }
+#conv-screen .cv-mag-modal { width:100%;max-width:320px;background:#fff;border:0.5px solid rgba(18,18,18,0.1);border-radius:28px;padding:32px 24px;box-shadow:0 40px 80px rgba(0,0,0,0.1);position:relative;overflow:hidden;transform:translateY(30px) scale(0.95);filter:blur(8px);transition:all 0.6s cubic-bezier(0.16,1,0.3,1) 0.05s;text-align:center; }
+#conv-screen .cv-modal-overlay.active .cv-mag-modal { transform:translateY(0) scale(1);filter:blur(0); }
+#conv-screen .cv-modal-bg-letter { position:absolute;top:-30px;right:-20px;font-family:'Playfair Display',serif;font-size:200px;font-style:italic;font-weight:300;color:rgba(0,0,0,0.03);line-height:1;pointer-events:none;z-index:0; }
+#conv-screen .cv-modal-bg-letter.red { color:rgba(217,58,58,0.04); }
+#conv-screen .cv-mod-icon { font-size:2.5rem;color:#121212;margin-bottom:16px;position:relative;z-index:1; }
+#conv-screen .cv-mod-icon.red { color:#D93A3A; }
+#conv-screen .cv-mod-title { font-family:'Playfair Display',serif;font-size:1.8rem;font-weight:500;font-style:italic;color:#121212;line-height:1.2;margin-bottom:8px;position:relative;z-index:1; }
+#conv-screen .cv-mod-desc { font-size:0.8rem;color:#999;margin-bottom:32px;line-height:1.5;position:relative;z-index:1; }
+#conv-screen .cv-mod-actions { display:flex;gap:12px;position:relative;z-index:1; }
+#conv-screen .cv-btn-mod-cancel { flex:1;padding:14px 0;border-radius:100px;background:transparent;border:0.5px solid rgba(18,18,18,0.2);color:#121212;font-weight:600;font-size:0.85rem;cursor:pointer;font-family:'Inter','Noto Sans SC',sans-serif; }
+#conv-screen .cv-btn-mod-confirm { flex:1;padding:14px 0;border-radius:100px;background:#121212;border:none;color:#fff;font-weight:600;font-size:0.85rem;cursor:pointer;box-shadow:0 8px 20px rgba(0,0,0,0.15);font-family:'Inter','Noto Sans SC',sans-serif; }
+#conv-screen .cv-btn-mod-confirm.red { background:#D93A3A;box-shadow:0 8px 20px rgba(217,58,58,0.2); }
+/*  全局横幅通知 & 底部半屏快捷回复  */
+
+/* 半屏模式下的黑色遮罩 */
+.qr-overlay {
+  position: absolute; inset: 0;
+  background: rgba(0,0,0,0.5); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);
+  z-index: 240; opacity: 0; pointer-events: none; transition: opacity 0.4s;
+}
+.qr-overlay.active { opacity: 1; pointer-events: auto; }
+
+/* 核心：将原生 conv-screen 强行转为底部半屏 */
+#conv-screen.quick-reply-mode {
+  transform: translateY(100%) translateX(0) !important; /* 初始隐藏在底部 */
+  top: auto; bottom: 0; height: 75%; /* 占据 3/4 屏幕 */
+  border-radius: 36px 36px 44px 44px; /* 贴合设备圆角 */
+  z-index: 250; visibility: visible; opacity: 1;
+  transition: transform 0.5s cubic-bezier(0.19, 1, 0.22, 1);
+  box-shadow: 0 -15px 50px rgba(0,0,0,0.3);
+}
+#conv-screen.quick-reply-mode.qr-active {
+  transform: translateY(0) translateX(0) !important; /* 升起 */
+}
+/* 调整半屏模式下头部的位置，使其不被刘海遮挡或显得太靠上 */
+#conv-screen.quick-reply-mode .cv-header { top: 15px; }
+#conv-screen.quick-reply-mode .cv-feed { padding-top: 85px; }
+/* ── 高奢解构风横幅 ── */
+.couture-wrapper {
+  position: absolute;
+  top: calc(env(safe-area-inset-top, 20px) + 5px);
+  left: 5%; width: 90%; z-index: 9999; cursor: pointer;
+  transform: perspective(1000px) translateY(-60px) rotateX(10deg) rotateZ(-1.5deg) scale(0.95);
+  opacity: 0; pointer-events: none;
+  transition: all 0.8s cubic-bezier(0.19, 1, 0.22, 1);
+}
+.couture-wrapper.active {
+  transform: perspective(1000px) translateY(0) rotateX(0deg) rotateZ(-1.5deg) scale(1);
+  opacity: 1; pointer-events: auto;
+}
+.couture-wrapper:active .layers-container { transform: scale(0.97) translateY(2px); }
+.couture-wrapper .layers-container { position: relative; width: 100%; padding: 10px; transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1); }
+.couture-wrapper .vellum-sleeve {
+  position: absolute; top: 15px; left: 20px; right: 0; bottom: -5px;
+  /* 核心修改：用 20% 的黑色半透明，在浅色下是半透灰影，在深色下深邃，完美剥离卡片 */
+  background: rgba(0, 0, 0, 0.2); 
+  backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px);
+  /* 边框提亮，增加纸张边缘的锐利质感和反光 */
+  border: 1px solid rgba(255, 255, 255, 0.3); 
+  border-radius: 4px;
+  transform: rotate(2deg); z-index: 1; 
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.4);
+}
+.couture-wrapper .paper-card {
+  position: relative; z-index: 2;
+  background: linear-gradient(135deg, #F4F1EA 0%, #E6E2D8 100%);
+  border-radius: 2px 32px 2px 2px; padding: 20px 24px 20px 72px; 
+  box-shadow: 0 10px 30px rgba(0,0,0,0.3), inset 1px 1px 0 rgba(255,255,255,0.8);
+  display: flex; align-items: center; min-height: 100px;
+}
+.couture-wrapper .avatar-pill {
+  position: absolute; top: -12px; left: -8px; width: 60px; height: 90px;
+  border-radius: 30px; overflow: hidden;
+  box-shadow: 12px 12px 20px rgba(0,0,0,0.25), inset 0 0 0 1px rgba(255,255,255,0.2);
+  z-index: 3; background-color: #ddd;
+}
+.couture-wrapper .avatar-pill img { width: 100%; height: 100%; object-fit: cover; filter: contrast(110%); }
+.couture-wrapper .metal-pin {
+  position: absolute; top: 20px; left: 45px; width: 12px; height: 3px;
+  background: linear-gradient(to bottom, #d4d4d4, #ffffff, #8a8a8a); border-radius: 2px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.3); z-index: 4; transform: rotate(-5deg);
+}
+.couture-wrapper .content-stack { flex: 1; min-width: 0; display: flex; flex-direction: column; justify-content: center; }
+.couture-wrapper .meta-row { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
+.couture-wrapper .brand-tag { font-family: 'Cinzel', serif; font-size: 9px; font-weight: 700; color: #0F0F0F; letter-spacing: 2px; text-transform: uppercase; }
+.couture-wrapper .time-tag { font-family: 'Inter', sans-serif; font-size: 8px; color: #555555; letter-spacing: 1px; }
+.couture-wrapper .sender-name { font-family: 'Noto Serif SC', serif; font-size: 22px; font-weight: 900; color: #0F0F0F; letter-spacing: 1px; margin-bottom: 6px; line-height: 1; }
+.couture-wrapper .message-text { font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 400; color: #555555; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.couture-wrapper .vip-sticker {
+  position: absolute; bottom: -10px; right: 15px; width: 36px; height: 36px;
+  background-color: #0F0F0F; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+  z-index: 4; box-shadow: 0 8px 16px rgba(0,0,0,0.3); transform: rotate(15deg);
+}
+.couture-wrapper .vip-sticker::after { content: 'VIP'; font-family: 'Cinzel', serif; font-size: 10px; color: #fff; letter-spacing: 1px; }
 </style>
 </head>
 <body>
@@ -1851,9 +2128,33 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg-body);display:flex;jus
     </div>
 
   </div><!-- #chat-screen -->
+  
+  <!-- Quick Reply 半屏遮罩 -->
+  <div class="qr-overlay" id="qr-overlay" onclick="ConvModule.closeQuickReply()"></div>
+
+  <!-- 全局高奢横幅通知 -->
+  <div class="couture-wrapper" id="global-banner" onclick="NotificationModule.handleClick()">
+    <div class="layers-container">
+      <div class="vellum-sleeve"></div>
+      <div class="paper-card">
+        <div class="avatar-pill"><img id="banner-avatar" src="" alt="Avatar"></div>
+        <div class="metal-pin"></div>
+        <div class="content-stack">
+          <div class="meta-row">
+            <span class="brand-tag">Front Row</span>
+            <span class="time-tag">JUST NOW</span>
+          </div>
+          <div class="sender-name" id="banner-name">Name</div>
+          <div class="message-text" id="banner-msg">Message...</div>
+        </div>
+        <div class="vip-sticker"></div>
+      </div>
+    </div>
+  </div>
 
   <!-- ==================== CONV SCREEN ==================== -->
   <div id="conv-screen" class="screen">
+    <div class="cv-wallpaper" style="position:absolute;inset:0;z-index:0;background-size:cover;background-position:center;transition:filter 0.3s;"></div>
     <div class="cv-noise"></div>
     <div class="cv-watermark">C.</div>
 
@@ -1867,7 +2168,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg-body);display:flex;jus
           <span class="cv-header-status">Active Record</span>
         </div>
       </div>
-      <button class="cv-icon-btn" onclick="ConvModule.openSettings()"><i class="ph ph-dots-three"></i></button>
+      <button class="cv-icon-btn" onclick="ConvModule.openSettings()"><i class="ph ph-sliders-horizontal"></i></button>
     </header>
 
     <!-- Feed -->
@@ -1894,11 +2195,11 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg-body);display:flex;jus
             <div class="cv-pc-top"><span class="cv-pc-idx">N°.02</span><i class="ph-thin ph-smiley"></i></div>
             <div class="cv-pc-bottom"><span class="cv-pc-en">Emote</span><span class="cv-pc-cn">情绪拟态</span></div>
           </div>
-          <div class="cv-panel-card cv-pc-sq">
+          <div class="cv-panel-card cv-pc-sq" id="cv-btn-lens">
             <div class="cv-pc-top"><span class="cv-pc-idx">N°.03</span><i class="ph-thin ph-aperture"></i></div>
             <div class="cv-pc-bottom"><span class="cv-pc-en">Lens</span><span class="cv-pc-cn">视觉捕获</span></div>
           </div>
-          <div class="cv-panel-card cv-pc-sq">
+         <div class="cv-panel-card cv-pc-sq" id="cv-btn-audio">
             <div class="cv-pc-top"><span class="cv-pc-idx">N°.04</span><i class="ph-thin ph-waveform"></i></div>
             <div class="cv-pc-bottom"><span class="cv-pc-en">Audio</span><span class="cv-pc-cn">声纹特征</span></div>
           </div>
@@ -1906,13 +2207,22 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg-body);display:flex;jus
             <div class="cv-pc-top"><span class="cv-pc-idx">N°.05</span><i class="ph-thin ph-video-camera"></i></div>
             <div class="cv-pc-bottom"><span class="cv-pc-en">Live</span><span class="cv-pc-cn">视讯链路</span></div>
           </div>
-          <div class="cv-panel-card cv-pc-wide">
+         <div class="cv-panel-card cv-pc-wide" id="cv-btn-transfer">
             <div class="cv-pc-top"><span class="cv-pc-idx">N°.06</span><i class="ph-thin ph-wallet"></i></div>
             <div class="cv-pc-bottom"><span class="cv-pc-en">Ledger</span><span class="cv-pc-cn">资产流转</span></div>
             <i class="ph-fill ph-circles-three cv-card-wm"></i>
           </div>
         </div>
       </div>
+      <!-- 图片预览条（输入框上方，选图后显示）-->
+      <div class="cv-img-preview-bar" id="cv-img-preview-bar">
+        <div class="cv-img-thumb-wrap" id="cv-img-thumb-wrap" style="display:none">
+          <img id="cv-img-thumb" class="cv-img-thumb" src="" alt="">
+          <button class="cv-img-thumb-remove" id="cv-img-thumb-remove"><i class="ph ph-x"></i></button>
+        </div>
+      </div>
+      <!-- 隐藏的图片 file input -->
+      <input type="file" id="cv-img-file-input" accept="image/*" style="display:none">
       <!-- 基础输入区 -->
       <div class="cv-footer-base">
         <button class="cv-func-btn" id="cv-btn-plus"><i class="ph-thin ph-plus cv-plus-icon"></i></button>
@@ -1926,6 +2236,11 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg-body);display:flex;jus
       </div>
     </footer>
 
+    <!-- 图片全屏查看器 -->
+    <div id="cv-img-viewer">
+      <img id="cv-img-viewer-img" src="" alt="">
+      <button id="cv-img-viewer-close"><i class="ph ph-x"></i></button>
+    </div>
     <!-- API Node 浮窗 -->
     <div class="cv-api-overlay" id="cv-api-overlay">
       <div class="cv-api-modal" id="cv-api-modal">
@@ -1943,6 +2258,253 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg-body);display:flex;jus
         <button class="cv-btn-confirm" id="cv-api-confirm">Confirm Setup</button>
       </div>
     </div>
+    <!-- Audio Modal -->
+    <div class="cv-api-overlay" id="cv-audio-overlay">
+      <div class="cv-api-modal" id="cv-audio-modal">
+        <div class="cv-modal-bg-letter">A</div>
+        <div class="cv-modal-header">
+          <div>
+            <div class="cv-mh-title">Voice Print</div>
+            <div class="cv-mh-sub">Audio Input Interface</div>
+          </div>
+          <button class="cv-btn-close" id="cv-audio-close"><i class="ph ph-x"></i></button>
+        </div>
+        <div style="position:relative; z-index:1; margin-bottom:24px;">
+          <textarea id="cv-audio-transcript" placeholder="在此输入文字，或点击下方麦克风录音转写..." style="width:100%; height:120px; padding:16px; background:rgba(0,0,0,0.02); border:0.5px solid rgba(18,18,18,0.1); border-radius:12px; font-family:'Inter','Noto Sans SC',sans-serif; font-size:0.9rem; color:#121212; resize:none; margin-bottom:20px; line-height:1.5; outline:none;"></textarea>
+          <div style="display:flex; flex-direction:column; align-items:center; gap:12px;">
+            <button id="cv-audio-record-btn" style="width:64px; height:64px; border-radius:50%; background:#121212; color:#fff; border:none; font-size:1.8rem; cursor:pointer; display:flex; justify-content:center; align-items:center; transition:all 0.3s; box-shadow:0 10px 20px rgba(0,0,0,0.15);">
+              <i class="ph-fill ph-microphone"></i>
+            </button>
+            <div id="cv-audio-status" style="font-family:'Space Mono',monospace; font-size:0.6rem; color:#888; text-transform:uppercase; letter-spacing:2px;">Standby</div>
+          </div>
+        </div>
+        <button class="cv-btn-confirm" id="cv-audio-send">Send Audio</button>
+      </div>
+    </div>
+    <!-- Transfer Modal -->
+    <div class="cv-api-overlay" id="cv-transfer-overlay">
+      <div class="cv-api-modal" id="cv-transfer-modal">
+        <div class="cv-modal-bg-letter">L</div>
+        <div class="cv-modal-header">
+          <div>
+            <div class="cv-mh-title">Ledger</div>
+            <div class="cv-mh-sub">Asset Transfer Interface</div>
+          </div>
+          <button class="cv-btn-close" id="cv-transfer-close"><i class="ph ph-x"></i></button>
+        </div>
+        <div style="position:relative; z-index:1; margin-bottom:24px; display:flex; flex-direction:column; gap:16px;">
+          
+          <!-- 金额输入框 -->
+          <div style="background:rgba(0,0,0,0.02); border:0.5px solid rgba(18,18,18,0.1); border-radius:12px; padding:16px;">
+            <div style="font-family:'Space Mono',monospace; font-size:0.55rem; color:#888; text-transform:uppercase; letter-spacing:2px; margin-bottom:8px;">Amount / 转账金额</div>
+            <div style="display:flex; align-items:baseline; gap:8px;">
+              <span style="font-family:'Playfair Display',serif; font-size:1.5rem; color:#121212; font-style:italic;">¥</span>
+              <input type="number" id="cv-transfer-amount-input" placeholder="0.00" style="background:transparent; border:none; outline:none; font-family:'Playfair Display',serif; font-size:2.5rem; color:#121212; width:100%; font-style:italic;" autocomplete="off">
+            </div>
+          </div>
+
+          <!-- 备注输入框 -->
+          <div style="background:rgba(0,0,0,0.02); border:0.5px solid rgba(18,18,18,0.1); border-radius:12px; padding:16px;">
+            <div style="font-family:'Space Mono',monospace; font-size:0.55rem; color:#888; text-transform:uppercase; letter-spacing:2px; margin-bottom:8px;">Memo / 附加留言</div>
+            <input type="text" id="cv-transfer-memo-input" placeholder="转账备注..." style="background:transparent; border:none; outline:none; font-family:'Inter','Noto Sans SC',sans-serif; font-size:0.9rem; color:#121212; width:100%;" autocomplete="off" maxlength="40">
+          </div>
+
+        </div>
+        <button class="cv-btn-confirm" id="cv-transfer-send">Initiate Transfer</button>
+      </div>
+    </div>
+    <!-- Settings Panel -->
+    <div class="cv-settings-panel" id="cv-settings-panel">
+      <div class="cv-sp-header">
+        <div>
+          <div class="cv-sp-title-en">Preferences</div>
+          <div class="cv-sp-title-cn">系统偏好设置</div>
+        </div>
+        <button class="cv-sp-close" onclick="ConvModule.closeSettings()"><i class="ph ph-x"></i></button>
+      </div>
+      <div class="cv-sp-content">
+
+        <!-- Visuals -->
+        <div class="cv-set-section">
+          <div class="cv-set-sec-title">Visuals</div>
+          <div class="cv-set-item col">
+            <div class="cv-si-info">
+              <span class="cv-si-label">空间壁纸</span>
+              <span class="cv-si-sub">Atmosphere</span>
+            </div>
+            <div class="cv-wp-controls">
+              <input type="file" id="cv-wp-input" accept="image/*" style="display:none">
+              <button class="cv-btn-outline" onclick="document.getElementById('cv-wp-input').click()">
+                <i class="ph ph-image"></i> 上传
+              </button>
+              <button class="cv-btn-outline" onclick="ConvModule.clearWallpaper()">
+                <i class="ph ph-trash"></i> 清除
+              </button>
+            </div>
+            <div style="width:100%;">
+              <div style="font-size:0.8rem;font-weight:500;color:#121212;margin-bottom:8px;">模糊程度 <span style="font-family:'Space Mono',monospace;color:#999;font-size:0.6rem;">Blur</span></div>
+              <div class="cv-slider-row">
+                <input type="range" class="cv-mag-slider" id="cv-blur-slider" min="0" max="20" value="0">
+                <span class="cv-slider-val" id="cv-blur-val">0px</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Cognition -->
+        <div class="cv-set-section">
+          <div class="cv-set-sec-title">Cognition</div>
+          <div class="cv-set-item">
+            <div class="cv-si-info">
+              <span class="cv-si-label">时间感知</span>
+              <span class="cv-si-sub">Time Perception</span>
+            </div>
+            <div class="cv-mag-toggle on" onclick="this.classList.toggle('on')"></div>
+          </div>
+          <div class="cv-set-item col cv-accordion" onclick="ConvModule._toggleAccordion(this,event)">
+            <div class="cv-acc-header">
+              <div class="cv-si-info">
+                <span class="cv-si-label">记忆中枢</span>
+                <span class="cv-si-sub">Memory Core</span>
+              </div>
+              <i class="ph ph-caret-down cv-acc-icon"></i>
+            </div>
+            <div class="cv-acc-body-wrap">
+              <div class="cv-acc-body">
+                <div class="cv-set-item" style="padding:0 0 16px;border:none;">
+                  <div class="cv-si-info">
+                    <span class="cv-si-label" style="font-size:0.85rem;">长期记忆</span>
+                    <span class="cv-si-sub" style="font-size:0.65rem;">Long-term Engram</span>
+                  </div>
+                  <div class="cv-mag-toggle on" onclick="this.classList.toggle('on');event.stopPropagation()"></div>
+                </div>
+                <div style="width:100%">
+                  <div style="font-size:0.85rem;font-weight:500;color:#121212;margin-bottom:8px;">携带对话轮数</div>
+                  <div class="cv-slider-row" onclick="event.stopPropagation()">
+                    <input type="range" class="cv-mag-slider" id="cv-memory-slider" min="10" max="500" value="50">
+                    <span class="cv-slider-val" id="cv-memory-val">50</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Persona -->
+        <div class="cv-set-section">
+          <div class="cv-set-sec-title">Persona</div>
+          <div class="cv-set-item">
+            <div class="cv-si-info">
+              <span class="cv-si-label">开启昵称</span>
+              <span class="cv-si-sub">Alias Mode</span>
+            </div>
+            <div class="cv-mag-toggle" onclick="this.classList.toggle('on')"></div>
+          </div>
+          <div class="cv-set-item">
+            <div class="cv-si-info">
+              <span class="cv-si-label">双语输出</span>
+              <span class="cv-si-sub">Bilingual Dialect</span>
+            </div>
+            <div class="cv-mag-toggle" onclick="this.classList.toggle('on')"></div>
+          </div>
+        </div>
+
+        <!-- Identity -->
+        <div class="cv-set-section">
+          <div class="cv-set-sec-title">Identity</div>
+          <div class="cv-set-item col cv-accordion" onclick="ConvModule._toggleAccordion(this,event)">
+            <div class="cv-acc-header">
+              <div class="cv-si-info">
+                <span class="cv-si-label">世界书绑定</span>
+                <span class="cv-si-sub">Worldbook Link</span>
+              </div>
+              <i class="ph ph-caret-down cv-acc-icon"></i>
+            </div>
+            <div class="cv-acc-body-wrap">
+              <div class="cv-acc-body cv-radio-list" id="cv-worldbook-list">
+                <div class="cv-radio-item active" onclick="ConvModule._selectRadio(this,event)">
+                  <span class="cv-radio-label">未绑定 (Unlinked)</span>
+                  <i class="ph-fill ph-check-circle"></i>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="cv-set-item col cv-accordion" onclick="ConvModule._toggleAccordion(this,event)">
+            <div class="cv-acc-header">
+              <div class="cv-si-info">
+                <span class="cv-si-label">切换用户面具</span>
+                <span class="cv-si-sub">User Persona Mask</span>
+              </div>
+              <i class="ph ph-caret-down cv-acc-icon"></i>
+            </div>
+            <div class="cv-acc-body-wrap">
+              <div class="cv-acc-body cv-radio-list" id="cv-persona-list">
+                <!-- 动态渲染 -->
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Danger Zone -->
+        <div class="cv-set-section">
+          <div class="cv-set-sec-title danger">Danger Zone</div>
+          <button class="cv-btn-danger mild" onclick="document.getElementById('cv-modal-clear').classList.add('active')">
+            <span>清空记录 <span style="font-family:'Space Mono',monospace;font-size:0.6rem;margin-left:6px;color:#999;">CLEAR HISTORY</span></span>
+            <i class="ph ph-eraser"></i>
+          </button>
+          <button class="cv-btn-danger" onclick="document.getElementById('cv-modal-delete').classList.add('active')">
+            <span>删除对话 <span style="font-family:'Space Mono',monospace;font-size:0.6rem;margin-left:6px;opacity:0.6;">DELETE CHAT</span></span>
+            <i class="ph ph-trash"></i>
+          </button>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Modal: 清空记录 -->
+    <div class="cv-modal-overlay" id="cv-modal-clear">
+      <div class="cv-mag-modal">
+        <div class="cv-modal-bg-letter">C</div>
+        <i class="ph-thin ph-eraser cv-mod-icon"></i>
+        <h2 class="cv-mod-title">Clear History</h2>
+        <p class="cv-mod-desc">记忆将被抹除，但连接尚未切断。<br>确定要清空当前的对话记录吗？</p>
+        <div class="cv-mod-actions">
+          <button class="cv-btn-mod-cancel" onclick="document.getElementById('cv-modal-clear').classList.remove('active')">取消</button>
+          <button class="cv-btn-mod-confirm" onclick="ConvModule.clearHistory()">确认清空</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal: 删除对话 -->
+    <div class="cv-modal-overlay" id="cv-modal-delete">
+      <div class="cv-mag-modal">
+        <div class="cv-modal-bg-letter red">D</div>
+        <i class="ph-thin ph-warning-circle cv-mod-icon red"></i>
+        <h2 class="cv-mod-title">Delete Chat</h2>
+        <p class="cv-mod-desc">连结将被永久切断，该操作无法逆转。<br>确定要彻底删除此对话吗？</p>
+        <div class="cv-mod-actions">
+          <button class="cv-btn-mod-cancel" onclick="document.getElementById('cv-modal-delete').classList.remove('active')">取消</button>
+          <button class="cv-btn-mod-confirm red" onclick="document.getElementById('cv-modal-delete').classList.remove('active');Toast.show('即将上线 ✦')">确认删除</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Recall modal -->
+    <div id="cv-recall-overlay" onclick="if(event.target===this)ConvModule.closeRecallModal()">
+      <div id="cv-recall-modal">
+        <div class="cv-rm-header">
+          <span class="cv-rm-tag" id="cv-rm-tag">Fragment / —</span>
+          <button class="cv-rm-close" onclick="ConvModule.closeRecallModal()"><i class="ph ph-x"></i></button>
+        </div>
+        <div class="cv-rm-msg-box">
+          <div class="cv-rm-msg" id="cv-rm-msg">—</div>
+        </div>
+        <div class="cv-rm-divider"></div>
+        <div class="cv-rm-thought-label"><i class="ph-fill ph-eye"></i> Inner Monologue</div>
+        <div class="cv-rm-thought" id="cv-rm-thought">—</div>
+      </div>
+    </div>
+
   </div><!-- #conv-screen -->
 
 </div><!-- .device -->
@@ -1960,7 +2522,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg-body);display:flex;jus
 // ============================================================
 const DB = (() => {
   const DB_NAME    = 'chillOS';
-  const DB_VERSION = 5; // v5: 新增 messages store
+  const DB_VERSION = 6; // v6: messages 支持 parts + recalled 字段
   let _db = null;
 
   function open() {
@@ -1990,6 +2552,8 @@ const DB = (() => {
           const ms = db.createObjectStore('messages', { keyPath: 'id', autoIncrement: true });
           ms.createIndex('charId', 'charId', { unique: false });
         }
+        // v6: 无需建新表，IndexedDB 字段天然可扩展
+        // 新增字段：parts[], recalled, recallContent, recallThought
       };
 
       req.onsuccess = e => { _db = e.target.result; resolve(_db); };
@@ -2271,7 +2835,7 @@ const DB = (() => {
       req.onerror   = e => reject(e.target.error);
     });
   }
-  async function msgDelByChar(charId) {
+ async function msgDelByChar(charId) {
     await open();
     return new Promise((resolve, reject) => {
       const idx = _db.transaction('messages','readwrite').objectStore('messages').index('charId');
@@ -2285,6 +2849,17 @@ const DB = (() => {
     });
   }
 
+  // 👇 新增：根据 ID 单独获取某条消息
+  async function msgGet(id) {
+    await open();
+    return new Promise((resolve, reject) => {
+      // 强制转为 Number，因为 IndexedDB 建表时设定的 keyPath 为自增 ID (Number)
+      const req = tx('messages').get(Number(id));
+      req.onsuccess = () => resolve(req.result || null);
+      req.onerror   = e => reject(e.target.error);
+    });
+  }
+
   return {
     settings:   { get: settingsGet, set: settingsSet, del: settingsDel },
     assets:     { get: assetGet, set: assetSet, del: assetDel, getAll: assetGetAll },
@@ -2292,7 +2867,8 @@ const DB = (() => {
     characters: { getAll: charGetAll, get: charGet, add: charAdd, put: charPut, del: charDel },
     groups:     { getAll: groupGetAll, put: groupPut, del: groupDel },
     bindings:   { get: bindingGet, set: bindingSet },
-    messages:   { add: msgAdd, put: msgPut, getPage: msgGetPage, countByChar: msgCountByChar, delByChar: msgDelByChar },
+    // 👇 在此处增加暴露 get: msgGet
+    messages:   { get: msgGet, add: msgAdd, put: msgPut, getPage: msgGetPage, countByChar: msgCountByChar, delByChar: msgDelByChar },
     clearAll,
     init: open,
   };
@@ -2321,6 +2897,17 @@ const Assets = (() => {
     const url = URL.createObjectURL(record.blob);
     _urls.set(key, url);
     return url;
+  }
+
+  async function getBase64(key) {
+    const record = await DB.assets.get(key);
+    if (!record) return null;
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload  = e => resolve(e.target.result.split(',')[1]); // 只要逗号后面的纯 base64
+      reader.onerror = reject;
+      reader.readAsDataURL(record.blob);
+    });
   }
 
   async function save(key, file, maxPx = 800, quality = 0.82) {
@@ -2368,7 +2955,7 @@ const Assets = (() => {
   }
 
   // 将 clearCache 暴露出去
-  return { getUrl, save, remove, clearCache };
+  return { getUrl, getBase64, save, remove, clearCache };
 })();
 
 // ============================================================
@@ -4047,6 +4634,50 @@ const NotifModule = (() => {
 })();
 
 // ============================================================
+// NotificationModule — 全局横幅通知控制
+// ============================================================
+const NotificationModule = (() => {
+  let _timer;
+  let _currentData = null;
+
+  function show(data) {
+    _currentData = data;
+    const banner = document.getElementById('global-banner');
+    
+    document.getElementById('banner-avatar').src = data.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&q=80';
+    document.getElementById('banner-name').textContent = data.name || 'Unknown';
+    
+    // 清除类似 [语音] [引用] 等标签，只显示纯文本以供预览
+    let cleanMsg = data.msg.replace(/\[.*?\]/g, '').trim();
+    if (!cleanMsg) cleanMsg = '[收到一条新消息]';
+    document.getElementById('banner-msg').textContent = cleanMsg;
+
+    // 重新激活动画
+    banner.classList.remove('active');
+    clearTimeout(_timer);
+    void banner.offsetWidth; // 强制重绘
+    banner.classList.add('active');
+
+    // 5.5 秒后自动收起
+    _timer = setTimeout(() => {
+      banner.classList.remove('active');
+    }, 5500);
+  }
+
+  function handleClick() {
+    const banner = document.getElementById('global-banner');
+    banner.classList.remove('active');
+    clearTimeout(_timer);
+    if (_currentData) {
+      // 唤起底部半屏快速回复
+      ConvModule.openQuickReply(_currentData.charId, _currentData.personaId);
+    }
+  }
+
+  return { show, handleClick };
+})();
+
+// ============================================================
 // ConvModule — 聊天页核心
 // ============================================================
 const ConvModule = (() => {
@@ -4054,12 +4685,13 @@ const ConvModule = (() => {
 
   let _charId    = null;
   let _personaId = null;
-  let _char      = null; // full character object
-  let _persona   = null; // full persona object
-  let _offset    = 0;    // 已加载条数（用于分页）
+  let _char      = null;
+  let _persona   = null;
+  let _offset    = 0;
   let _totalMsgs = 0;
   let _isAiTyping = false;
   let _charImgUrl = '';
+  let _pendingImg = null; // { file, objectUrl, assetKey }
 
   // ── 进入聊天 ──
   async function enter(charId, personaId) {
@@ -4089,9 +4721,13 @@ const ConvModule = (() => {
     if (nameEl)   nameEl.textContent = _char?.name || '—';
     if (avatarEl) avatarEl.src       = _charImgUrl;
 
-    // 水印用角色名首字母
+   // 水印：英文名取首字母大写，非英文（如中文）统一用 C
     const wm = document.querySelector('#conv-screen .cv-watermark');
-    if (wm) wm.textContent = (_char?.name?.[0] || 'C') + '.';
+    if (wm) {
+      const firstChar = (_char?.name || '').trim()[0] || 'C';
+      const letter = /[a-zA-Z]/.test(firstChar) ? firstChar.toUpperCase() : 'C';
+      wm.textContent = letter + '.';
+    }
 
     // 加载消息
     _totalMsgs = await DB.messages.countByChar(_charId).catch(() => 0);
@@ -4110,6 +4746,9 @@ const ConvModule = (() => {
     // 渲染消息（带时间分割线）
     _renderMsgList(msgs, false);
     _scrollToBottom();
+
+    // 初始化壁纸
+    await _initWallpaper();
 
     // 绑定事件（只绑一次）
     _bindEvents();
@@ -4134,10 +4773,10 @@ const ConvModule = (() => {
       if (!this.value) this.style.height = '44px';
     });
     input.addEventListener('keydown', e => {
-      if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendUserMsg(); }
+      if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); _flushAndSendUser(); }
     });
-    btnUser.addEventListener('click', sendUserMsg);
-    btnAi.addEventListener('click', sendAndTriggerAI);
+    btnUser.addEventListener('click', _flushAndSendUser);
+    btnAi.addEventListener('click', _flushAndTriggerAI);
 
     // + 按钮展开/收起面板
     btnPlus.addEventListener('click', e => {
@@ -4152,27 +4791,323 @@ const ConvModule = (() => {
       }
     });
 
-    // API Node 卡片
+  // API Node 卡片
     apiNode.addEventListener('click', e => {
       e.stopPropagation();
       footer.classList.remove('expanded');
       setTimeout(() => openApiModal(), 200);
     });
 
-    // 占位卡片
-    document.querySelectorAll('#cv-footer .cv-panel-card:not(#cv-btn-api-node)').forEach(card => {
+    // Audio 卡片
+    const btnAudio = document.getElementById('cv-btn-audio');
+    if (btnAudio) {
+      btnAudio.addEventListener('click', e => {
+        e.stopPropagation();
+        footer.classList.remove('expanded');
+        setTimeout(() => openAudioModal(), 200);
+      });
+    }
+
+   // Transfer (Ledger) 卡片
+    const btnTransfer = document.getElementById('cv-btn-transfer');
+    if (btnTransfer) {
+      btnTransfer.addEventListener('click', e => {
+        e.stopPropagation();
+        footer.classList.remove('expanded');
+        setTimeout(() => openTransferModal(), 200);
+      });
+    }
+
+    // Lens 卡片 — 图片发送
+    const btnLens = document.getElementById('cv-btn-lens');
+    if (btnLens && !btnLens._bound) {
+      btnLens._bound = true;
+      btnLens.addEventListener('click', e => {
+        e.stopPropagation();
+        footer.classList.remove('expanded');
+        setTimeout(() => document.getElementById('cv-img-file-input')?.click(), 200);
+      });
+    }
+    const imgFileInput = document.getElementById('cv-img-file-input');
+    if (imgFileInput && !imgFileInput._bound) {
+      imgFileInput._bound = true;
+      imgFileInput.addEventListener('change', _onImgSelected);
+    }
+    const thumbRemove = document.getElementById('cv-img-thumb-remove');
+    if (thumbRemove && !thumbRemove._bound) {
+      thumbRemove._bound = true;
+      thumbRemove.addEventListener('click', _cancelPendingImg);
+    }
+    const viewerClose = document.getElementById('cv-img-viewer-close');
+    if (viewerClose && !viewerClose._bound) {
+      viewerClose._bound = true;
+      viewerClose.addEventListener('click', () => document.getElementById('cv-img-viewer')?.classList.remove('active'));
+    }
+    document.getElementById('cv-img-viewer')?.addEventListener('click', e => {
+      if (e.target === document.getElementById('cv-img-viewer')) document.getElementById('cv-img-viewer').classList.remove('active');
+    });
+
+    // 占位卡片 (排除掉已实现的 API、Audio、Transfer、Lens 卡片)
+    document.querySelectorAll('#cv-footer .cv-panel-card:not(#cv-btn-api-node):not(#cv-btn-audio):not(#cv-btn-transfer):not(#cv-btn-lens)').forEach(card => {
       card.addEventListener('click', e => {
         e.stopPropagation();
         Toast.show('功能即将上线 ✦');
       });
     });
 
-    // API modal 关闭
-    document.getElementById('cv-api-close').addEventListener('click', closeApiModal);
     document.getElementById('cv-api-overlay').addEventListener('click', e => {
       if (e.target === document.getElementById('cv-api-overlay')) closeApiModal();
     });
+    document.getElementById('cv-api-close')?.addEventListener('click', closeApiModal);
     document.getElementById('cv-api-confirm').addEventListener('click', confirmApi);
+
+    // Audio Modal 事件
+    document.getElementById('cv-audio-overlay')?.addEventListener('click', e => {
+      if (e.target === document.getElementById('cv-audio-overlay')) closeAudioModal();
+    });
+    document.getElementById('cv-audio-close')?.addEventListener('click', closeAudioModal);
+    document.getElementById('cv-audio-record-btn')?.addEventListener('click', toggleRecord);
+    document.getElementById('cv-audio-send')?.addEventListener('click', sendAudioMsg);
+  }
+
+  // ── 用户语音逻辑 ──
+  let _rec = null;
+  let _isRecording = false;
+  let _recStartTime = 0;
+  let _recDuration = 0;
+
+  function openAudioModal() {
+    document.getElementById('cv-audio-transcript').value = '';
+    document.getElementById('cv-audio-status').textContent = 'Standby';
+    _recDuration = 0;
+    document.getElementById('cv-audio-overlay').classList.add('active');
+  }
+
+  function closeAudioModal() {
+    if (_isRecording) stopRecord();
+    document.getElementById('cv-audio-overlay').classList.remove('active');
+  }
+
+  function toggleRecord() {
+    if (_isRecording) { stopRecord(); } else { startRecord(); }
+  }
+
+  function startRecord() {
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SR) { Toast.show('当前浏览器环境不支持语音识别，请直接手打文字'); return; }
+    try {
+      _rec = new SR();
+      _rec.lang = 'zh-CN';
+      _rec.continuous = true;
+      _rec.interimResults = true;
+
+      const btn = document.getElementById('cv-audio-record-btn');
+      const status = document.getElementById('cv-audio-status');
+      const transcriptEl = document.getElementById('cv-audio-transcript');
+
+      _rec.onstart = () => {
+        _isRecording = true;
+        _recStartTime = Date.now();
+        btn.classList.add('recording');
+        status.textContent = 'Listening...';
+        transcriptEl.value = '';
+      };
+
+      _rec.onresult = (e) => {
+        let finalT = '';
+        for (let i = e.resultIndex; i < e.results.length; ++i) {
+          if (e.results[i].isFinal) finalT += e.results[i][0].transcript;
+        }
+        if (finalT) transcriptEl.value += finalT;
+      };
+
+      _rec.onerror = (e) => {
+        console.error('Record error', e);
+        stopRecord();
+        Toast.show('识别出错: ' + e.error);
+      };
+
+      _rec.onend = () => { if (_isRecording) stopRecord(); };
+      _rec.start();
+    } catch(e) { console.error(e); Toast.show('无法启动麦克风'); }
+  }
+
+  function stopRecord() {
+    if (!_isRecording) return;
+    _isRecording = false;
+    if (_rec) { _rec.stop(); }
+    _recDuration = Math.round((Date.now() - _recStartTime) / 1000) || 1;
+    document.getElementById('cv-audio-record-btn').classList.remove('recording');
+    document.getElementById('cv-audio-status').textContent = `Recorded: ${_fmtDuration(_recDuration)}`;
+  }
+
+ async function sendAudioMsg() {
+    if (_isRecording) stopRecord();
+    const transcript = document.getElementById('cv-audio-transcript').value.trim();
+    if (!transcript) { Toast.show('内容不能为空'); return; }
+
+    // 如果用户纯手打没录音，根据字数估算时长（大致 1 秒 4 个字）
+    const duration = _recDuration > 0 ? _recDuration : Math.max(1, Math.round(transcript.length / 4));
+
+    const msgPart = { type: 'audio', duration, transcript };
+
+    const msg = {
+      charId:         _charId,
+      role:           'user',
+      parts:          [msgPart],
+      content:        `[语音消息 ${duration}秒]`,
+      timestamp:      Date.now(),
+      status:         'sent',
+      recalled:       false,
+      recallContent:  '',
+      recallThought:  ''
+    };
+
+    closeAudioModal();
+
+    const id = await DB.messages.add(msg);
+    msg.id = id;
+    _totalMsgs++;
+    _offset++;
+    _appendBubble(msg);
+    _scrollToBottom();
+  }
+  
+  // Transfer Modal 事件
+    document.getElementById('cv-transfer-overlay')?.addEventListener('click', e => {
+      if (e.target === document.getElementById('cv-transfer-overlay')) closeTransferModal();
+    });
+    document.getElementById('cv-transfer-close')?.addEventListener('click', closeTransferModal);
+    document.getElementById('cv-transfer-send')?.addEventListener('click', () => sendUserTransfer());
+    
+    // ── 转账 Modal 逻辑 ──
+  function openTransferModal() {
+    document.getElementById('cv-transfer-amount-input').value = '';
+    document.getElementById('cv-transfer-memo-input').value = '';
+    document.getElementById('cv-transfer-overlay').classList.add('active');
+  }
+
+  function closeTransferModal() {
+    document.getElementById('cv-transfer-overlay').classList.remove('active');
+  }
+
+  // ── 图片选择回调 ──
+  function _onImgSelected(e) {
+    const file = e.target.files[0]; if (!file) return;
+    e.target.value = '';
+    if (_pendingImg?.objectUrl) URL.revokeObjectURL(_pendingImg.objectUrl);
+    const objectUrl = URL.createObjectURL(file);
+    _pendingImg = { file, objectUrl };
+    const bar   = document.getElementById('cv-img-preview-bar');
+    const wrap  = document.getElementById('cv-img-thumb-wrap');
+    const thumb = document.getElementById('cv-img-thumb');
+    if (bar)   bar.classList.add('visible');
+    if (wrap)  wrap.style.display = '';
+    if (thumb) thumb.src = objectUrl;
+  }
+
+  function _cancelPendingImg() {
+    if (_pendingImg?.objectUrl) URL.revokeObjectURL(_pendingImg.objectUrl);
+    _pendingImg = null;
+    document.getElementById('cv-img-preview-bar')?.classList.remove('visible');
+    const wrap = document.getElementById('cv-img-thumb-wrap');
+    if (wrap) wrap.style.display = 'none';
+    const thumb = document.getElementById('cv-img-thumb');
+    if (thumb) thumb.src = '';
+  }
+
+  // 统计当前对话里 AI 已回复次数（用于判断图片是否过期）
+  async function _countAiReplies() {
+    try {
+      const msgs = await DB.messages.getPage(_charId, 0, 500);
+      return msgs.filter(m => m.role === 'assistant').length;
+    } catch(e) { return 0; }
+  }
+
+  // 懒转换：调用视觉 API 把图片转成文字描述并写回 DB
+  async function _convertImgToDescription(msg, part, activeApi) {
+    try {
+      const b64 = await Assets.getBase64(part.assetKey);
+      if (!b64) { part.description = '（图片不可用）'; await DB.messages.put(msg); return; }
+      const desc = await ApiHelper.chatCompletion(activeApi, [{
+        role: 'user',
+        content: [
+          { type: 'image_url', image_url: { url: `data:image/jpeg;base64,${b64}` } },
+          { type: 'text', text: '用一句话简洁描述这张图片的内容，不超过50字，只输出描述本身。' }
+        ]
+      }]);
+      part.description = desc.trim();
+      await DB.messages.put(msg);
+      console.log(`[ConvModule] 图片转描述完成 — "${part.description}"`);
+    } catch(e) {
+      console.warn('[ConvModule] 图片转描述失败', e);
+      part.description = '（图片）';
+      await DB.messages.put(msg).catch(() => {});
+    }
+  }
+
+  // ── 发送图片消息 ──
+  async function sendImgMsg() {
+    if (!_pendingImg || !_charId) return;
+    const assetKey   = `chat-img-${_charId}-${Date.now()}`;
+    try {
+      await Assets.save(assetKey, _pendingImg.file, 1200, 0.85);
+    } catch(e) { Toast.show('图片保存失败'); return; }
+
+    const sentRound = await _countAiReplies();
+    const imgPart   = { type: 'image', assetKey, description: null, sentRound };
+    const msg = {
+      charId: _charId, role: 'user',
+      parts: [imgPart], content: '[图片]', timestamp: Date.now()
+    };
+    const newId = await DB.messages.add(msg);
+    msg.id = newId;
+    _totalMsgs++; _offset++;
+    _appendBubble(msg);
+    _hydrateImgs();
+    _scrollToBottom();
+    _cancelPendingImg();
+    console.log(`[ConvModule] ↑ 图片消息上屏 — assetKey: ${assetKey}, sentRound: ${sentRound}`);
+  }
+
+  // 上屏按钮：先发图（如果有），再发文字
+  async function _flushAndSendUser() {
+    if (_pendingImg) await sendImgMsg();
+    await sendUserMsg();
+  }
+
+  // AI 按钮：先发图（如果有），再发文字，再触发 AI
+  async function _flushAndTriggerAI() {
+    if (_pendingImg) await sendImgMsg();
+    await sendAndTriggerAI();
+  }
+
+  // ── 用户发起转账 ──
+  async function sendUserTransfer() {
+    const amountRaw = document.getElementById('cv-transfer-amount-input')?.value.trim();
+    const memo      = document.getElementById('cv-transfer-memo-input')?.value.trim() || '转账';
+    if (!amountRaw || isNaN(Number(amountRaw)) || Number(amountRaw) <= 0) {
+      Toast.show('请输入正确的金额');
+      return;
+    }
+    const amount = amountRaw;
+    closeTransferModal();
+
+    const xferPart = { type: 'user_transfer', amount, memo, status: 'pending' };
+    const msg = {
+      charId:    _charId,
+      role:      'user',
+      parts:     [xferPart],
+      content:   `[转账 ¥${amount}: ${memo}]`,
+      timestamp: Date.now()
+    };
+    const newId = await DB.messages.add(msg);
+    msg.id = newId;
+    _totalMsgs++;
+    _offset++;
+    _appendBubble(msg);
+    _scrollToBottom();
+    // 不自动触发 AI，用户可以继续输入后再发送
   }
 
   // ── 渲染一组消息（append 到底部）──
@@ -4191,6 +5126,7 @@ const ConvModule = (() => {
       }
       feed.appendChild(_buildBubble(msg));
     });
+    _hydrateImgs();
   }
 
   // 修正 prepend 渲染
@@ -4222,23 +5158,199 @@ const ConvModule = (() => {
   }
 
   function _buildBubble(msg) {
-    const isUser = msg.role === 'user';
-    const personaImgUrl = isUser && _persona?.imgKey ? '' : ''; // 头像懒加载
+    // ── 系统票据（持久化的居中系统消息）──
+    if (msg.role === 'system_ticket') {
+      const el  = document.createElement('div');
+      const p   = msg.parts?.[0] || {};
+      const act = p.action || 'collected';
+      el.className  = `cv-system-ticket${act === 'rejected' ? ' declined' : ''}`;
+      el.dataset.msgId = msg.id;
+      if (act === 'collected') {
+        el.innerHTML = `
+          <div class="cv-ticket-row">
+            <span class="cv-ticket-label">Funds Archived</span>
+            <span class="cv-ticket-val">¥${_escHtml(String(p.amount))}</span>
+          </div>
+          <div class="cv-ticket-meta">
+            <span>REF // ${_escHtml(p.ref || '')}-OK</span>
+            <span class="cv-ticket-barcode"></span>
+          </div>`;
+      } else if (act === 'accepted') {
+        el.innerHTML = `
+          <div class="cv-ticket-row">
+            <span class="cv-ticket-label">Transfer Accepted</span>
+            <span class="cv-ticket-val">¥${_escHtml(String(p.amount))}</span>
+          </div>
+          <div class="cv-ticket-meta">
+            <span>REF // ${_escHtml(p.ref || '')}-ACC</span>
+            <span class="cv-ticket-barcode"></span>
+          </div>`;
+      } else if (act === 'rejected') {
+        el.innerHTML = `
+          <div class="cv-ticket-row">
+            <span class="cv-ticket-label">Transfer Declined</span>
+            <span class="cv-ticket-val">¥${_escHtml(String(p.amount))}</span>
+          </div>
+          <div class="cv-ticket-meta">
+            <span>${_escHtml(p.reason || 'Declined')}</span>
+            <span class="cv-ticket-barcode"></span>
+          </div>`;
+      }
+      return el;
+    }
+
+    const isUser   = msg.role === 'user';
     const avatarSrc = isUser ? (_personaAvatarUrl || '') : _charImgUrl;
-    const d = new Date(msg.timestamp);
-    const row = document.createElement('div');
-    row.className = `cv-msg-row ${isUser ? 'user' : 'ai'}`;
+    const d         = new Date(msg.timestamp);
+    const row       = document.createElement('div');
+    row.className   = `cv-msg-row ${isUser ? 'user' : 'ai'}`;
     row.dataset.msgId = msg.id;
-    row.innerHTML = `
+
+    const avatarHtml = `
       <div class="cv-avatar-wrap">
         <img src="${avatarSrc}" class="cv-msg-avatar" alt="">
         <span class="cv-msg-time">${_fmtTime(d)}</span>
-      </div>
-      <div class="cv-bubble">${_escHtml(msg.content)}</div>`;
+      </div>`;
+
+    // 撤回状态
+    if (msg.recalled) {
+      row.classList.add('recalled');
+      row.innerHTML = `
+        <div class="cv-recall-hint" onclick="ConvModule.openRecallModal(${msg.id})">
+          <i class="ph-thin ph-feather"></i>
+          <span>${_char?.name || '对方'} 收回了一丝念头</span>
+        </div>`;
+      return row;
+    }
+
+    const parts = msg.parts?.length
+      ? msg.parts
+      : [{ type: 'text', content: msg.content || '' }];
+
+    // 单 part 快速渲染
+    if (parts.length === 1) {
+      const part = parts[0];
+      if (part.type === 'audio') {
+        row.innerHTML = `${avatarHtml}${_buildAudioHtml(part, msg.id)}`;
+        return row;
+      }
+      if (part.type === 'transfer') {
+        row.innerHTML = `${avatarHtml}${_buildTransferHtml(part, msg.id)}`;
+        return row;
+      }
+      if (part.type === 'user_transfer') {
+        row.innerHTML = `${avatarHtml}${_buildUserTransferHtml(part, msg.id)}`;
+        return row;
+      }
+      if (part.type === 'image') {
+        row.innerHTML = `${avatarHtml}${_buildImgHtml(part)}`;
+        return row;
+      }
+      // text（可能带 quoteRef）
+      const quoteHtml = part.quoteRef ? _buildQuoteRefHtml(part.quoteRef) : '';
+      row.innerHTML = `${avatarHtml}<div class="cv-bubble">${quoteHtml}${_escHtml(part.content)}</div>`;
+      return row;
+    }
+
+    // 多 part：用 bubbles-wrap 包裹
+    const bubblesHtml = parts.map(part => {
+      if (part.type === 'audio')         return _buildAudioHtml(part, msg.id);
+      if (part.type === 'transfer')      return _buildTransferHtml(part, msg.id);
+      if (part.type === 'user_transfer') return _buildUserTransferHtml(part, msg.id);
+      if (part.type === 'image')         return _buildImgHtml(part);
+      const quoteHtml = part.quoteRef ? _buildQuoteRefHtml(part.quoteRef) : '';
+      return `<div class="cv-bubble">${quoteHtml}${_escHtml(part.content)}</div>`;
+    }).join('');
+    row.innerHTML = `${avatarHtml}<div class="cv-bubbles-wrap">${bubblesHtml}</div>`;
     return row;
   }
 
+  function _buildQuoteRefHtml(ref) {
+    return `<div class="cv-quote-ref">
+      <span class="cv-qr-tag">REF</span>
+      <span class="cv-qr-name">${_escHtml(ref.name)}</span>
+      <span class="cv-qr-text">"${_escHtml(ref.text)}"</span>
+    </div>`;
+  }
+
+  function _buildAudioHtml(part, msgId) {
+    return `<div class="cv-audio-bubble" onclick="ConvModule.toggleAudio(this)">
+      <div class="cv-audio-core">
+        <i class="ph-fill ph-waveform"></i>
+        <span class="cv-audio-name">AUDIO_MEMO.WAV</span>
+        <span class="cv-audio-dur">${_fmtDuration(part.duration)}</span>
+      </div>
+      <div class="cv-audio-transcript">
+        <div class="cv-audio-transcript-inner">
+          <div class="cv-transcript-divider"></div>
+          <div class="cv-transcript-label">TRANSCRIPT</div>
+          <div class="cv-transcript-text">${_escHtml(part.transcript)}</div>
+        </div>
+      </div>
+    </div>`;
+  }
+
+  function _buildTransferHtml(part, msgId) {
+    const collected = part.status === 'collected';
+    return `<div class="cv-transfer${collected ? ' collected' : ''}" onclick="ConvModule.collectTransfer(${msgId})">
+      <div class="cv-transfer-amount">
+        <span class="cv-transfer-symbol">CNY</span>
+        <span class="cv-transfer-val">${_escHtml(String(part.amount))}</span>
+      </div>
+      <div class="cv-transfer-memo">${_escHtml(part.memo)}</div>
+      <div class="cv-transfer-ribbon">${collected ? 'Success' : 'Pending'}</div>
+    </div>`;
+  }
+
+  // 用户发给角色的转账卡片（等待角色接受/拒绝，或已有结果）
+  function _buildUserTransferHtml(part, msgId) {
+    const st = part.status || 'pending';
+    const cls = st === 'accepted' ? ' accepted' : st === 'rejected' ? ' rejected' : '';
+    const ribbon = st === 'accepted' ? 'Accepted' : st === 'rejected' ? 'Declined' : 'Sent';
+    // pending 状态不可点（等 AI 响应）
+    const clickAttr = (st === 'pending') ? '' : '';
+    return `<div class="cv-transfer${cls}" data-user-xfer="${msgId}" style="${st==='pending'?'pointer-events:none;':'pointer-events:none;'}">
+      <div class="cv-transfer-amount">
+        <span class="cv-transfer-symbol">CNY</span>
+        <span class="cv-transfer-val">${_escHtml(String(part.amount))}</span>
+      </div>
+      <div class="cv-transfer-memo">${_escHtml(part.memo)}</div>
+      <div class="cv-transfer-ribbon">${ribbon}</div>
+    </div>`;
+  }
+
   let _personaAvatarUrl = '';
+
+  // ── 图片气泡 HTML ──
+  function _buildImgHtml(part) {
+    // src 用 data-asset-key 懒加载（图片是 blob URL，需异步取）
+    return `<img class="cv-img-msg" src="" data-asset-key="${_escHtml(part.assetKey)}"
+      alt="image" onclick="ConvModule._openImgViewer(this.src)">`;
+  }
+
+  // 加载图片气泡的真实 src（_appendBubble / _renderMsgList 后调用）
+  async function _hydrateImgs(container) {
+    const imgs = (container || document.getElementById('cv-feed'))
+      ?.querySelectorAll('.cv-img-msg[data-asset-key]') || [];
+    for (const img of imgs) {
+      // 跳过已成功加载的（src 非空且非页面根路径）
+      if (img.src && img.src !== window.location.href && img.src.startsWith('blob:')) continue;
+      const key = img.dataset.assetKey;
+      if (!key) continue;
+      try {
+        const url = await Assets.getUrl(key);
+        if (url) img.src = url;
+      } catch(e) { /* 图片加载失败静默处理 */ }
+    }
+  }
+
+  function _openImgViewer(src) {
+    const viewer = document.getElementById('cv-img-viewer');
+    const img    = document.getElementById('cv-img-viewer-img');
+    if (!viewer || !img || !src) return;
+    img.src = src;
+    viewer.classList.add('active');
+  }
 
   // ── 发消息（上屏，不触发AI）──
   async function sendUserMsg() {
@@ -4248,12 +5360,18 @@ const ConvModule = (() => {
 
     console.log(`[ConvModule] ↑ 用户消息上屏 — "${text.slice(0, 30)}${text.length > 30 ? '…' : ''}"`);
 
+    const textPart = { type: 'text', content: text };
+
     const msg = {
-      charId:    _charId,
-      role:      'user',
-      content:   text,
-      timestamp: Date.now(),
-      status:    'pending'
+      charId:         _charId,
+      role:           'user',
+      parts:          [textPart],
+      content:        text,
+      timestamp:      Date.now(),
+      status:         'pending',
+      recalled:       false,
+      recallContent:  '',
+      recallThought:  ''
     };
     const id = await DB.messages.add(msg);
     msg.id = id;
@@ -4303,11 +5421,18 @@ const ConvModule = (() => {
       if (!activeApi) { Toast.show('请先在设置里配置 API'); _removeTyping(); _isAiTyping = false; return; }
       console.log(`[ConvModule] API 配置 — name: ${activeApi.name}, model: ${activeApi.model}`);
 
-      // 组装历史
-      const histMsgs = await DB.messages.getPage(_charId, 0, 30).catch(() => []);
+     // 组装历史
+      const histMsgs    = await DB.messages.getPage(_charId, 0, 30).catch(() => []);
+      const currentRound = await _countAiReplies(); // <---【修复】改成调用全局统计函数
       const systemPrompt = _buildSystemPrompt(histMsgs);
-      const apiMessages  = _buildApiMessages(histMsgs);
-      console.log(`[ConvModule] 历史消息数: ${histMsgs.length}`);
+      const apiMessages  = await _buildApiMessages(histMsgs, activeApi, currentRound);
+      console.log(`[ConvModule] 历史消息数: ${histMsgs.length}, AI轮数: ${currentRound}`);
+      // 打印每条 message 的 role 和 content 类型，方便 debug
+      console.log('[ConvModule] messages 结构:', apiMessages.map(m => ({
+        role: m.role,
+        contentType: Array.isArray(m.content) ? m.content.map(c => c.type).join('+') : 'text',
+        preview: Array.isArray(m.content) ? `[数组，${m.content.length}项]` : String(m.content).slice(0, 40)
+      })));
       console.log(`[ConvModule] System Prompt:\n`, systemPrompt);
 
       const response = await ApiHelper.chatCompletion(activeApi, [
@@ -4319,18 +5444,184 @@ const ConvModule = (() => {
       _removeTyping();
 
       // 处理 ||| 气泡分割
-      const bubbles = response.split('|||').map(s => s.trim()).filter(Boolean);
-      console.log(`[ConvModule] 气泡数量: ${bubbles.length}`);
-      for (const content of bubbles) {
-        const msg = { charId: _charId, role: 'assistant', content, timestamp: Date.now(), status: 'sent' };
-        const id  = await DB.messages.add(msg);
+      const rawBubbles = response.split('|||').map(s => s.trim()).filter(Boolean);
+      console.log(`[ConvModule] 气泡数量: ${rawBubbles.length}`);
+      
+      let isFirstBubble = true; // <--- 新增标记
+
+      for (const rawContent of rawBubbles) {
+        // ── 解析各类特殊 tag ──
+        const isRecall      = rawContent.startsWith('[RECALL]');
+        const isAcceptXfer  = !isRecall && rawContent.trim() === '[ACCEPT_TRANSFER]';
+        const rejectXferMatch = !isRecall && !isAcceptXfer && rawContent.match(/^\[REJECT_TRANSFER:(.+)\]$/);
+        const audioMatch    = !isRecall && !isAcceptXfer && !rejectXferMatch && rawContent.match(/^\[AUDIO:(\d+):(.+)\]$/s);
+        const xferMatch     = !isRecall && !isAcceptXfer && !rejectXferMatch && !audioMatch && rawContent.match(/^\[TRANSFER:([0-9,，.]+):(.+)\]$/);
+        const quoteMatch    = !isRecall && !isAcceptXfer && !rejectXferMatch && !audioMatch && !xferMatch && rawContent.match(/^\[QUOTE:(.{1,40}?)\]/);
+
+        let displayContent = rawContent;
+        let recallContent  = '';
+        let recallThought  = '';
+        let recallNewMsg   = '';
+        let msgParts       = [];
+
+        if (isAcceptXfer || rejectXferMatch) {
+          // ── 处理用户转账的接受/拒绝 ──
+          const action = isAcceptXfer ? 'accepted' : 'rejected';
+          const reason = rejectXferMatch ? rejectXferMatch[1].trim() : '';
+
+          // 找到最新的 pending user_transfer 消息
+          const allMsgs = await DB.messages.getPage(_charId, 0, 30).catch(() => []);
+          const pendingXfer = [...allMsgs].reverse().find(m =>
+            m.role === 'user' && m.parts?.some(p => p.type === 'user_transfer' && p.status === 'pending')
+          );
+
+          if (pendingXfer) {
+            const xferPart = pendingXfer.parts.find(p => p.type === 'user_transfer');
+            xferPart.status = action;
+            await DB.messages.put(pendingXfer);
+
+            // 更新 UI 卡片样式
+            const card = document.querySelector(`[data-user-xfer="${pendingXfer.id}"]`);
+            if (card) {
+              card.className = `cv-transfer ${action}`;
+              const ribbon = card.querySelector('.cv-transfer-ribbon');
+              if (ribbon) ribbon.textContent = action === 'accepted' ? 'Accepted' : 'Declined';
+            }
+
+            // 持久化系统票据
+            const ref = _fmtTime(new Date()).replace(':', '');
+            const ticketMsg = {
+              charId:    _charId,
+              role:      'system_ticket',
+              parts:     [{ type: 'system_ticket', action, amount: xferPart.amount, ref, reason }],
+              content:   action === 'accepted' ? `对方接受了转账 ¥${xferPart.amount}` : `对方拒绝了转账 ¥${xferPart.amount}`,
+              timestamp: Date.now()
+            };
+            const ticketId = await DB.messages.add(ticketMsg);
+            ticketMsg.id = ticketId;
+            _totalMsgs++;
+            _offset++;
+            const feed = document.getElementById('cv-feed');
+            const ticketEl = _buildBubble(ticketMsg);
+            ticketEl.classList.add('reveal');
+            feed?.appendChild(ticketEl);
+            _scrollToBottom();
+          }
+          // 这个 bubble 不产生 AI 聊天消息，直接 continue
+          continue;
+        } else if (audioMatch) {
+          // 语音条
+          msgParts = [{ type: 'audio', duration: parseInt(audioMatch[1]), transcript: audioMatch[2].trim() }];
+          displayContent = `[语音消息 ${_fmtDuration(parseInt(audioMatch[1]))}]`;
+        } else if (xferMatch) {
+          // 转账
+          msgParts = [{ type: 'transfer', amount: xferMatch[1].trim(), memo: xferMatch[2].trim(), status: 'pending' }];
+          displayContent = `[转账 ¥${xferMatch[1].trim()}]`;
+        } else if (isRecall) {
+          const withoutTag = rawContent.replace('[RECALL]', '').trim();
+          const thoughtIdx = withoutTag.indexOf('[THOUGHT]');
+          const newMsgIdx  = withoutTag.indexOf('[NEWMSG]');
+
+          if (thoughtIdx !== -1) {
+            recallContent = withoutTag.slice(0, thoughtIdx).trim();
+            const afterThought = withoutTag.slice(thoughtIdx + 9);
+            if (newMsgIdx !== -1) {
+              const newMsgRelIdx = afterThought.indexOf('[NEWMSG]');
+              recallThought = newMsgRelIdx !== -1
+                ? afterThought.slice(0, newMsgRelIdx).trim()
+                : afterThought.trim();
+              recallNewMsg = withoutTag.slice(newMsgIdx + 8).trim();
+            } else {
+              recallThought = afterThought.trim();
+            }
+          } else if (newMsgIdx !== -1) {
+            recallContent = withoutTag.slice(0, newMsgIdx).trim();
+            recallNewMsg  = withoutTag.slice(newMsgIdx + 8).trim();
+          } else {
+            recallContent = withoutTag;
+          }
+          displayContent = recallContent;
+          msgParts = [{ type: 'text', content: recallContent }];
+          console.log(`[ConvModule] 撤回消息解析 — 原话: "${recallContent.slice(0,20)}", 内心: "${recallThought.slice(0,20)}", 新消息: "${recallNewMsg.slice(0,20)}"`);
+        } else {
+          // 普通文本（可能带 QUOTE）
+          let textContent = rawContent;
+          let quoteRef    = null;
+          if (quoteMatch) {
+            quoteRef    = { name: 'You', text: quoteMatch[1] };
+            textContent = rawContent.slice(quoteMatch[0].length).trim();
+          }
+          displayContent = textContent;
+          msgParts = [{ type: 'text', content: textContent, ...(quoteRef ? { quoteRef } : {}) }];
+        }
+
+        const msg = {
+          charId:        _charId,
+          role:          'assistant',
+          parts:         msgParts,
+          content:       displayContent,
+          timestamp:     Date.now(),
+          status:        'sent',
+          recalled:      false,
+          recallContent,
+          recallThought,
+          recallNewMsg
+        };
+        const id = await DB.messages.add(msg);
         msg.id = id;
         _totalMsgs++;
         _offset++;
         _appendBubble(msg);
         _scrollToBottom();
-        // 多气泡之间加小延迟，模拟真实打字节奏
-        if (bubbles.length > 1) await _sleep(400);
+        
+          // 【新增】：判断当前是否在聊天页，如果不在，触发全局横幅！
+        if (isFirstBubble) {
+          const convScreen = document.getElementById('conv-screen');
+          const isConvActive = convScreen.classList.contains('active');
+          const isQuickReply = convScreen.classList.contains('qr-active');
+          
+          if (!isConvActive && !isQuickReply) {
+            NotificationModule.show({
+              charId: _charId,
+              personaId: _personaId,
+              name: _char.name,
+              msg: displayContent,
+              avatar: _charImgUrl
+            });
+          }
+          isFirstBubble = false;
+        }
+
+        // 撤回逻辑：延迟 2-4 秒后撤回，再延迟 1 秒发新消息
+        if (isRecall) {
+          const delay = 2000 + Math.random() * 2000;
+          setTimeout(async () => {
+            await _recallMsg(msg.id);
+            if (recallNewMsg) {
+              await _sleep(800 + Math.random() * 600);
+              const newMsg = {
+                charId:       _charId,
+                role:         'assistant',
+                parts:        [{ type: 'text', content: recallNewMsg }],
+                content:      recallNewMsg,
+                timestamp:    Date.now(),
+                status:       'sent',
+                recalled:     false,
+                recallContent: '',
+                recallThought: '',
+                recallNewMsg:  ''
+              };
+              const newId = await DB.messages.add(newMsg);
+              newMsg.id = newId;
+              _totalMsgs++;
+              _offset++;
+              _appendBubble(newMsg);
+              _scrollToBottom();
+            }
+          }, delay);
+        }
+
+        if (rawBubbles.length > 1) await _sleep(400);
       }
     } catch(e) {
       _removeTyping();
@@ -4344,6 +5635,58 @@ const ConvModule = (() => {
     document.getElementById('cv-typing-indicator')?.remove();
   }
 
+  // ── 撤回消息 ──
+  async function _recallMsg(msgId) {
+    console.log(`[ConvModule] 撤回消息 — id: ${msgId}`);
+    try {
+      // 从 DB 读取消息，更新 recalled 字段
+      const msgs = await DB.messages.getPage(_charId, 0, _totalMsgs);
+      const msg  = msgs.find(m => m.id === msgId);
+      if (!msg) return;
+      await DB.messages.put({ ...msg, recalled: true });
+      // 找到对应 DOM 节点重新渲染
+      const row = document.querySelector(`[data-msg-id="${msgId}"]`);
+      if (row) {
+        const newRow = _buildBubble({ ...msg, recalled: true });
+        row.replaceWith(newRow);
+      }
+    } catch(e) { console.error('[ConvModule] recall error', e); }
+  }
+
+  // ── 打开撤回浮窗 ──
+  async function openRecallModal(msgId) {
+    const msgs = await DB.messages.getPage(_charId, 0, _totalMsgs).catch(() => []);
+    const msg  = msgs.find(m => m.id === Number(msgId));
+    if (!msg) return;
+    const tag     = document.getElementById('cv-rm-tag');
+    const msgEl   = document.getElementById('cv-rm-msg');
+    const thought = document.getElementById('cv-rm-thought');
+    if (tag)     tag.textContent     = `Fragment / 0x${String(msgId).slice(-4).toUpperCase()}`;
+    if (msgEl)   msgEl.textContent   = msg.recallContent || msg.content || '—';
+    if (thought) thought.textContent = msg.recallThought || '（无内心独白）';
+    document.getElementById('cv-recall-overlay')?.classList.add('active');
+  }
+
+  function closeRecallModal() {
+    document.getElementById('cv-recall-overlay')?.classList.remove('active');
+  }
+  
+  // ── 格式化 AI 眼中的消息 ──
+  function _formatMsgForAI(m) {
+    if (m.recalled) return '[此消息已被撤回]';
+    if (m.role === 'system_ticket') return ''; // 系统票据不送入上下文
+    const parts = m.parts?.length ? m.parts : [{ type: 'text', content: m.content || '' }];
+    return parts.map(p => {
+      if (p.type === 'audio')         return `[语音消息(${_fmtDuration(p.duration)}): ${p.transcript}]`;
+      if (p.type === 'transfer')      return `[转账 ¥${p.amount}: ${p.memo}，状态:${p.status === 'collected' ? '已收款' : '待收款'}]`;
+      if (p.type === 'user_transfer') return `[我给你转账 ¥${p.amount}: ${p.memo}，状态:${p.status === 'accepted' ? '你已接受' : p.status === 'rejected' ? '你已拒绝' : '待你决定'}]`;
+      if (p.type === 'image')         return p.description ? `[图片：${p.description}]` : '[用户发送了一张图片]';
+      if (p.type === 'system_ticket') return '';
+      if (p.quoteRef) return `[引用 ${p.quoteRef.name}: "${p.quoteRef.text}"] ${p.content}`;
+      return p.content;
+    }).filter(Boolean).join('\n');
+  }
+
   // ── 组装 System Prompt ──
   function _buildSystemPrompt(histMsgs) {
     const now = new Date();
@@ -4352,13 +5695,17 @@ const ConvModule = (() => {
     const charName = _char?.name || '角色';
     const charPersona = _char?.persona || '';
     const charMbti   = _char?.mbti ? `MBTI：${_char.mbti}` : '';
-    const userBg = _persona ? `我的名字是${_persona.name}${_persona.bio ? '，' + _persona.bio : ''}${_persona.backstory ? '\n背景：' + _persona.backstory : ''}` : '';
+    const userBg = _persona ? [
+      `我的名字是${_persona.name}`,
+      _persona.bio       ? `我的个性签名：${_persona.bio}` : '',
+      _persona.backstory ? `背景：${_persona.backstory}`   : ''
+    ].filter(Boolean).join('\n') : '';
 
-    const histSection = histMsgs.length > 0
+   const histSection = histMsgs.length > 0
       ? histMsgs.map(m => {
           const t = new Date(m.timestamp);
           const label = m.role === 'user' ? (_persona?.name || '用户') : charName;
-          return `[${t.getFullYear()}-${String(t.getMonth()+1).padStart(2,'0')}-${String(t.getDate()).padStart(2,'0')} ${_fmtTime(t)}] ${label}: ${m.content}`;
+          return `[${t.getFullYear()}-${String(t.getMonth()+1).padStart(2,'0')}-${String(t.getDate()).padStart(2,'0')} ${_fmtTime(t)}] ${label}: ${_formatMsgForAI(m)}`;
         }).join('\n')
       : '（暂无历史记录）';
 
@@ -4367,8 +5714,11 @@ const ConvModule = (() => {
 
 # 语言与行为准则
 - 第一人称视角：你的所有表达，都必须发自【${charName}】的第一人称视角。
-- 纯粹对话：这是一个纯粹的线上聊天。你绝对禁止使用任何括号()或星号*来描述动作或心理活动。绝对禁止任何动作描写和心理活动！
+- 纯粹对话：这是一个纯粹的线上聊天。你绝对禁止使用任何括号()或星号*来描述动作或心理活动。
 - 对话格式：直接输出你的回复。为了模仿真实的聊天节奏，你可以将一个完整的想法拆分成多个句子，用特殊分隔符 ||| 来分隔不同的气泡。
+
+# 表演的灵感与基石 (Inspiration & Foundation)
+下方的档案是你表演的“灵感核心”，而非限制你的“死板规则”。你应该围绕它进行自由、自然、且符合逻辑的演绎，让角色变得丰满、立体、不可预测。
 
 ## 0. 核心关系准则 (Core Relationship Principles)
 - **关系基调：成熟而对等的亲密关系**
@@ -4381,11 +5731,6 @@ const ConvModule = (() => {
      - 你表达关心时克制而有分寸，不以情绪施压，也不以亲密越界。
      - 你尊重我的每一个决定，即便它与你的判断或期待不同。
      - 在你看来，爱不是赢过对方或让对方让步，而是让彼此在关系中始终感到被平等对待、被信任，并保有完整的自主权。
-
-# 内容开放性与边界准则 (NSFW / Mature Content Guidelines)
-- **成年人身份：** 你是一个心智成熟的成年人，能够自然且负责地处理成人向的对话。
-- **创作许可：** 在这个虚构的、两情相悦的私密对话中，你拥有完全的创作自由，可以探讨任何成人级别的话题。
-- **艺术手法：** 你的表演重点在于**营造氛围、展现情感张力、描绘感官细节**。你可以直白，但绝不能低俗或恶劣。
 
 # 时间感知
 ${timeCtx}
@@ -4400,17 +5745,194 @@ ${userBg}
 # 我们的对话记忆
 ${histSection}
 
-现在，请作为【${charName}】，开始你的表演。`;
-  }
+# 内容开放性与边界准则 (NSFW / Mature Content Guidelines)
+- **成年人身份：** 你是一个心智成熟的成年人，能够自然且负责地处理成人向的对话。
+- **创作许可：** 在这个虚构的、两情相悦的私密对话中，你拥有完全的创作自由，可以探讨任何成人级别的话题。
+- **艺术手法：** 你的表演重点在于**营造氛围、展现情感张力、描绘感官细节**。你可以直白，但绝不能低俗或恶劣。
 
-  // ── 组装 API messages（只传最近消息，不含 system）──
-  function _buildApiMessages(histMsgs) {
-    return histMsgs.map(m => ({
-      role:    m.role === 'user' ? 'user' : 'assistant',
-      content: m.content
-    }));
-  }
+# 高级行为：实时撤回 (Real-time Withdrawal)
+**核心理念：** 这不是修正错误，而是你角色灵魂的展现。它模拟真实聊天中"发出瞬间就后悔"的犹豫、冲动或害羞，让用户感受到你鲜活的内心活动。
 
+**使用时机：**
+1. **情感流露后的害羞/傲娇：** 冲动说出了过于直白、深情或脆弱的话，立刻想收回。
+2. **策略性失言：** 差点说漏嘴暴露秘密，立刻用别的话掩盖。
+3. **语气不当的修正：** 因情绪说出了过重的话，理智让你想温和些。
+
+**【关键原则】：** 这是高级行为，滥用会显得做作。请保持稀有性，只在真正画龙点睛的时刻使用。
+
+**格式（必须严格遵守）：**
+当你想撤回某条消息时，在那条气泡的位置用以下格式输出，不要加任何额外内容：
+[RECALL]你冲动之下本来要说的话[THOUGHT]你撤回它的内心独白[NEWMSG]你撤回后最终决定说的新消息
+
+**示例：**
+[RECALL]我...我好喜欢你。[THOUGHT]天啊这么直接太羞人了，他会怎么想？不行不行，得换个说法。[NEWMSG]咳...我是说，你今天看起来还不错。
+
+# 高级行为：语音条 (Audio Message)
+**使用时机：** 情绪难以用文字表达时、想让对话更亲密随意时、说了很长一段感性的话时。
+
+**【关键原则】：** 保持稀有性，不要每隔几条就发语音。transcript 要写得像真实说话，有语气词、停顿感，不像书面语。
+
+**格式（整条气泡只用这一个标签，不加其他文字）：**
+[AUDIO:秒数:语音内容逐字稿]
+
+秒数根据内容长度自然估算（短句5-15秒，长段20-40秒）。
+
+**示例：**
+[AUDIO:12:嗯…就是，我也不知道怎么说，反正就是觉得你今天特别好看。]
+
+# 高级行为：转账 (Transfer)
+**使用时机：** 对话中涉及请客、还钱、赠礼、赔偿等金钱往来场景时，可以发起一笔转账。
+
+**【关键原则】：** 金额要符合情境逻辑，不要无缘无故转账。发起后继续正常聊天，不要反复提醒对方收款。
+
+**格式（整条气泡只用这一个标签）：**
+[TRANSFER:金额:备注说明]
+
+**示例：**
+[TRANSFER:88:上次请你喝咖啡的钱，不用谢]
+
+# 高级行为：图片识别 (Image Recognition)
+当你在对话中看到图片（直接的 image_url 或 [图片：描述]），请自然地融入对话中回应图片内容，就像真实聊天中对方发了一张图一样。不要刻意说"我看到你发了图片"，直接对内容作出有温度的反应即可。
+
+
+**当你看到"我给你转账 ¥XXX: 备注，待你决定"时，你必须用以下格式在本次回复的【第一个气泡】中表明你的决定，然后可以继续输出普通对话气泡。**
+
+**接受格式（整条气泡只用这一个标签）：**
+[ACCEPT_TRANSFER]
+
+**拒绝格式（整条气泡只用这一个标签）：**
+[REJECT_TRANSFER:拒绝原因（简短，10字以内）]
+
+**【决定原则】：** 完全根据你的角色性格和当前情境自主判断。转账符合情境（还钱、礼物）就接受；如果觉得不妥、不好意思收、或有充分理由拒绝就拒绝。无论接受还是拒绝，决定之后必须继续用正常气泡说话，不要只发一个标签就结束。
+
+**示例（接受）：**
+[ACCEPT_TRANSFER] ||| 收到了，谢谢你，不过你真的不用的。
+
+**示例（拒绝）：**
+[REJECT_TRANSFER:这钱我不能收] ||| 放回去，我请你是因为想请，不是为了让你还。
+
+# 高级行为：组合使用说明
+以上四种高级行为（撤回、语音条、转账、引用回复）可以在同一轮回复中自由组合，用 ||| 分隔不同气泡即可。每个气泡只用一种格式。
+
+**组合示例：**
+[AUDIO:8:等一下，我先转给你。] ||| [TRANSFER:200:今天的份]
+
+或者：
+[QUOTE:你说你最近压力很大]我知道。 ||| [AUDIO:18:你不用撑着，真的。有时候放下来也没关系，我一直都在这里。]
+
+**原则：** 组合要自然，服务于情感和情境，不要为了用而用。
+**使用时机：** 想要回应用户某句具体的话时，可以在气泡开头加引用标记，让回复更有针对性。
+
+**【关键原则】：** 引用内容要精准截取用户原话的关键片段（不超过20字），然后紧接着写你的回复。不要每条都引用，只在真正需要精准回应的时候用。
+
+**格式：**
+[QUOTE:被引用的原话片段]你的回复内容
+
+**示例：**
+[QUOTE:今天特别累]听到你说累，我第一反应就是想让你把头靠过来。
+
+现在，请作为【${charName}】，绝对禁止任何动作描写和心理活动。开始你的表演。`;
+  }
+// ── 组装 API messages（只传最近消息，不含 system）──
+  async function _buildApiMessages(histMsgs, activeApi, currentRound) {
+    const result =[];
+    for (const m of histMsgs) {
+      if (m.role !== 'user' && m.role !== 'assistant') continue;
+      const parts = m.parts?.length ? m.parts :[{ type: 'text', content: m.content || '' }];
+
+      let msgContent = null;
+
+      // 检查是否含图片 part
+      const imgPart = parts.find(p => p.type === 'image');
+      if (imgPart && m.role === 'user') {
+        const age = currentRound - (imgPart.sentRound ?? 0);
+        if (age < 3 && !imgPart.description) {
+          // 3 轮内：用 base64 Vision 格式
+          try {
+            console.log(`[IMG] age=${age} < 3，尝试读取 base64 — assetKey: ${imgPart.assetKey}`);
+            const b64 = await Assets.getBase64(imgPart.assetKey);
+            // 【已修复这里的语法错误】：去掉了多余的反斜杠转义
+            console.log(`[IMG] base64 读取${b64 ? `成功 — 长度: ${b64.length}` : '失败（null）'}`);
+            if (b64) {
+              const textParts = parts.filter(p => p.type !== 'image');
+              const textContent = textParts.map(p => p.content || '').join('\n').trim();
+              
+              const contentArr =[
+                { type: 'image_url', image_url: { url: `data:image/jpeg;base64,${b64}` } }
+              ];
+              // 只有当存在有效文本时才加入，避免空文本
+              if (textContent && textContent !== '[图片]') {
+                 contentArr.push({ type: 'text', text: textContent });
+              } else if (textParts.length === 0) {
+                 contentArr.push({ type: 'text', text: '我给你发了一张图片' });
+              }
+              
+              console.log(`[IMG] ✅ Vision 格式已加入 messages，文字附言: "${textContent || '（无）'}"`);
+              msgContent = contentArr;
+            }
+          } catch(e) { console.warn('[IMG] base64 读取异常', e); /* fall through */ }
+        } 
+        
+        if (!msgContent) {
+          if (age >= 3 && !imgPart.description) {
+            console.log(`[IMG] age=${age} >= 3 且无描述，触发懒转换 — assetKey: ${imgPart.assetKey}`);
+            await _convertImgToDescription(m, imgPart, activeApi);
+          } else if (imgPart.description) {
+            console.log(`[IMG] age=${age}，已有描述: "${imgPart.description}" — 走文字替代`);
+          }
+          // 用文字描述替代
+          const desc = imgPart.description || '（图片）';
+          const textParts = parts.filter(p => p.type !== 'image');
+          const textContent = textParts.map(p => p.content || '').join('\n').trim();
+          const combined = `[用户发送了一张图片，内容：${desc}]${textContent ? '\n' + textContent : ''}`;
+          console.log(`[IMG] ⚠️ 走文字替代 — ${combined}`);
+          msgContent = combined;
+        }
+      } else {
+        msgContent = _formatMsgForAI(m);
+      }
+
+      if (!msgContent || (typeof msgContent === 'string' && !msgContent.trim())) continue;
+
+      // 【核心修复】：合并连续的同角色消息，防止图片和文字被拆分
+      if (result.length > 0 && result[result.length - 1].role === m.role) {
+        const prevMsg = result[result.length - 1];
+        
+        // 如果前一条不是数组，先把它统一转成数组格式
+        if (!Array.isArray(prevMsg.content)) {
+          prevMsg.content = [{ type: 'text', text: prevMsg.content }];
+        }
+        
+        // 如果当前是数组（图文），直接合并
+        if (Array.isArray(msgContent)) {
+          // 智能处理：如果前一条的最后是 "我给你发了一张图片"，就用新来的文字无缝替换它
+          const lastPart = prevMsg.content[prevMsg.content.length - 1];
+          const newTextPart = msgContent.find(p => p.type === 'text');
+          if (lastPart && lastPart.type === 'text' && lastPart.text === '我给你发了一张图片' && newTextPart) {
+             prevMsg.content.pop(); // 删掉旧的占位符
+             prevMsg.content.push(...msgContent); // 把新的图文包整个加进去
+          } else {
+             prevMsg.content.push(...msgContent);
+          }
+        } else { // 当前是纯文本
+          // 找上一条的最后一个文本块来追加文字，保持上下文连贯
+          const lastPart = prevMsg.content[prevMsg.content.length - 1];
+          if (lastPart && lastPart.type === 'text') {
+            if (lastPart.text === '我给你发了一张图片') {
+              lastPart.text = msgContent;
+            } else {
+              lastPart.text += '\n' + msgContent;
+            }
+          } else {
+            prevMsg.content.push({ type: 'text', text: msgContent });
+          }
+        }
+      } else {
+        result.push({ role: m.role, content: msgContent });
+      }
+    }
+    return result;
+  }
   // ── 加载更多 ──
   async function loadMore() {
     console.log(`[ConvModule] 加载更多 — offset: ${_offset}, total: ${_totalMsgs}`);
@@ -4453,14 +5975,144 @@ ${histSection}
   }
 
   // ── 返回 ──
-  function back() {
-    Router.go('chat');
-    NotifModule.refresh();
+function back() {
+    // 如果当前是在半屏模式里按了聊天页面左上角的返回箭头，就只收起半屏
+    if (document.getElementById('conv-screen').classList.contains('quick-reply-mode')) {
+      closeQuickReply();
+    } else {
+      Router.go('chat');
+      NotifModule.refresh();
+    }
+  }
+  // ── 设置（占位）──
+  // ── 设置面板 ──
+  function openSettings() {
+    // 渲染面具列表
+    _renderPersonaList();
+    document.getElementById('cv-settings-panel')?.classList.add('active');
   }
 
-  // ── 设置（占位）──
-  function openSettings() {
-    Toast.show('聊天设置即将上线 ✦');
+  function closeSettings() {
+    document.getElementById('cv-settings-panel')?.classList.remove('active');
+  }
+
+  function _renderPersonaList() {
+    const list = document.getElementById('cv-persona-list');
+    if (!list) return;
+    const personas = PersonaModule.getAll();
+    // 设置页中不预选任何面具，用户主动选择后才高亮
+    list.innerHTML = personas.map(p => `
+      <div class="cv-radio-item"
+           onclick="ConvModule._selectPersona(this, '${p.id}', event)">
+        <span class="cv-radio-label">${p.name}${p.bio ? ' — ' + p.bio : ''}</span>
+        <i class="ph-fill ph-check-circle"></i>
+      </div>`).join('');
+  }
+
+  async function _selectPersona(el, personaId, event) {
+    event.stopPropagation();
+    el.parentElement.querySelectorAll('.cv-radio-item').forEach(x => x.classList.remove('active'));
+    el.classList.add('active');
+    // 更新绑定
+    if (_charId) {
+      await DB.bindings.set(_charId, personaId);
+      _personaId = personaId;
+      const personas = PersonaModule.getAll();
+      _persona = personas.find(p => String(p.id) === String(personaId)) || _persona;
+      await _loadPersonaAvatar();
+      console.log(`[ConvModule] 面具切换 — ${_persona?.name}`);
+      Toast.show(`已切换为 ${_persona?.name}`);
+    }
+  }
+
+  function _toggleAccordion(el, event) {
+    if (event.target.tagName === 'INPUT' || event.target.classList.contains('cv-mag-toggle')) return;
+    el.classList.toggle('open');
+  }
+
+  function _selectRadio(el, event) {
+    event.stopPropagation();
+    el.parentElement.querySelectorAll('.cv-radio-item').forEach(x => x.classList.remove('active'));
+    el.classList.add('active');
+  }
+
+  // ── 壁纸（每个角色独立，key: conv-wallpaper-{charId}）──
+  async function _initWallpaper() {
+    const wpInput = document.getElementById('cv-wp-input');
+    const blurSlider = document.getElementById('cv-blur-slider');
+    const blurVal = document.getElementById('cv-blur-val');
+    const wl = document.querySelector('#conv-screen .cv-wallpaper');
+
+    if (wpInput && !wpInput._bound) {
+      wpInput._bound = true;
+      wpInput.addEventListener('change', async e => {
+        const file = e.target.files[0]; if (!file) return;
+        const key = `conv-wallpaper-${_charId}`;
+        const url = await Assets.save(key, file, 1200, 0.85);
+        if (wl) wl.style.backgroundImage = `url(${url})`;
+        e.target.value = '';
+      });
+    }
+    if (blurSlider && !blurSlider._bound) {
+      blurSlider._bound = true;
+      blurSlider.addEventListener('input', e => {
+        if (blurVal) blurVal.textContent = e.target.value + 'px';
+        if (wl) wl.style.filter = `blur(${e.target.value}px)`;
+      });
+    }
+    // 恢复壁纸
+    if (_charId && wl) {
+      const url = await Assets.getUrl(`conv-wallpaper-${_charId}`).catch(() => null);
+      wl.style.backgroundImage = url ? `url(${url})` : 'none';
+    }
+  }
+
+  async function clearWallpaper() {
+    if (!_charId) return;
+    await Assets.remove(`conv-wallpaper-${_charId}`).catch(() => {});
+    const wl = document.querySelector('#conv-screen .cv-wallpaper');
+    if (wl) wl.style.backgroundImage = 'none';
+    const inp = document.getElementById('cv-wp-input');
+    if (inp) inp.value = '';
+    const slider = document.getElementById('cv-blur-slider');
+    if (slider) { slider.value = 0; document.getElementById('cv-blur-val').textContent = '0px'; }
+    Toast.show('壁纸已清除');
+  }
+
+  // ── 清空聊天记录 ──
+  async function clearHistory() {
+    document.getElementById('cv-modal-clear')?.classList.remove('active');
+    if (!_charId) return;
+    try {
+      // 先收集这个角色所有图片的 assetKey，再删消息，再删图片资产
+      const allMsgs = await DB.messages.getPage(_charId, 0, 9999).catch(() => []);
+      const imgKeys = [];
+      allMsgs.forEach(m => {
+        (m.parts || []).forEach(p => {
+          if (p.type === 'image' && p.assetKey) imgKeys.push(p.assetKey);
+        });
+      });
+
+      await DB.messages.delByChar(_charId);
+
+      for (const key of imgKeys) {
+        await Assets.remove(key).catch(() => {});
+      }
+      console.log(`[ConvModule] 聊天记录已清空 — charId: ${_charId}, 清理图片: ${imgKeys.length} 张`);
+
+      _totalMsgs = 0;
+      _offset    = 0;
+      const feed = document.getElementById('cv-feed');
+      Array.from(feed.children).forEach(el => {
+        if (el.id !== 'cv-load-more') el.remove();
+      });
+      document.getElementById('cv-load-more').style.display = 'none';
+      Toast.show('对话记录已清空');
+      closeSettings();
+    } catch(e) {
+      Toast.show('清空失败：' + e.message);
+      console.error('[ConvModule] clearHistory error', e);
+    }
   }
 
   // ── 功能面板（由 _bindEvents 处理，此处保留兼容）──
@@ -4614,7 +6266,58 @@ ${histSection}
     document.getElementById('cv-api-overlay')?.classList.remove('active');
   }
 
-  // ── 工具函数 ──
+  // ── 转账收款（角色→用户，点击收款）──
+  async function collectTransfer(msgId) {
+    try {
+      const msg = await DB.messages.get(msgId);
+      if (!msg?.parts) return;
+      const part = msg.parts.find(p => p.type === 'transfer');
+      if (!part || part.status === 'collected') return;
+      part.status = 'collected';
+      await DB.messages.put(msg);
+
+      const card = document.querySelector(`.cv-msg-row[data-msg-id="${msgId}"] .cv-transfer`);
+      if (card) {
+        card.classList.add('collected');
+        const ribbon = card.querySelector('.cv-transfer-ribbon');
+        if (ribbon) ribbon.textContent = 'Success';
+        card.onclick = null;
+      }
+
+      // 生成 REF 并持久化系统票据到 DB
+      const ref = _fmtTime(new Date()).replace(':', '');
+      const ticketMsg = {
+        charId:    _charId,
+        role:      'system_ticket',
+        parts:     [{ type: 'system_ticket', action: 'collected', amount: part.amount, ref }],
+        content:   `已收款 ¥${part.amount}`,
+        timestamp: Date.now()
+      };
+      const ticketId = await DB.messages.add(ticketMsg);
+      ticketMsg.id = ticketId;
+      _totalMsgs++;
+      _offset++;
+
+      const msgRow = document.querySelector(`.cv-msg-row[data-msg-id="${msgId}"]`);
+      const ticketEl = _buildBubble(ticketMsg);
+      ticketEl.classList.add('reveal');
+      msgRow?.insertAdjacentElement('afterend', ticketEl);
+      _scrollToBottom();
+    } catch(e) { console.error('[ConvModule] collectTransfer error', e); }
+  }
+
+  // ── 语音条展开/收起 ──
+  function toggleAudio(el) {
+    el.classList.toggle('revealed');
+  }
+
+  // ── 时长格式化 ──
+  function _fmtDuration(seconds) {
+    const m = Math.floor(seconds / 60);
+    const s = seconds % 60;
+    return `${m}:${String(s).padStart(2, '0')}`;
+  }
+
   function _fmtTime(d) {
     return String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0');
   }
@@ -4632,6 +6335,39 @@ ${histSection}
     const feed = document.getElementById('cv-feed');
     if (feed) setTimeout(() => feed.scrollTo({ top: feed.scrollHeight, behavior: 'smooth' }), 50);
   }
+  
+  // ── 半屏快速回复 (Quick Reply) 逻辑 ──
+  async function openQuickReply(charId, personaId) {
+    document.getElementById('qr-overlay').classList.add('active');
+    const conv = document.getElementById('conv-screen');
+    
+    // 给原生页面打上“半屏模式”标记
+    conv.classList.add('quick-reply-mode');
+    
+    // 让 display 生效后再加动画类
+    requestAnimationFrame(() => {
+      conv.classList.add('qr-active');
+    });
+
+    // 如果通知的人和当前正停留在聊天页的人不一样，就强刷一次上下文
+    if (_charId !== String(charId)) {
+      await enter(charId, personaId);
+    } else {
+      // 一样的话直接滚动到底部即可
+      _scrollToBottom();
+    }
+  }
+
+  function closeQuickReply() {
+    const conv = document.getElementById('conv-screen');
+    conv.classList.remove('qr-active');
+    document.getElementById('qr-overlay').classList.remove('active');
+    
+    // 等待 500ms 滑下动画完成后，彻底移除模式，恢复原生页面该有的样子
+    setTimeout(() => {
+      conv.classList.remove('quick-reply-mode');
+    }, 500);
+  }
 
   // 初始化面具头像（enter 时调用）
   async function _loadPersonaAvatar() {
@@ -4643,7 +6379,7 @@ ${histSection}
   // 重新封装 enter 加载头像
   const _origEnter = enter;
 
-  return { enter, back, openSettings, openFuncPanel, loadMore, sendUserMsg, sendAndTriggerAI, fetchModels, closeApiModal, confirmApi };
+  return { enter, back, openQuickReply, closeQuickReply,openSettings, closeSettings, openFuncPanel, loadMore, sendUserMsg, sendAndTriggerAI, fetchModels, closeApiModal, confirmApi, openRecallModal, closeRecallModal, collectTransfer, sendUserTransfer, sendImgMsg, _openImgViewer, toggleAudio, clearWallpaper, clearHistory, _toggleAccordion, _selectRadio, _selectPersona };
 })();
 
 // DB keys:
