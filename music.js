@@ -40,18 +40,10 @@ const MusicModule = (() => {
       /* 星空画布 */
       #ms-canvas { position: absolute; inset: 0; z-index: 0; pointer-events: none; }
 
-      /* 关闭按钮 */
-      #ms-close-btn {
-        position: fixed; top: calc(env(safe-area-inset-top, 0px) + 14px); left: 20px;
-        z-index: 10001; color: rgba(255,255,255,0.5); font-size: 1.6rem; cursor: pointer;
-        padding: 6px; transition: color 0.2s;
-      }
-      #ms-close-btn:active { color: #fff; }
-
       /* view 切换 */
       #music-root .ms-view {
         position: absolute; inset: 0; overflow-y: auto; padding-bottom: 120px;
-        opacity: 0; pointer-events: none; transition: opacity 0.5s ease; z-index: 10;
+        opacity: 0; pointer-events: none; transition: opacity 0.4s ease; z-index: 10;
       }
       #music-root .ms-view.active { opacity: 1; pointer-events: auto; }
 
@@ -59,11 +51,12 @@ const MusicModule = (() => {
       #music-root .ms-title-en { font-family: var(--ms-font-en); font-size: 2rem; letter-spacing: 4px; font-weight: 400; text-transform: uppercase; }
       #music-root .ms-text-light { color: var(--ms-text-sub); font-size: 0.85rem; font-weight: 300; }
 
-      /* header */
-      #music-root .ms-header { display:flex; align-items:center; justify-content:space-between; padding:25px; position:sticky; top:0;
+      /* header - 加入安全距离，适配PWA沉浸式 */
+      #music-root .ms-header { display:flex; align-items:center; justify-content:space-between; padding:calc(env(safe-area-inset-top, 0px) + 25px) 25px 20px; position:sticky; top:0;
         background: linear-gradient(to bottom,rgba(3,3,5,1) 0%,rgba(3,3,5,0) 100%); z-index:20; }
-      #music-root .ms-back-btn { font-size:1.5rem; color:var(--ms-text-main); cursor:pointer; }
-      #music-root .ms-icon-btn { font-size:1.4rem; color:var(--ms-text-main); cursor:pointer; transition:color 0.3s; padding:5px; }
+      #music-root .ms-back-btn { font-size:1.6rem; color:var(--ms-text-main); cursor:pointer; padding: 5px; margin-left: -5px; transition:color 0.3s; }
+      #music-root .ms-back-btn:active { color:var(--ms-text-sub); }
+      #music-root .ms-icon-btn { font-size:1.5rem; color:var(--ms-text-main); cursor:pointer; transition:color 0.3s; padding:5px; }
       #music-root .ms-icon-btn:active { color:var(--ms-text-sub); }
 
       /* input / select */
@@ -84,9 +77,9 @@ const MusicModule = (() => {
 
       /* ── 本地 Hub ── */
       #ms-local-view { padding:0; }
-      #music-root .ms-local-top-bar { display:flex; justify-content:space-between; align-items:center; padding:calc(env(safe-area-inset-top,0px) + 35px) 25px 20px; position:sticky; top:0; z-index:20; background:linear-gradient(to bottom,rgba(3,3,5,1) 30%,rgba(3,3,5,0) 100%); }
+      #music-root .ms-local-top-bar { display:flex; justify-content:space-between; align-items:center; padding:calc(env(safe-area-inset-top, 0px) + 25px) 25px 20px; position:sticky; top:0; z-index:20; background:linear-gradient(to bottom,rgba(3,3,5,1) 30%,rgba(3,3,5,0) 100%); }
       #music-root .ms-local-top-bar .ms-title-en { font-size:1.5rem; letter-spacing:3px; }
-      #music-root .ms-top-bar-actions { display:flex; gap:15px; }
+      #music-root .ms-top-bar-actions { display:flex; gap:10px; }
       #music-root .ms-local-page-title { padding:10px 25px 30px; }
       #music-root .ms-local-page-title h2 { font-family:var(--ms-font-en); font-size:2.2rem; font-weight:400; color:#fff; letter-spacing:2px; line-height:1.2; }
       #music-root .ms-local-page-title p { color:var(--ms-text-sub); font-size:0.85rem; margin-top:8px; letter-spacing:2px; text-transform:uppercase; font-family:var(--ms-font-en); }
@@ -127,7 +120,7 @@ const MusicModule = (() => {
 
       /* ── 主页 ── */
       #ms-home-view { padding:40px 0; }
-      #music-root .ms-user-profile { display:flex; align-items:center; justify-content:space-between; padding:0 25px; margin-bottom:35px; }
+      #music-root .ms-user-profile { display:flex; align-items:center; justify-content:space-between; padding:0 25px; margin-bottom:35px; margin-top: calc(env(safe-area-inset-top, 0px)); }
       #music-root .ms-user-info { display:flex; align-items:center; gap:15px; }
       #music-root .ms-avatar { width:45px; height:45px; border-radius:50%; background-color:#333; background-size:cover; background-position:center; border:1px solid rgba(255,255,255,0.2); }
       #music-root .ms-greeting { font-size:1.1rem; font-weight:300; }
@@ -157,7 +150,7 @@ const MusicModule = (() => {
       /* ── 歌曲列表页 ── */
       #music-root .ms-sl-header { width:100%; height:35vh; background-size:cover; background-position:center; position:relative; display:flex; flex-direction:column; justify-content:flex-end; padding:30px 25px; }
       #music-root .ms-sl-header::after { content:''; position:absolute; inset:0; background:linear-gradient(to bottom,transparent 0%,var(--ms-bg) 100%); pointer-events:none; }
-      #music-root .ms-sl-top-bar { position:absolute; top:25px; left:25px; right:25px; z-index:10; display:flex; justify-content:space-between; align-items:center; }
+      #music-root .ms-sl-top-bar { position:absolute; top:calc(env(safe-area-inset-top, 0px) + 25px); left:25px; right:25px; z-index:10; display:flex; justify-content:space-between; align-items:center; }
       #music-root .ms-sl-title-box { position:relative; z-index:2; margin-bottom:10px; }
       #music-root .ms-sl-title { font-size:2.2rem; font-family:var(--ms-font-en); margin-bottom:8px; text-shadow:0 2px 15px rgba(0,0,0,0.9); }
       #music-root .ms-song-list { padding:10px 25px; }
@@ -224,24 +217,26 @@ const MusicModule = (() => {
         background:rgba(3,3,5,0.85); backdrop-filter:blur(25px); -webkit-backdrop-filter:blur(25px);
         z-index:50; transition:top 0.5s cubic-bezier(0.2,0.8,0.2,1);
         display:flex; flex-direction:column; padding:25px 20px;
+        padding-top: calc(env(safe-area-inset-top, 0px) + 25px);
       }
       #ms-full-player.expanded { top:0; }
       #music-root .ms-fp-header { display:flex; justify-content:space-between; align-items:center; padding:10px 0; }
-      #music-root .ms-fp-header i { font-size:1.6rem; cursor:pointer; padding:10px; }
+      #music-root .ms-fp-header i { font-size:1.6rem; cursor:pointer; padding:10px; margin-left: -10px; }
       #music-root .ms-fp-title-area { text-align:center; }
       #music-root .ms-fp-source { font-size:0.65rem; color:var(--ms-text-sub); letter-spacing:2px; text-transform:uppercase; margin-bottom:4px; }
       #music-root .ms-fp-art-wrap { flex:1; display:flex; align-items:center; justify-content:center; margin-top:2vh; }
       #music-root .ms-fp-art { width:280px; height:280px; border-radius:50%; background-size:cover; background-position:center; box-shadow:0 0 50px rgba(255,255,255,0.08),inset 0 0 30px rgba(0,0,0,0.6); animation:ms-rotateCover 25s linear infinite; animation-play-state:paused; position:relative; border:1px solid rgba(255,255,255,0.1); }
       #music-root .ms-fp-art::before { content:''; position:absolute; inset:-2px; border-radius:50%; background:radial-gradient(circle at 30% 30%,rgba(255,255,255,0.15),transparent 60%); pointer-events:none; }
       #music-root .ms-fp-art.spinning { animation-play-state:running; }
-      #music-root .ms-fp-info { margin-bottom:25px; text-align:center; }
+      #music-root .ms-fp-info { margin-bottom:20px; text-align:center; }
       #music-root .ms-fp-song-title { font-size:1.8rem; font-family:var(--ms-font-en); margin-bottom:8px; text-shadow:0 0 10px rgba(255,255,255,0.2); }
       #music-root .ms-fp-song-artist { font-size:0.95rem; color:var(--ms-text-sub); font-weight:300; }
-      #music-root .ms-fp-lyrics { height:70px; overflow:hidden; text-align:center; margin-bottom:30px; position:relative; }
-      #music-root .ms-lyric-line { font-size:0.9rem; transition:all 0.4s ease; position:absolute; width:100%; top:25px; opacity:0; color:rgba(255,255,255,0.4); font-weight:300; }
-      #music-root .ms-lyric-line.active { color:#fff; font-size:1.05rem; opacity:1; transform:translateY(0); text-shadow:0 0 8px rgba(255,255,255,0.3); }
-      #music-root .ms-lyric-line.prev { transform:translateY(-25px); opacity:0; }
-      #music-root .ms-lyric-line.next { transform:translateY(25px); opacity:0; }
+      
+      /* 歌词视窗重构：平滑滚动 */
+      #music-root .ms-fp-lyrics { height:100px; overflow:hidden; text-align:center; margin-bottom:30px; position:relative; -webkit-mask-image: linear-gradient(to bottom, transparent, black 15%, black 85%, transparent); mask-image: linear-gradient(to bottom, transparent, black 15%, black 85%, transparent); }
+      #music-root .ms-lyric-scroll { transition: transform 0.4s cubic-bezier(0.2,0.8,0.2,1); padding-top: 35px; }
+      #music-root .ms-lyric-line { font-size:0.9rem; color:rgba(255,255,255,0.4); font-weight:300; min-height: 30px; line-height:30px; transition:all 0.4s ease; padding: 0 20px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+      #music-root .ms-lyric-line.active { color:#fff; font-size:1.05rem; text-shadow:0 0 8px rgba(255,255,255,0.3); font-weight:400; transform: scale(1.05); }
 
       /* 进度条 */
       #music-root .ms-progress-wrap { display:flex; align-items:center; gap:15px; margin-bottom:40px; font-size:0.75rem; color:var(--ms-text-sub); font-family:'Cinzel',monospace; }
@@ -279,7 +274,7 @@ const MusicModule = (() => {
     root.innerHTML = `
       <div id="ms-noise"></div>
       <div id="ms-canvas"></div>
-      <i class="ph ph-caret-down" id="ms-close-btn"></i>
+      
       <audio id="ms-audio" preload="metadata" style="display:none"></audio>
       <input type="file" id="ms-file-img" accept="image/*" style="display:none">
       <input type="file" id="ms-file-music" accept="audio/*" multiple style="display:none">
@@ -292,6 +287,7 @@ const MusicModule = (() => {
           <div class="ms-top-bar-actions">
             <i class="ph ph-plus ms-icon-btn" id="ms-btn-create-pl" title="新建故事"></i>
             <i class="ph ph-link ms-icon-btn" id="ms-btn-go-api" title="云端连接"></i>
+            <i class="ph ph-x ms-icon-btn" id="ms-btn-exit" title="关闭模块"></i>
           </div>
         </div>
         <div class="ms-local-page-title ms-fade-in">
@@ -312,9 +308,10 @@ const MusicModule = (() => {
           <p class="ms-text-light" style="margin-bottom:20px;">连接网易云，同步你的音乐宇宙</p>
           <div class="ms-api-input-wrap">
             <i class="ph ph-globe"></i>
-            <input type="text" id="ms-api-url-input" placeholder="输入 API 地址，如 https://api.example.com" value="https://api-enhanced-phi.vercel.app">
+            <input type="text" id="ms-api-url-input" placeholder="输入 API 地址，如 https://api.xxx.com" value="">
           </div>
-          <button class="ms-btn-ghost" style="width:100%;margin-bottom:25px;padding:15px;font-size:1.05rem;" id="ms-btn-connect-api">确 认 连 接</button>
+          <button class="ms-btn-ghost" style="width:100%;padding:15px;font-size:1.05rem;" id="ms-btn-connect-api">确 认 连 接</button>
+          <div id="ms-btn-api-guide" style="margin-top:20px; color:var(--ms-text-sub); text-decoration:underline; cursor:pointer; font-size:0.85rem; letter-spacing:1px;">如何部署 API ？</div>
         </div>
       </div>
 
@@ -323,7 +320,7 @@ const MusicModule = (() => {
         <div class="ms-header">
           <i class="ph ph-caret-left ms-back-btn" id="ms-btn-login-back"></i>
         </div>
-        <div style="display:flex;flex-direction:column;justify-content:center;padding:0 30px;height:80vh;">
+        <div style="display:flex;flex-direction:column;justify-content:center;padding:0 30px;height:75vh;">
           <div class="ms-title-en" style="margin-bottom:50px;font-size:2.5rem;text-shadow:0 0 20px rgba(255,255,255,0.2);text-align:center;">Moon<br>Story</div>
           <div class="ms-login-tabs">
             <div class="ms-login-tab active" data-tab="qr">扫码登录</div>
@@ -392,7 +389,7 @@ const MusicModule = (() => {
                 </div>
               </div>
             </div>
-            <div class="ms-grid-card ms-card-sub" id="ms-card-search" style="background-image:url('https://images.unsplash.com/photo-1614730321146-b6fa6a46bcb4?auto=format&fit=crop&w=600&q=80');" onclick="MusicModule._navTo('ms-search-view')">
+            <div class="ms-grid-card ms-card-sub" id="ms-card-search" style="background-image:url('https://images.unsplash.com/photo-1614730321146-b6fa6a46bcb4?auto=format&fit=crop&w=600&q=80');">
               <div class="ms-card-overlay"></div>
               <div class="ms-card-content">
                 <i class="ph ph-magnifying-glass ms-card-icon-top"></i>
@@ -467,7 +464,7 @@ const MusicModule = (() => {
             <div class="ms-fp-source">PLAYING NOW</div>
             <div class="ms-text-light" id="ms-fp-pl-name" style="font-size:0.8rem;color:#fff;"></div>
           </div>
-          <i class="ph ph-dots-three ms-ctrl-icon"></i>
+          <i class="ph ph-dots-three ms-ctrl-icon" style="opacity:0;pointer-events:none;"></i>
         </div>
         <div class="ms-fp-art-wrap">
           <div class="ms-fp-art" id="ms-fp-art"></div>
@@ -477,9 +474,9 @@ const MusicModule = (() => {
           <div class="ms-fp-song-artist" id="ms-fp-artist">Artist</div>
         </div>
         <div class="ms-fp-lyrics">
-          <div class="ms-lyric-line prev" id="ms-lyric-prev"></div>
-          <div class="ms-lyric-line active" id="ms-lyric-curr">纯音乐</div>
-          <div class="ms-lyric-line next" id="ms-lyric-next"></div>
+          <div class="ms-lyric-scroll" id="ms-lyric-scroll">
+            <div class="ms-lyric-line active">纯音乐</div>
+          </div>
         </div>
         <div class="ms-progress-wrap">
           <span id="ms-time-current">00:00</span>
@@ -516,6 +513,31 @@ const MusicModule = (() => {
         </div>
       </div>
 
+      <!-- API 教程弹窗 -->
+      <div class="ms-modal-overlay" id="ms-modal-api-guide">
+        <div class="ms-modal-content" style="max-height:80vh; overflow-y:auto; padding: 30px 25px;">
+          <h3 class="ms-modal-title ms-title-en" style="font-size:1.1rem; margin-bottom: 20px;">API GUIDE</h3>
+          <div class="ms-text-light" style="font-size:0.9rem; line-height:1.6; text-align:left;">
+            <p style="margin-bottom:12px; color:#fff;">本模块需要接入 NeteaseCloudMusicApi 才能访问云端数据，请自行部署以保证数据安全。</p>
+            <p style="margin-bottom:8px; font-weight: 400; color:#d4d4d8;"><b>方法一：Vercel 一键部署（免费）</b></p>
+            <ol style="margin-bottom:15px; padding-left:20px;">
+              <li>在 GitHub 搜索 <code>NeteaseCloudMusicApi</code> 并 Fork 该项目。</li>
+              <li>登录 Vercel，Import 刚才 Fork 的仓库并部署。</li>
+              <li>部署完成后，将生成的域名（如 <code>https://api-xxx.vercel.app</code>）填入上个页面的输入框。</li>
+            </ol>
+            <p style="margin-bottom:8px; font-weight: 400; color:#d4d4d8;"><b>方法二：服务器部署</b></p>
+            <ol style="padding-left:20px;">
+              <li>在服务器 <code>git clone</code> 该项目。</li>
+              <li>运行 <code>npm install</code> 与 <code>node app.js</code>。</li>
+              <li>建议使用 Nginx 反向代理并配置 HTTPS。</li>
+            </ol>
+          </div>
+          <div class="ms-modal-actions" style="justify-content:center; margin-top:20px;">
+            <button class="ms-modal-btn" id="ms-btn-close-guide" style="width: 100%;">我知道了</button>
+          </div>
+        </div>
+      </div>
+
       <!-- 上传工作台 -->
       <div class="ms-modal-overlay" id="ms-modal-upload">
         <div class="ms-action-sheet">
@@ -534,23 +556,31 @@ const MusicModule = (() => {
   };
 
   // ── 状态 ──
-  let _apiBase = 'https://api-enhanced-phi.vercel.app';
+  let _apiBase = '';
   let _cookie = '';
   let _isLoggedIn = false;
+  let _userProfile = null;
   let _qrKey = '';
   let _qrTimer = null;
+  
+  let _viewStack =[]; // 页面栈管理
+  let _initialized = false;
 
-  let _localPlaylists = [
+  // 歌词状态
+  let _lyrics =[]; 
+  let _currentLyricIdx = -1;
+
+  let _localPlaylists =[
     { id: 'l1', name: '默认漫游指南', titleEn: 'DEFAULT', count: 0, cover: 'https://images.unsplash.com/photo-1519681393784-d120267933ba?auto=format&fit=crop&w=600&q=80', songs: [], isLocal: true }
   ];
   let _currentPlaylistObj = null;
-  let _currentPlaylist = [];
+  let _currentPlaylist =[];
   let _currentIdx = -1;
   let _isPlaying = false;
   let _playMode = 0; // 0 顺序 1 随机 2 单曲循环
   let _isDragging = false;
   let _contextIsLocal = true;
-  let _pendingFiles = [];
+  let _pendingFiles =[];
   let _uploadImgTargetId = null;
   let _tempCover = '';
   const _playModeIcons = ['ph-repeat', 'ph-shuffle', 'ph-repeat-once'];
@@ -558,23 +588,64 @@ const MusicModule = (() => {
   // DOM 快捷访问
   const _$ = id => document.getElementById(id);
 
-  // ── 导航 ──
+  // ── 配置本地持久化 ──
+  function _saveConfig() {
+    localStorage.setItem('ms_music_config', JSON.stringify({
+      apiBase: _apiBase, cookie: _cookie, profile: _userProfile
+    }));
+  }
+  function _loadConfig() {
+    try {
+      const conf = JSON.parse(localStorage.getItem('ms_music_config'));
+      if (conf) {
+        _apiBase = conf.apiBase || '';
+        _cookie = conf.cookie || '';
+        _userProfile = conf.profile || null;
+      }
+    } catch(e) {}
+  }
+
+  // ── 导航栈逻辑 ──
   function _navTo(viewId) {
     document.querySelectorAll('#music-root .ms-view').forEach(v => v.classList.remove('active'));
     _$(viewId)?.classList.add('active');
-    if (viewId === 'ms-local-view') _contextIsLocal = true;
-    if (viewId === 'ms-home-view') _contextIsLocal = false;
+    if (_viewStack[_viewStack.length - 1] !== viewId) {
+      _viewStack.push(viewId);
+    }
+    _contextIsLocal = (viewId === 'ms-local-view');
   }
+
+  function _navBack() {
+    if (_viewStack.length > 1) {
+      _viewStack.pop();
+      const prevView = _viewStack[_viewStack.length - 1];
+      document.querySelectorAll('#music-root .ms-view').forEach(v => v.classList.remove('active'));
+      _$(prevView)?.classList.add('active');
+      _contextIsLocal = (prevView === 'ms-local-view');
+    } else {
+      close();
+    }
+  }
+
   function _openModal(id) { _$(id)?.classList.add('active'); }
   function _closeModal(id) { _$(id)?.classList.remove('active'); }
   function _toggleFullPlayer() { _$('ms-full-player')?.classList.toggle('expanded'); }
 
   // ── API 请求 ──
   async function _api(path) {
+    if (!_apiBase) throw new Error('API Base URL not set');
     const sep = path.includes('?') ? '&' : '?';
     const cookieParam = _cookie ? `${sep}cookie=${encodeURIComponent(_cookie)}` : '';
     const res = await fetch(`${_apiBase}${path}${cookieParam}`);
     return res.json();
+  }
+
+  // ── UI 更新 ──
+  function _updateProfileUI() {
+    const nameEl = _$('ms-user-name');
+    const avatarEl = _$('ms-user-avatar');
+    if (nameEl) nameEl.textContent = _userProfile?.nickname || '—';
+    if (avatarEl && _userProfile?.avatarUrl) avatarEl.style.backgroundImage = `url('${_userProfile.avatarUrl}')`;
   }
 
   // ── 扫码登录 ──
@@ -614,16 +685,140 @@ const MusicModule = (() => {
     }, 2000);
   }
 
+// ── 登录成功后的处理 ──
   async function _afterLogin() {
     try {
-      const data = await _api('/user/account');
-      const profile = data.profile;
-      _isLoggedIn = true;
-      _$('ms-user-name').textContent = profile?.nickname || '—';
-      const avatar = _$('ms-user-avatar');
-      if (avatar && profile?.avatarUrl) avatar.style.backgroundImage = `url('${profile.avatarUrl}')`;
+      // 加上时间戳，强制拉取最新状态，防止刚刚扫码完却拿到未登录的缓存
+      const data = await _api('/user/account?timestamp=' + Date.now());
+      if (data.profile) {
+        _userProfile = data.profile;
+        _isLoggedIn = true;
+        _saveConfig();
+        _updateProfileUI();
+      }
       _navTo('ms-home-view');
     } catch(e) { _navTo('ms-home-view'); }
+  }
+
+  // ── 手机号 + 密码登录 ──
+  async function _loginWithPassword() {
+    const phone = _$('ms-pwd-phone').value.trim();
+    const pass = _$('ms-pwd-pass').value.trim();
+    if (!phone || !pass) return alert('请输入手机号和密码');
+    
+    const btn = _$('ms-btn-pwd-login');
+    btn.textContent = '登录中...';
+    btn.disabled = true;
+
+    console.log(`[MusicModule] 🚀 开始密码登录: 手机号=${phone}`);
+
+    try {
+      const url = `/login/cellphone?phone=${phone}&password=${encodeURIComponent(pass)}&timestamp=${Date.now()}`;
+      console.log(`[MusicModule] 📡 请求API:`, url);
+      
+      const data = await _api(url);
+      console.log('[MusicModule] 📦 密码登录 API 返回结果:', data);
+
+      if (data.code === 200) {
+        console.log('[MusicModule] 🎉 登录 API 校验成功！');
+        _cookie = data.cookie || '';
+        await _afterLogin();
+      } else if (data.code === 10004 || (data.message && data.message.includes('安全风险'))) {
+        // === 处理网易云风控 ===
+        console.warn('[MusicModule] ⚠️ 触发网易云风控拦截！');
+        alert("⚠️ 触发网易云风控拦截！\n\n原因：API部署在云端，异地IP登录被网易云判断为安全风险（Code: 10004）。\n\n💡 强烈建议：请切换到【扫码登录】，使用网易云 App 扫码，扫码模式不受异地IP限制！");
+      } else {
+        console.warn('[MusicModule] ⚠️ 登录失败，状态码:', data.code);
+        alert(data.message || data.msg || `登录失败，错误码：${data.code}`);
+      }
+    } catch (e) {
+      console.error('[MusicModule] ❌ 密码登录网络请求异常:', e);
+      alert('网络请求出错，请按 F12 查看控制台报错');
+    } finally {
+      btn.textContent = '登 录';
+      btn.disabled = false;
+    }
+  }
+
+  // ── 获取验证码 ──
+  async function _sendSmsCode() {
+    const phone = _$('ms-code-phone').value.trim();
+    if (!phone) return alert('请输入手机号');
+    
+    const btn = _$('ms-btn-send-code');
+    btn.disabled = true;
+    
+    console.log(`[MusicModule] 🚀 准备发送验证码到手机: ${phone}`);
+
+    try {
+      const url = `/captcha/sent?phone=${phone}&timestamp=${Date.now()}`;
+      const data = await _api(url);
+      console.log('[MusicModule] 📦 发送验证码 API 返回结果:', data);
+
+      if (data.code === 200) {
+        console.log('[MusicModule] 🎉 验证码发送成功，开启 60s 倒计时');
+        let countdown = 60;
+        btn.textContent = `${countdown}s`;
+        const timer = setInterval(() => {
+          countdown--;
+          if (countdown <= 0) {
+            clearInterval(timer);
+            btn.textContent = '获取';
+            btn.disabled = false;
+          } else {
+            btn.textContent = `${countdown}s`;
+          }
+        }, 1000);
+      } else {
+        console.warn('[MusicModule] ⚠️ 验证码发送失败');
+        alert(data.message || data.msg || `发送失败，错误码：${data.code}`);
+        btn.disabled = false;
+      }
+    } catch (e) {
+      console.error('[MusicModule] ❌ 发送验证码网络请求异常:', e);
+      alert('请求出错，请按 F12 查看控制台报错');
+      btn.disabled = false;
+    }
+  }
+
+  // ── 手机号 + 验证码登录 ──
+  async function _loginWithCode() {
+    const phone = _$('ms-code-phone').value.trim();
+    const code = _$('ms-code-val').value.trim();
+    if (!phone || !code) return alert('请输入手机号和验证码');
+    
+    const btn = _$('ms-btn-code-login');
+    btn.textContent = '登录中...';
+    btn.disabled = true;
+
+    console.log(`[MusicModule] 🚀 开始验证码登录: 手机号=${phone}, 验证码=${code}`);
+
+    try {
+      const url = `/login/cellphone?phone=${phone}&captcha=${code}&timestamp=${Date.now()}`;
+      console.log(`[MusicModule] 📡 请求API:`, url);
+      
+      const data = await _api(url);
+      console.log('[MusicModule] 📦 验证码登录 API 返回结果:', data);
+
+      if (data.code === 200) {
+        console.log('[MusicModule] 🎉 登录 API 校验成功！');
+        _cookie = data.cookie || '';
+        await _afterLogin();
+      } else if (data.code === 10004 || (data.message && data.message.includes('安全风险'))) {
+        // === 处理网易云风控 ===
+        console.warn('[MusicModule] ⚠️ 触发网易云风控拦截！');
+        alert("⚠️ 触发网易云风控拦截！\n\n原因：API部署在云端，异地IP登录被网易云判断为安全风险（Code: 10004）。\n\n💡 强烈建议：请切换到【扫码登录】，使用网易云 App 扫码，扫码模式不受异地IP限制！");
+      } else {
+        console.warn('[MusicModule] ⚠️ 登录失败，状态码:', data.code);
+        alert(data.message || data.msg || `登录失败，错误码：${data.code}`);
+      }
+    } catch (e) {
+      console.error('[MusicModule] ❌ 验证码登录网络请求异常:', e);
+      alert('网络请求出错，请按 F12 查看控制台报错');
+    } finally {
+      btn.textContent = '登 录';
+      btn.disabled = false;
+    }
   }
 
   // ── 渲染本地歌单 ──
@@ -666,10 +861,24 @@ const MusicModule = (() => {
     _navTo('ms-playlists-view');
     const container = _$('ms-pl-list-render');
     container.innerHTML = '<div class="ms-text-light" style="text-align:center;padding:40px;">加载中...</div>';
+    
+    // 1. 先拦截一下，确保能拿到用户ID
+    if (!_userProfile || !_userProfile.userId) {
+      container.innerHTML = '<div class="ms-text-light" style="text-align:center;padding:40px;">未获取到用户ID，请尝试重新登录</div>';
+      return;
+    }
+
     try {
-      const data = await _api('/user/playlist');
-      const lists = data.playlist || [];
+      // 2. 将 userId 作为参数传给接口，顺便加上 limit=100 获取更多歌单
+      const data = await _api(`/user/playlist?uid=${_userProfile.userId}&limit=100`);
+      const lists = data.playlist ||[];
       container.innerHTML = '';
+      
+      if (lists.length === 0) {
+        container.innerHTML = '<div class="ms-text-light" style="text-align:center;padding:40px;">这片星域有些安静，暂无歌单</div>';
+        return;
+      }
+
       lists.forEach((pl, i) => {
         const el = document.createElement('div');
         el.className = 'ms-pl-card ms-fade-in';
@@ -685,7 +894,8 @@ const MusicModule = (() => {
         container.appendChild(el);
       });
     } catch(e) {
-      container.innerHTML = '<div class="ms-text-light" style="text-align:center;padding:40px;">加载失败</div>';
+      console.error('[MusicModule] 加载云端歌单失败', e);
+      container.innerHTML = '<div class="ms-text-light" style="text-align:center;padding:40px;">加载失败，请检查网络或重新登录</div>';
     }
   }
 
@@ -698,7 +908,7 @@ const MusicModule = (() => {
     container.innerHTML = '<div class="ms-text-light" style="text-align:center;padding:40px;">加载中...</div>';
     try {
       const data = await _api('/recommend/songs');
-      const songs = (data.data?.dailySongs || []).map(s => ({
+      const songs = (data.data?.dailySongs ||[]).map(s => ({
         id: s.id, title: s.name,
         artist: s.ar?.map(a => a.name).join(' / ') || '',
         cover: s.al?.picUrl || '', isCloud: true
@@ -723,7 +933,7 @@ const MusicModule = (() => {
     container.innerHTML = '<div class="ms-text-light" style="text-align:center;padding:40px;">加载中...</div>';
     try {
       const data = await _api(`/playlist/track/all?id=${pl.id}&limit=100`);
-      const songs = (data.songs || []).map(s => ({
+      const songs = (data.songs ||[]).map(s => ({
         id: s.id, title: s.name,
         artist: s.ar?.map(a => a.name).join(' / ') || '',
         cover: s.al?.picUrl || '', isCloud: true
@@ -779,7 +989,7 @@ const MusicModule = (() => {
     container.innerHTML = '<div class="ms-text-light" style="text-align:center;padding:40px;">搜索中...</div>';
     try {
       const data = await _api(`/search?keywords=${encodeURIComponent(q)}&limit=30`);
-      const songs = (data.result?.songs || []).map(s => ({
+      const songs = (data.result?.songs ||[]).map(s => ({
         id: s.id, title: s.name,
         artist: s.artists?.map(a => a.name).join(' / ') || '',
         cover: '', isCloud: true
@@ -803,6 +1013,51 @@ const MusicModule = (() => {
     }
   }
 
+  // ── 歌词处理 ──
+  function _parseLyrics(lrc) {
+    const lines = lrc.split('\n');
+    const result = [];
+    const regex = /\[(\d{2}):(\d{2}(?:\.\d{2,3})?)\](.*)/;
+    lines.forEach(line => {
+      const match = regex.exec(line);
+      if (match) {
+        const m = parseInt(match[1]);
+        const s = parseFloat(match[2]);
+        const text = match[3].trim();
+        if (text) result.push({ time: m * 60 + s, text });
+      }
+    });
+    return result;
+  }
+
+  function _renderLyricsDOM() {
+    const container = _$('ms-lyric-scroll');
+    if (!_lyrics.length) {
+      container.innerHTML = '<div class="ms-lyric-line active">纯音乐 / 暂无歌词</div>';
+      container.style.transform = `translateY(0px)`;
+      return;
+    }
+    container.innerHTML = _lyrics.map((l, i) => `<div class="ms-lyric-line" id="lyric-line-${i}">${l.text}</div>`).join('');
+    container.style.transform = `translateY(0px)`;
+  }
+
+  async function _fetchLyrics(song) {
+    _lyrics =[];
+    _currentLyricIdx = -1;
+    _$('ms-lyric-scroll').innerHTML = '<div class="ms-lyric-line active">加载歌词中...</div>';
+    _$('ms-lyric-scroll').style.transform = `translateY(0px)`;
+
+    if (song.isCloud && song.id) {
+      try {
+        const data = await _api(`/lyric?id=${song.id}`);
+        if (data && data.lrc && data.lrc.lyric) {
+          _lyrics = _parseLyrics(data.lrc.lyric);
+        }
+      } catch(e) {}
+    }
+    _renderLyricsDOM();
+  }
+
   // ── 播放器 ──
   async function _playSong(idx) {
     if (idx < 0 || idx >= _currentPlaylist.length) return;
@@ -822,13 +1077,12 @@ const MusicModule = (() => {
       _$('ms-fp-art').style.backgroundImage = `url('${song.cover}')`;
     }
 
-    // 获取播放链接
+    // 获取播放链接与歌词
     let url = song.url || '';
     if (song.isCloud && song.id) {
       try {
         const data = await _api(`/song/url/v1?id=${song.id}&level=exhigh&randomCNIP=true`);
         url = data.data?.[0]?.url || '';
-        // 顺便拉封面
         if (!song.cover) {
           const detail = await _api(`/song/detail?ids=${song.id}`);
           const pic = detail.songs?.[0]?.al?.picUrl;
@@ -840,6 +1094,8 @@ const MusicModule = (() => {
         }
       } catch(e) {}
     }
+    
+    _fetchLyrics(song);
 
     if (!url) { console.warn('[MusicModule] 无法获取播放链接'); return; }
     audio.src = url;
@@ -945,7 +1201,7 @@ const MusicModule = (() => {
       added++;
     });
     if (added > 0) { _renderLocalPlaylists(); _openSongList(_currentPlaylistObj); }
-    _pendingFiles = [];
+    _pendingFiles =[];
     _closeModal('ms-modal-upload');
   }
 
@@ -993,24 +1249,64 @@ const MusicModule = (() => {
   const _bindEvents = () => {
     const audio = _$('ms-audio');
 
-    // 关闭音乐模块
-    _$('ms-close-btn').onclick = () => close();
+    // 退出模块
+    _$('ms-btn-exit').onclick = () => close();
 
     // 本地页
     _$('ms-btn-create-pl').onclick = () => _openModal('ms-modal-create-pl');
-    _$('ms-btn-go-api').onclick = () => _navTo('ms-api-login-view');
+    _$('ms-btn-go-api').onclick = async () => {
+      // 优化：只要本地存储了数据，点图标【秒进主页】，不让用户等网络请求
+      if (_cookie && _apiBase && _userProfile) {
+        _updateProfileUI();
+        _isLoggedIn = true;
+        _navTo('ms-home-view');
+        
+        // 后台静默验证（加时间戳防缓存）
+        try {
+          const data = await _api('/user/account?timestamp=' + Date.now());
+          if (!data.profile) {
+            // 如果Cookie真过期了，默默清空，下次再点就会要求重登
+            _cookie = ''; _userProfile = null; _isLoggedIn = false;
+            _saveConfig();
+          }
+        } catch(e) {}
+        return;
+      }
+      _navTo('ms-api-login-view');
+    };
 
     // API 连接页
-    _$('ms-btn-api-back').onclick = () => _navTo('ms-local-view');
-    _$('ms-btn-connect-api').onclick = () => {
+    _$('ms-btn-api-back').onclick = _navBack;
+    _$('ms-btn-connect-api').onclick = async () => {
       const url = _$('ms-api-url-input')?.value.trim();
-      if (url) _apiBase = url.replace(/\/$/, '');
-      _navTo('ms-login-view');
-      _startQR();
+      if (url) {
+        _apiBase = url.replace(/\/$/, '');
+        _saveConfig();
+        
+        // 优化：如果换了API地址但本地有Cookie，先试一下能不能直接进
+        if (_cookie) {
+           try {
+             const data = await _api('/user/account?timestamp=' + Date.now());
+             if (data.profile) {
+               _userProfile = data.profile;
+               _isLoggedIn = true;
+               _saveConfig();
+               _updateProfileUI();
+               _navTo('ms-home-view');
+               return;
+             }
+           } catch(e) {}
+        }
+
+        _navTo('ms-login-view');
+        _startQR();
+      } else {
+        alert("请先输入您的 API 地址");
+      }
     };
 
     // 登录页
-    _$('ms-btn-login-back').onclick = () => { if (_qrTimer) clearInterval(_qrTimer); _navTo('ms-api-login-view'); };
+    _$('ms-btn-login-back').onclick = () => { if (_qrTimer) clearInterval(_qrTimer); _navBack(); };
     _$('ms-btn-refresh-qr').onclick = () => _startQR();
     document.querySelectorAll('#music-root .ms-login-tab').forEach(tab => {
       tab.onclick = function() {
@@ -1021,21 +1317,27 @@ const MusicModule = (() => {
         if (this.dataset.tab === 'qr' && !_qrKey) _startQR();
       };
     });
+    
+    // === 新增：绑定账号密码及验证码登录事件 ===
+    _$('ms-btn-pwd-login').onclick = _loginWithPassword;
+    _$('ms-btn-send-code').onclick = _sendSmsCode;
+    _$('ms-btn-code-login').onclick = _loginWithCode;
 
     // 主页卡片
     _$('ms-card-playlist').onclick = () => _loadCloudPlaylists();
     _$('ms-card-daily').onclick = () => _loadDailyRec();
-    _$('ms-btn-logout').onclick = () => { _isLoggedIn = false; _cookie = ''; _qrKey = ''; _navTo('ms-local-view'); };
+    _$('ms-card-search').onclick = () => _navTo('ms-search-view');
+    _$('ms-btn-logout').onclick = () => { 
+      _isLoggedIn = false; _cookie = ''; _qrKey = ''; _userProfile = null; 
+      _saveConfig(); 
+      _navTo('ms-local-view'); 
+    };
 
-    // 歌单列表 back
-    _$('ms-btn-pl-back').onclick = () => _navTo('ms-home-view');
-
-    // 歌曲列表 back
-    _$('ms-btn-sl-back').onclick = () => { _contextIsLocal ? _navTo('ms-local-view') : _navTo('ms-playlists-view'); };
-    _$('ms-sl-upload-btn').onclick = () => { _pendingFiles = []; _renderPendingList(); _openModal('ms-modal-upload'); };
-
-    // 搜索
-    _$('ms-btn-search-back').onclick = () => _navTo('ms-home-view');
+    // 各列表页 Back
+    _$('ms-btn-pl-back').onclick = _navBack;
+    _$('ms-btn-sl-back').onclick = _navBack;
+    _$('ms-sl-upload-btn').onclick = () => { _pendingFiles =[]; _renderPendingList(); _openModal('ms-modal-upload'); };
+    _$('ms-btn-search-back').onclick = _navBack;
     _$('ms-search-input').oninput = _handleSearch;
 
     // 播放器
@@ -1063,12 +1365,37 @@ const MusicModule = (() => {
       if (audio.duration) audio.currentTime = (e.target.value / 100) * audio.duration;
     });
 
-    // audio 事件
+    // audio 事件与歌词同步
     audio.addEventListener('timeupdate', () => {
-      if (_isDragging || !audio.duration) return;
-      const pct = (audio.currentTime / audio.duration) * 100;
-      bar.value = pct; fill.style.width = `${pct}%`;
-      _$('ms-time-current').textContent = _fmtTime(audio.currentTime);
+      if (!_isDragging && audio.duration) {
+        const pct = (audio.currentTime / audio.duration) * 100;
+        bar.value = pct; fill.style.width = `${pct}%`;
+        _$('ms-time-current').textContent = _fmtTime(audio.currentTime);
+      }
+      
+      // 同步歌词
+      if (_lyrics.length > 0) {
+        const ct = audio.currentTime;
+        let idx = -1;
+        for (let i = 0; i < _lyrics.length; i++) {
+          if (ct >= _lyrics[i].time - 0.3) { // 增加0.3s平滑过渡缓冲
+            idx = i;
+          } else {
+            break;
+          }
+        }
+        if (idx >= 0 && idx !== _currentLyricIdx) {
+          if (_currentLyricIdx >= 0) {
+            const oldEl = _$('lyric-line-' + _currentLyricIdx);
+            if (oldEl) oldEl.classList.remove('active');
+          }
+          _currentLyricIdx = idx;
+          const newEl = _$('lyric-line-' + idx);
+          if (newEl) newEl.classList.add('active');
+          // line-height 是 30px
+          _$('ms-lyric-scroll').style.transform = `translateY(-${idx * 30}px)`;
+        }
+      }
     });
     audio.addEventListener('loadedmetadata', () => { _$('ms-time-total').textContent = _fmtTime(audio.duration); });
     audio.addEventListener('ended', () => { if (_playMode !== 2) _nextSong(); });
@@ -1106,7 +1433,7 @@ const MusicModule = (() => {
     _$('ms-btn-confirm-create').onclick = () => {
       const name = _$('ms-new-pl-name')?.value.trim();
       if (!name) return;
-      _localPlaylists.push({ id: 'p_' + Date.now(), name, titleEn: 'NEW RECORD', count: 0, cover: _tempCover || 'https://images.unsplash.com/photo-1478760329108-5c3ed9d495a0?auto=format&fit=crop&w=600&q=80', songs: [], isLocal: true });
+      _localPlaylists.push({ id: 'p_' + Date.now(), name, titleEn: 'NEW RECORD', count: 0, cover: _tempCover || 'https://images.unsplash.com/photo-1478760329108-5c3ed9d495a0?auto=format&fit=crop&w=600&q=80', songs:[], isLocal: true });
       _renderLocalPlaylists();
       _$('ms-new-pl-name').value = ''; _tempCover = '';
       _$('ms-new-pl-cover').innerHTML = '<span><i class="ph ph-camera"></i> 点击上传封面</span>';
@@ -1114,21 +1441,52 @@ const MusicModule = (() => {
     };
 
     // 关闭弹窗点背景
-    ['ms-modal-create-pl', 'ms-modal-upload'].forEach(id => {
-      _$(id).onclick = e => { if (e.target === _$(id)) _closeModal(id); };
+    ['ms-modal-create-pl', 'ms-modal-upload', 'ms-modal-api-guide'].forEach(id => {
+      const el = _$(id);
+      if (el) {
+        el.onclick = e => { if (e.target === el) _closeModal(id); };
+      }
     });
-  };
+  }; 
 
   // ── 公开方法 ──
   function open() {
-    _injectCSS();
-    _injectHTML();
-    _bindEvents();
+    _loadConfig();
+    if (!_initialized) {
+      _injectCSS();
+      _injectHTML();
+      _bindEvents();
+      _initialized = true;
+    }
+    
+    // 初始化上次登录的状态
+    const apiUrlInput = _$('ms-api-url-input');
+    if (apiUrlInput) apiUrlInput.value = _apiBase || '';
+    if (_userProfile) { 
+      _updateProfileUI(); 
+      _isLoggedIn = true; 
+    }
+    
+    // 渲染及重置导航栈
     _renderLocalPlaylists();
-    setTimeout(() => document.getElementById('music-root')?.classList.add('ms-open'), 20);
-    // 需要 Three.js 时懒加载
-    if (window.THREE) _initThree();
-    else {
+    
+    // 重置路由视图，每次打开默认回到本地主控台
+    _viewStack = ['ms-local-view'];
+    document.querySelectorAll('#music-root .ms-view').forEach(v => v.classList.remove('active'));
+    const localView = _$('ms-local-view');
+    if (localView) localView.classList.add('active');
+    _contextIsLocal = true;
+
+    // 延迟添加打开动画
+    setTimeout(() => {
+      const root = document.getElementById('music-root');
+      if (root) root.classList.add('ms-open');
+    }, 20);
+
+    // 需要 Three.js 时懒加载星空背景
+    if (window.THREE) {
+      _initThree();
+    } else {
       const s = document.createElement('script');
       s.src = 'https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js';
       s.onload = _initThree;
@@ -1141,7 +1499,13 @@ const MusicModule = (() => {
     if (root) {
       root.classList.remove('ms-open');
     }
+    // 停止全屏播放器的拉起状态
+    const fullPlayer = _$('ms-full-player');
+    if (fullPlayer) {
+      fullPlayer.classList.remove('expanded');
+    }
   }
 
+  // 暴露给外部调用的接口
   return { open, close, _navTo };
 })();
