@@ -364,7 +364,7 @@ const MusicModule = (() => {
             </div>
           </div>
           <div class="ms-header-actions">
-            <i class="ph ph-sign-out ms-icon-btn" id="ms-btn-logout" title="退出登录"></i>
+            <i class="ph ph-planet ms-icon-btn" id="ms-btn-logout" title="返回本地空间"></i>
           </div>
         </div>
         <div class="ms-home-grid">
@@ -932,7 +932,7 @@ const MusicModule = (() => {
     const container = _$('ms-song-list-render');
     container.innerHTML = '<div class="ms-text-light" style="text-align:center;padding:40px;">加载中...</div>';
     try {
-      const data = await _api(`/playlist/track/all?id=${pl.id}&limit=100`);
+      const data = await _api(`/playlist/track/all?id=${pl.id}&limit=1000`);
       const songs = (data.songs ||[]).map(s => ({
         id: s.id, title: s.name,
         artist: s.ar?.map(a => a.name).join(' / ') || '',
@@ -1304,6 +1304,8 @@ const MusicModule = (() => {
         alert("请先输入您的 API 地址");
       }
     };
+    _$('ms-btn-api-guide').onclick = () => _openModal('ms-modal-api-guide');
+    _$('ms-btn-close-guide').onclick = () => _closeModal('ms-modal-api-guide');
 
     // 登录页
     _$('ms-btn-login-back').onclick = () => { if (_qrTimer) clearInterval(_qrTimer); _navBack(); };
@@ -1327,9 +1329,9 @@ const MusicModule = (() => {
     _$('ms-card-playlist').onclick = () => _loadCloudPlaylists();
     _$('ms-card-daily').onclick = () => _loadDailyRec();
     _$('ms-card-search').onclick = () => _navTo('ms-search-view');
+   // 返回本地首页（保留网易云登录状态）
     _$('ms-btn-logout').onclick = () => { 
-      _isLoggedIn = false; _cookie = ''; _qrKey = ''; _userProfile = null; 
-      _saveConfig(); 
+      console.log('[MusicModule] 🏠 返回本地星空，保留云端连接...');
       _navTo('ms-local-view'); 
     };
 
