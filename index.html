@@ -11,9 +11,16 @@
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#fafafa">
 <script src="https://unpkg.com/@phosphor-icons/web"></script>
+<script src="https://unpkg.com/fflate@0.8.2/umd/index.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="music.js"></script>
+<script src="https://unpkg.com/vconsole@latest/dist/vconsole.min.js"></script>
+<script>
+  // 初始化 VConsole
+  var vConsole = new VConsole();
+</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Noto+Sans+SC:wght@300;400;500;700&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400;1,700&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Inter:wght@300;400;500;700;900&family=Libre+Barcode+39+Text&display=swap" rel="stylesheet">
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Noto+Sans+SC:wght@300;400;500;700&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400;1,700&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Inter:wght@300;400;500;700;900&family=Cinzel:wght@500;700&family=Noto+Serif+SC:wght@500;700;900&family=Libre+Barcode+39+Text&display=swap" rel="stylesheet">
 
 <style>
@@ -329,6 +336,10 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg-body);display:flex;jus
 .styled-slider{flex:1;-webkit-appearance:none;height:2px;background:var(--s-line);}
 .styled-slider::-webkit-slider-thumb{-webkit-appearance:none;width:16px;height:16px;background:var(--s-accent);border-radius:0;transform:rotate(45deg);}
 .slider-val{font-family:'Playfair Display',serif;font-size:1.2rem;font-style:italic;width:40px;text-align:right;color:var(--s-text-primary);}
+.novel-prompt-ta{width:100%;min-height:88px;margin-top:12px;padding:10px;background:rgba(0,0,0,0.03);border:0.5px solid rgba(18,18,18,0.12);border-radius:10px;font-size:0.8rem;font-family:inherit;color:var(--s-text-primary);resize:vertical;outline:none;line-height:1.5;box-sizing:border-box;}
+[data-theme="dark"] .novel-prompt-ta{background:rgba(255,255,255,0.04);border-color:rgba(255,255,255,0.12);}
+#novel-test-preview-area{min-height:160px;display:flex;align-items:center;justify-content:center;}
+#novel-test-preview-img{border-radius:10px;}
 .btn-primary{width:100%;background:var(--s-accent);color:var(--s-btn-text);border:none;padding:18px;font-size:0.8667rem;font-weight:500;letter-spacing:2px;cursor:pointer;margin-bottom:12px;transition:opacity .3s;font-family:'DM Sans',sans-serif;text-transform:uppercase;}
 .btn-primary:active{opacity:.8;}
 .btn-outline{width:100%;background:transparent;color:var(--s-accent);border:1px solid var(--s-accent);padding:16px;font-size:0.8667rem;font-weight:500;letter-spacing:2px;cursor:pointer;margin-bottom:12px;transition:opacity .3s;font-family:'DM Sans',sans-serif;text-transform:uppercase;}
@@ -1044,6 +1055,16 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg-body);display:flex;jus
 #conv-screen .cv-bubble.typing-capsule { background:transparent!important;border:1px solid #121212!important;border-radius:100px!important;padding:8px 14px!important;display:flex;align-items:center;gap:8px;box-shadow:none!important;color:#121212!important; }
 #conv-screen .cv-ticking { font-size:1rem;color:#121212;animation:cv-tick-spin 1.2s steps(6) infinite; }
 @keyframes cv-tick-spin { from{transform:rotate(0deg);}to{transform:rotate(360deg);} }
+/* Novel 配图等待占位（与打字胶囊同系） */
+#conv-screen .cv-novel-pending .cv-novel-pending-wrap { max-width:260px;padding:10px 14px;border-radius:18px;border:1px dashed rgba(18,18,18,0.22);background:rgba(255,255,255,0.92);box-shadow:0 2px 12px rgba(0,0,0,0.04);display:flex;flex-direction:column;gap:6px; }
+#conv-screen .cv-novel-pending .cv-novel-pending-line { display:flex;align-items:center;gap:8px;font-size:0.9rem;color:#121212;font-weight:500; }
+#conv-screen .cv-novel-pending .cv-novel-pending-spin { font-size:1.05rem;color:#121212;animation:cv-tick-spin 2.2s linear infinite; }
+#conv-screen .cv-novel-pending .cv-novel-pending-sub { font-family:'Space Mono',monospace;font-size:0.58rem;letter-spacing:0.5px;color:#888;line-height:1.35;text-transform:uppercase; }
+#conv-screen .cv-novel-pending .cv-novel-pending-dots { display:inline-flex;gap:1px;letter-spacing:0; }
+#conv-screen .cv-novel-pending .cv-novel-pending-dots span { animation:cv-novel-dot 1.1s ease-in-out infinite; opacity:0.35; }
+#conv-screen .cv-novel-pending .cv-novel-pending-dots span:nth-child(2) { animation-delay:0.15s; }
+#conv-screen .cv-novel-pending .cv-novel-pending-dots span:nth-child(3) { animation-delay:0.3s; }
+@keyframes cv-novel-dot { 0%,100%{opacity:0.2;}50%{opacity:1;} }
 #conv-screen .cv-typing-text { font-family:'Space Mono',monospace;font-size:0.55rem;letter-spacing:2px;color:#121212;text-transform:uppercase; }
 #conv-screen .cv-cursor { display:inline-block;width:5px;height:10px;background:#121212;margin-left:4px;vertical-align:middle;animation:cv-blink 0.8s steps(2) infinite; }
 @keyframes cv-blink { 0%,100%{opacity:1;}50%{opacity:0;} }
@@ -1094,10 +1115,16 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg-body);display:flex;jus
 #conv-screen .cv-img-msg { max-width:220px;max-height:300px;border-radius:14px;display:block;object-fit:contain;cursor:pointer;transition:opacity .2s; }
 #conv-screen .cv-img-msg:active { opacity:0.85; }
 /* 图片全屏预览 */
-#cv-img-viewer { position:absolute;inset:0;background:rgba(0,0,0,0.92);z-index:500;display:none;align-items:center;justify-content:center; }
-#cv-img-viewer.active { display:flex; }
-#cv-img-viewer img { max-width:100%;max-height:100%;object-fit:contain;border-radius:4px; }
-#cv-img-viewer-close { position:absolute;top:20px;right:20px;color:#fff;font-size:1.6rem;background:none;border:none;cursor:pointer;opacity:.7; }
+#conv-screen #cv-img-viewer { position:absolute;inset:0;background:rgba(0,0,0,0.92);z-index:500;display:none;flex-direction:column;align-items:center;justify-content:center;padding:56px 12px 24px; }
+#conv-screen #cv-img-viewer.active { display:flex; }
+#conv-screen #cv-img-viewer-inner { display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;max-width:100%;max-height:100%;flex:1;min-height:0; }
+#conv-screen #cv-img-viewer-img { max-width:100%;max-height:calc(100vh - 200px);width:auto;height:auto;object-fit:contain;border-radius:4px; }
+#conv-screen #cv-img-viewer-close { position:absolute;top:20px;right:20px;color:#fff;font-size:1.6rem;background:rgba(255,255,255,0.08);border:0.5px solid rgba(255,255,255,0.2);width:40px;height:40px;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:0.2s;z-index:2; }
+#conv-screen #cv-img-viewer-close:hover { background:rgba(255,255,255,0.15); }
+#conv-screen #cv-img-viewer-actions { display:flex;gap:10px;flex-wrap:wrap;justify-content:center;align-items:center;width:100%;max-width:360px;padding-top:4px; }
+#conv-screen #cv-img-viewer-actions .cv-img-viewer-btn { flex:1;min-width:132px;padding:10px 16px;border:0.5px solid rgba(255,255,255,0.35);border-radius:100px;background:rgba(255,255,255,0.06);color:#fff;font-family:'Inter','Noto Sans SC',sans-serif;font-size:0.8rem;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;transition:0.2s; }
+#conv-screen #cv-img-viewer-actions .cv-img-viewer-btn:active { background:#fff;color:#121212;transform:scale(0.97); }
+#conv-screen #cv-img-viewer-actions .cv-img-viewer-btn:disabled { opacity:0.45;pointer-events:none; }
 #conv-screen .cv-func-btn { width:44px;height:44px;border-radius:50%;background:#fff;border:1px solid rgba(18,18,18,0.05);color:#121212;font-size:1.4rem;display:flex;justify-content:center;align-items:center;cursor:pointer;flex-shrink:0;margin-bottom:2px;box-shadow:0 2px 10px rgba(0,0,0,0.03); }
 #conv-screen .cv-func-btn:active { transform:scale(0.9); }
 #conv-screen .cv-plus-icon { transition:transform 0.5s cubic-bezier(0.19,1,0.22,1); }
@@ -1414,6 +1441,9 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg-body);display:flex;jus
   z-index: 4; box-shadow: 0 8px 16px rgba(0,0,0,0.3); transform: rotate(15deg);
 }
 .couture-wrapper .vip-sticker::after { content: 'VIP'; font-family: 'Cinzel', serif; font-size: 10px; color: #fff; letter-spacing: 1px; }
+
+@keyframes spin { 100% { transform: rotate(360deg); } }
+
 </style>
 </head>
 <body>
@@ -1582,6 +1612,10 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg-body);display:flex;jus
           <span class="menu-text-cn">API 设置</span>
           <span class="menu-text-en">Connection & Intelligence</span>
         </div>
+        <div class="menu-item" onclick="Router.go('voice-page','V')">
+          <span class="menu-text-cn">音画设置</span>
+          <span class="menu-text-en">Voice & Vision</span>
+        </div>
         <div class="menu-item" onclick="Router.go('ui-page','U')">
           <span class="menu-text-cn">美化设置</span>
           <span class="menu-text-en">Appearance & Themes</span>
@@ -1641,6 +1675,191 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg-body);display:flex;jus
           <button class="btn-primary"  onclick="ApiModule.save()">保存配置</button>
           <button class="btn-outline"  onclick="ApiModule.setActive()">设为当前使用</button>
           <button class="btn-ghost"    onclick="ApiModule.delete()">删除此配置</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 音画设置页（二级菜单） -->
+    <div id="voice-page" class="settings-page">
+      <div class="page-watermark">Vo</div>
+      <div class="nav-bar">
+        <span class="nav-title">音画设置</span>
+        <button class="sub-back-btn" onclick="Router.back()">Back</button>
+      </div>
+      <div class="main-view" style="padding-top:80px;">
+        <div class="menu-list">
+          <div class="menu-item" onclick="Router.go('minimax-page','M')">
+            <span class="menu-text-cn">MiniMax 设置</span>
+            <span class="menu-text-en">TTS Voice Synthesis</span>
+          </div>
+          <div class="menu-item" onclick="Router.go('novel-settings-page','N')">
+            <span class="menu-text-cn">Novel 设置</span>
+            <span class="menu-text-en">Novel AI Config</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- MiniMax 设置页 -->
+    <div id="minimax-page" class="settings-page">
+      <div class="page-watermark">Mm</div>
+      <div class="nav-bar">
+        <span class="nav-title">MiniMax 设置</span>
+        <button class="sub-back-btn" onclick="Router.back()">Back</button>
+      </div>
+      <div class="content-scroll">
+        <div class="form-section" style="margin-bottom:8px;">
+          <label class="label-text">服务商 / PROVIDER</label>
+          <div style="font-family:'Space Mono',monospace;font-size:0.75rem;color:#888;margin-top:6px;">MiniMax TTS</div>
+        </div>
+        <div class="input-wrapper">
+          <label class="label-text">API Key / KEY</label>
+          <input type="password" id="voice-api-key" class="input-line" placeholder="eyJ...">
+        </div>
+        <div class="input-wrapper">
+          <label class="label-text">Group ID</label>
+          <input type="text" id="voice-group-id" class="input-line" placeholder="1234567890">
+        </div>
+        <div class="input-wrapper">
+          <label class="label-text">模型 / MODEL</label>
+          <select id="voice-model" class="select-stylish">
+            <option value="speech-01-turbo">speech-01-turbo（推荐）</option>
+            <option value="speech-01-hd">speech-01-hd（高清）</option>
+            <option value="speech-01">speech-01（标准）</option>
+          </select>
+        </div>
+        <div class="input-wrapper">
+          <label class="label-text">语言 / LANGUAGE</label>
+          <select id="voice-lang" class="select-stylish">
+           <option value="Chinese">中文</option>
+           <option value="English">English</option>
+           <option value="Japanese">日本語</option>
+           <option value="Korean">한국어</option>
+           <option value="Chinese,Yue">粤语</option>
+           <option value="auto">自动检测</option>
+          </select>
+        </div>
+        <div class="input-wrapper">
+          <label class="label-text">语速 / SPEED</label>
+          <div class="slider-row">
+            <input type="range" id="voice-speed" class="styled-slider" min="0.5" max="2.0" step="0.1" value="1.0"
+              oninput="document.getElementById('voice-speed-val').textContent=parseFloat(this.value).toFixed(1)">
+            <span class="slider-val" id="voice-speed-val">1.0</span>
+          </div>
+        </div>
+        <div class="input-wrapper">
+          <label class="label-text">音量 / VOL</label>
+          <div class="slider-row">
+            <input type="range" id="voice-vol" class="styled-slider" min="1" max="10" step="1" value="5"
+              oninput="document.getElementById('voice-vol-val').textContent=this.value">
+            <span class="slider-val" id="voice-vol-val">5</span>
+          </div>
+        </div>
+        <div style="margin-top:40px;">
+          <button class="btn-primary" onclick="VoiceModule.save()">保存配置</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Novel 设置页：Persistent API Token + 生图参数（官方 image.novelai.net） -->
+    <div id="novel-settings-page" class="settings-page">
+      <div class="page-watermark">Nv</div>
+      <div class="nav-bar">
+        <span class="nav-title">Novel 设置</span>
+        <button class="sub-back-btn" onclick="Router.back()">Back</button>
+      </div>
+      <div class="content-scroll">
+        <p style="font-size:0.75rem;color:var(--s-text-secondary);line-height:1.5;margin-bottom:16px;">
+          在 NovelAI 用户菜单创建 <strong>Persistent API Token</strong> 填入此处。生图走官方 <code style="font-size:0.7rem;">image.novelai.net</code>，消耗 Anlas。
+        </p>
+        <div class="input-wrapper">
+          <label class="label-text">Persistent Token / KEY</label>
+          <input type="password" id="novel-api-key" class="input-line" placeholder="粘贴 API Token" autocomplete="off">
+        </div>
+        <div class="input-wrapper">
+          <label class="label-text">模型 / MODEL</label>
+          <select id="novel-model" class="select-stylish">
+            <option value="nai-diffusion-3">nai-diffusion-3</option>
+            <option value="nai-diffusion-4-5-curated">nai-diffusion-4-5-curated</option>
+            <option value="nai-diffusion-4-5-full">nai-diffusion-4-5-full</option>
+            <option value="nai-diffusion-furry-3">nai-diffusion-furry-3</option>
+          </select>
+        </div>
+        <div class="input-wrapper">
+          <label class="label-text">采样步数 / STEPS</label>
+          <div class="slider-row">
+            <input type="range" id="novel-steps" class="styled-slider" min="1" max="50" step="1" value="28"
+              oninput="document.getElementById('novel-steps-val').textContent=this.value">
+            <span class="slider-val" id="novel-steps-val">28</span>
+          </div>
+        </div>
+        <div class="input-wrapper">
+          <label class="label-text">Prompt Guidance / SCALE</label>
+          <div class="slider-row">
+            <input type="range" id="novel-scale" class="styled-slider" min="1" max="15" step="0.5" value="5"
+              oninput="document.getElementById('novel-scale-val').textContent=parseFloat(this.value).toFixed(1)">
+            <span class="slider-val" id="novel-scale-val">5.0</span>
+          </div>
+        </div>
+        <div class="input-wrapper">
+          <label class="label-text">Sampler</label>
+          <select id="novel-sampler" class="select-stylish">
+            <option value="k_euler">k_euler</option>
+            <option value="k_euler_ancestral">k_euler_ancestral</option>
+            <option value="k_dpmpp_2m">k_dpmpp_2m</option>
+            <option value="k_dpmpp_2m_sde">k_dpmpp_2m_sde</option>
+          </select>
+        </div>
+        <div class="input-wrapper">
+          <label class="label-text">尺寸 / SIZE</label>
+          <select id="novel-size" class="select-stylish">
+            <option value="832x1216">竖图 832×1216</option>
+            <option value="1216x832">横图 1216×832</option>
+            <option value="1024x1024">方图 1024×1024</option>
+          </select>
+        </div>
+
+        <div class="form-section" style="margin-top:8px;margin-bottom:0;">
+          <div class="section-title">提示词 / Prompt</div>
+          <div class="input-wrapper" style="margin-bottom:22px;">
+            <label class="label-text">全局正向提示词 / Global Positive</label>
+            <div style="font-family:'Space Mono',monospace;font-size:0.75rem;color:var(--s-text-secondary);margin-top:4px;">未配置角色专属时使用 · Fallback when character prompt is empty</div>
+            <div style="margin-top:10px;margin-bottom:8px;padding:10px 12px;background:rgba(0,0,0,0.03);border:0.5px solid rgba(18,18,18,0.1);border-radius:10px;font-family:'Space Mono',monospace;font-size:0.7rem;line-height:1.45;color:var(--s-text-secondary);">
+              <span style="display:block;margin-bottom:6px;letter-spacing:0.5px;">示例（英文关键词、逗号分隔，可与对话里 <span style="user-select:all;">[NOVEL_IMG]</span> 内文拼接）</span>
+              <span style="user-select:all;display:block;color:var(--s-text-primary);word-break:break-word;">1girl, solo, upper body, soft lighting, depth of field, detailed eyes, cozy indoor, warm tone, masterpiece</span>
+            </div>
+            <textarea id="novel-prompt-positive" class="novel-prompt-ta" placeholder="选填。全局风格前缀；英文关键词逗号分隔。可参考上方示例。用于测试生图及对话配图（角色可再在聊天设置里覆盖为专属正向）。" rows="4"></textarea>
+          </div>
+          <div class="input-wrapper" style="margin-bottom:0;">
+            <label class="label-text">反向提示词 / Negative</label>
+            <div style="font-family:'Space Mono',monospace;font-size:0.75rem;color:var(--s-text-secondary);margin-top:4px;">Undesired · 留空则使用当前模型默认 UC</div>
+            <textarea id="novel-prompt-negative" class="novel-prompt-ta" placeholder="可不填；填写后将用于测试生图与对话配图" rows="4"></textarea>
+          </div>
+        </div>
+
+        <div class="form-section" style="margin-bottom:0;">
+          <div class="section-title">测试生图 / Test</div>
+          <div class="upload-area" id="novel-test-preview-area" style="cursor:default;">
+            <div style="width:100%;text-align:center;">
+              <img id="novel-test-preview-img" alt="预览" style="display:none;max-width:100%;max-height:min(50vh,320px);object-fit:contain;margin:0 auto;">
+              <div id="novel-test-preview-placeholder" class="upload-placeholder">
+                <i class="ph ph-image"></i><span>测试结果将显示在此处</span>
+              </div>
+            </div>
+          </div>
+          <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:16px;align-items:center;">
+            <button type="button" class="btn-primary" id="novel-test-btn" onclick="NovelModule.testGenerate()" style="width:auto;padding-left:24px;padding-right:24px;">测试生图</button>
+            <button type="button" class="btn-ghost" onclick="NovelModule.downloadTestPreview()" style="width:auto;padding:10px 16px;">下载图片</button>
+            <button type="button" class="btn-ghost" onclick="NovelModule.clearTestPreview()" style="width:auto;padding:10px 16px;">清除预览</button>
+          </div>
+        </div>
+
+        <div style="margin-top:40px;">
+          <button class="btn-primary" onclick="NovelModule.save()">保存配置</button>
+        </div>
+        <div style="margin-top:20px;font-family:'Space Mono',monospace;font-size:0.6rem;color:var(--s-text-secondary);letter-spacing:0.5px;line-height:1.6;">
+          保存后：此处正/反向为<strong>全局默认</strong>。某角色在聊天中开启 Novel 配图后，可填写<strong>角色专属正向 / 反向</strong>；有填写则仅使用该角色专属项，不再叠加对应全局项（留空的一侧仍回退到全局）。<br>
+          开启配图后，系统提示会要求模型在 <span style="user-select:all;">[NOVEL_IMG]</span> 内<strong>仅使用英文</strong>；关闭配图时则要求仅用<strong>中文</strong>描述画面、勿使用该标签。
         </div>
       </div>
     </div>
@@ -2209,7 +2428,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg-body);display:flex;jus
           </div>
         </div>
       </div>
-      <!-- 图片预览条（输入框上方，选图后显示）-->
+     <!-- 图片预览条（输入框上方，选图后显示）-->
       <div class="cv-img-preview-bar" id="cv-img-preview-bar"></div>
       <!-- 隐藏的图片 file input -->
       <input type="file" id="cv-img-file-input" accept="image/*" multiple style="display:none">
@@ -2228,8 +2447,14 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg-body);display:flex;jus
 
     <!-- 图片全屏查看器 -->
     <div id="cv-img-viewer">
-      <img id="cv-img-viewer-img" src="" alt="">
-      <button id="cv-img-viewer-close"><i class="ph ph-x"></i></button>
+      <button type="button" id="cv-img-viewer-close" aria-label="关闭"><i class="ph ph-x"></i></button>
+      <div id="cv-img-viewer-inner">
+        <img id="cv-img-viewer-img" src="" alt="">
+        <div id="cv-img-viewer-actions">
+          <button type="button" class="cv-img-viewer-btn" id="cv-img-viewer-download"><i class="ph ph-download-simple"></i> 下载</button>
+          <button type="button" class="cv-img-viewer-btn" id="cv-img-viewer-regen" style="display:none;"><i class="ph ph-arrows-clockwise"></i> 重新生图</button>
+        </div>
+      </div>
     </div>
     <!-- API Node 浮窗 -->
     <div class="cv-api-overlay" id="cv-api-overlay">
@@ -2313,6 +2538,84 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg-body);display:flex;jus
         <button class="cv-sp-close" onclick="ConvModule.closeSettings()"><i class="ph ph-x"></i></button>
       </div>
       <div class="cv-sp-content">
+
+        <!-- Voice -->
+        <div class="cv-set-section">
+          <div class="cv-set-sec-title">Voice</div>
+          <div class="cv-set-item">
+            <div class="cv-si-info">
+              <span class="cv-si-label">MiniMax 语音合成</span>
+              <span class="cv-si-sub">TTS Auto-Synthesis</span>
+            </div>
+            <div class="cv-mag-toggle" id="cv-voice-tts-toggle" onclick="ConvModule._toggleTTS(this)"></div>
+          </div>
+          <div id="cv-voice-options-wrap" class="cv-voice-options-wrap" style="display:none;">
+            <div class="cv-set-item col">
+              <div class="cv-si-info">
+                <span class="cv-si-label">音色 ID</span>
+                <span class="cv-si-sub">MiniMax Voice ID</span>
+              </div>
+              <div style="display:flex;gap:8px;width:100%;align-items:center;">
+                <input type="text" id="cv-voice-id-input" class="cv-clean-input"
+                  style="flex:1;border:none;border-bottom:0.5px solid rgba(18,18,18,0.15);padding:6px 2px;font-size:0.85rem;background:transparent;outline:none;"
+                  placeholder="MiniMax 控制台复制的 Voice ID">
+                <button id="cv-voice-preview-btn" onclick="ConvModule.previewVoice()"
+                  style="flex-shrink:0;padding:6px 14px;border:0.5px solid #121212;border-radius:20px;background:transparent;font-size:0.75rem;font-family:'Space Mono',monospace;letter-spacing:1px;cursor:pointer;transition:.2s;"
+                  onmousedown="this.style.background='#121212';this.style.color='#fff'"
+                  onmouseup="this.style.background='transparent';this.style.color='#121212'">
+                  <i class="ph ph-play"></i> 试听
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Novel -->
+        <div class="cv-set-section">
+          <div class="cv-set-sec-title">Novel</div>
+          <div class="cv-set-item">
+            <div class="cv-si-info">
+              <span class="cv-si-label">Novel 图像生成</span>
+              <span class="cv-si-sub">Image Synthesis</span>
+            </div>
+            <div class="cv-mag-toggle" id="cv-novel-toggle" onclick="ConvModule._toggleNovel(this)"></div>
+          </div>
+          <div id="cv-novel-char-prompts-wrap" class="cv-novel-char-prompts-wrap" style="display:none;">
+            <div class="cv-set-item col cv-accordion" onclick="ConvModule._toggleAccordion(this,event)">
+              <div class="cv-acc-header">
+                <div class="cv-si-info">
+                  <span class="cv-si-label">角色专属正向提示词</span>
+                  <span class="cv-si-sub">Character Positive · Overrides global</span>
+                </div>
+                <i class="ph ph-caret-down cv-acc-icon"></i>
+              </div>
+              <div class="cv-acc-body-wrap">
+                <div class="cv-acc-body">
+                  <div style="font-family:'Space Mono',monospace;font-size:0.62rem;color:#888;margin-bottom:8px;line-height:1.4;">示例：<span style="user-select:all;color:#121212;">anime screencap, film grain, muted colors</span>（风格前缀，与标签内英文拼接）</div>
+                  <textarea id="cv-novel-prefix"
+                    style="width:100%;min-height:80px;padding:10px;background:rgba(0,0,0,0.03);border:0.5px solid rgba(18,18,18,0.1);border-radius:10px;font-size:0.8rem;font-family:inherit;color:#121212;resize:none;outline:none;line-height:1.5;"
+                    placeholder="选填。留空则用 Novel 全局正向。英文逗号分隔，写法同设置页示例。" onclick="event.stopPropagation()"></textarea>
+                </div>
+              </div>
+            </div>
+            <div class="cv-set-item col cv-accordion" onclick="ConvModule._toggleAccordion(this,event)">
+              <div class="cv-acc-header">
+                <div class="cv-si-info">
+                  <span class="cv-si-label">角色专属反向提示词</span>
+                  <span class="cv-si-sub">Character Negative · Overrides global</span>
+                </div>
+                <i class="ph ph-caret-down cv-acc-icon"></i>
+              </div>
+              <div class="cv-acc-body-wrap">
+                <div class="cv-acc-body">
+                  <textarea id="cv-novel-negative"
+                    style="width:100%;min-height:80px;padding:10px;background:rgba(0,0,0,0.03);border:0.5px solid rgba(18,18,18,0.1);border-radius:10px;font-size:0.8rem;font-family:inherit;color:#121212;resize:none;outline:none;line-height:1.5;"
+                    placeholder="选填。填写后仅本角色使用；留空则采用 Novel 设置中的全局反向提示词（若全局亦为空则使用模型默认 UC）。" onclick="event.stopPropagation()"></textarea>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
 
         <!-- Visuals -->
         <div class="cv-set-section">
@@ -2911,6 +3214,12 @@ const Assets = (() => {
     return url;
   }
 
+  /** 从已有 Blob（如 NovelAI 返回的 PNG）走同一套压缩与入库 */
+  async function saveBlob(key, blob, maxPx = 1200, quality = 0.85) {
+    const file = new File([blob], 'img.png', { type: blob.type || 'image/png' });
+    return save(key, file, maxPx, quality);
+  }
+
   async function remove(key) {
     revoke(key);
     await DB.assets.del(key);
@@ -2945,7 +3254,7 @@ const Assets = (() => {
   }
 
   // 将 clearCache 暴露出去
-  return { getUrl, getBase64, save, remove, clearCache };
+  return { getUrl, getBase64, save, saveBlob, remove, clearCache };
 })();
 
 // ============================================================
@@ -2972,6 +3281,7 @@ const Router = (() => {
   // 顶层 screen id 列表
   const TOP_SCREENS = ['settings-screen', 'character-screen', 'chat-screen', 'conv-screen'];
 
+  // 改为数组栈，支持多级子页导航
   const _subStack = {};
 
   function go(target, watermark) {
@@ -2984,15 +3294,16 @@ const Router = (() => {
       return;
     }
 
-    // ── settings sub-page ──
+    // ── settings sub-page（支持多级）──
     const el = document.getElementById(target);
     if (!el) return;
-    // 找到当前属于哪个顶层 screen（简单：target 含 'settings' 相关的属于 settings）
     const parentScreen = 'settings-screen';
-    const prev = _subStack[parentScreen];
-    if (prev) document.getElementById(prev)?.classList.remove('active');
+    if (!_subStack[parentScreen]) _subStack[parentScreen] = [];
+    const stack = _subStack[parentScreen];
+    // 隐藏当前栈顶页
+    if (stack.length) document.getElementById(stack[stack.length - 1])?.classList.remove('active');
     el.classList.add('active');
-    _subStack[parentScreen] = target;
+    stack.push(target);
     if (watermark) {
       const bg = document.getElementById('bg-letter');
       if (bg) {
@@ -3005,12 +3316,18 @@ const Router = (() => {
 
   function back() {
     // 先检查 settings sub-page
-    const settingsSub = _subStack['settings-screen'];
-    if (settingsSub && document.getElementById('settings-screen')?.classList.contains('active')) {
-      document.getElementById(settingsSub)?.classList.remove('active');
-      _subStack['settings-screen'] = null;
+    const stack = _subStack['settings-screen'];
+    if (stack?.length && document.getElementById('settings-screen')?.classList.contains('active')) {
+      const current = stack.pop();
+      document.getElementById(current)?.classList.remove('active');
+      // 恢复上一级（如果有），否则回到 settings 主菜单
       const bg = document.getElementById('bg-letter');
-      if (bg) { bg.style.opacity = '0'; setTimeout(() => { bg.innerText = 'S'; bg.style.opacity = '1'; }, 250); }
+      if (stack.length) {
+        document.getElementById(stack[stack.length - 1])?.classList.add('active');
+        // 不需要改水印，保持当前
+      } else {
+        if (bg) { bg.style.opacity = '0'; setTimeout(() => { bg.innerText = 'S'; bg.style.opacity = '1'; }, 250); }
+      }
       return;
     }
     // 关闭所有顶层 screen，回到 home
@@ -3027,6 +3344,7 @@ const Router = (() => {
     if (pageId === 'ui-page')      UIModule.renderIconsEditGrid();
     if (pageId === 'api-page')     ApiModule.render();
     if (pageId === 'system-page')  SystemModule.render();
+    if (pageId === 'novel-settings-page') NovelModule.restoreUI();
   }
 
   return { go, back };
@@ -3527,6 +3845,13 @@ document.getElementById('file-icon').addEventListener('change', async e => {
   } catch(err) { Toast.show('上传失败'); console.error(err); }
   e.target.value = '';
   _pendingIconId = null;
+});
+
+// 【新增】打开音乐模块
+document.querySelector('[data-icon-id="2"]').addEventListener('click', () => {
+  if (typeof MusicModule !== 'undefined') {
+    MusicModule.open();
+  }
 });
 
 // ============================================================
@@ -4668,6 +4993,595 @@ const NotificationModule = (() => {
 })();
 
 // ============================================================
+// VoiceModule — MiniMax TTS 配置 + 播放引擎
+// ============================================================
+const VoiceModule = (() => {
+  const KEY_CFG = 'voice-config'; // { apiKey, groupId, model, lang, speed, vol }
+  let _cfg = null;
+  let _audioCache = new Map(); // assetKey/msgId → AudioBuffer or blob URL
+
+  async function init() {
+    try {
+      const saved = await DB.settings.get(KEY_CFG);
+      if (saved) {
+        _cfg = saved;
+        _restoreUI();
+      }
+    } catch(e) { console.warn('[VoiceModule] init failed', e); }
+  }
+
+  function _restoreUI() {
+    if (!_cfg) return;
+    const set = (id, val) => { const el = document.getElementById(id); if (el && val != null) el.value = val; };
+    set('voice-api-key',   _cfg.apiKey  || '');
+    set('voice-group-id',  _cfg.groupId || '');
+    set('voice-model',     _cfg.model   || 'speech-01-turbo');
+    set('voice-lang',      _cfg.lang    || 'zh');
+    set('voice-speed',     _cfg.speed   || '1.0');
+    set('voice-vol',       _cfg.vol     || '5');
+    const speedVal = document.getElementById('voice-speed-val');
+    if (speedVal) speedVal.textContent = parseFloat(_cfg.speed || 1).toFixed(1);
+    const volVal = document.getElementById('voice-vol-val');
+    if (volVal) volVal.textContent = _cfg.vol || '5';
+  }
+
+  async function save() {
+    _cfg = {
+      apiKey:  document.getElementById('voice-api-key')?.value.trim()  || '',
+      groupId: document.getElementById('voice-group-id')?.value.trim() || '',
+      model:   document.getElementById('voice-model')?.value           || 'speech-01-turbo',
+      lang:    document.getElementById('voice-lang')?.value            || 'zh',
+      speed:   parseFloat(document.getElementById('voice-speed')?.value || '1.0'),
+      vol:     parseInt(document.getElementById('voice-vol')?.value    || '5'),
+    };
+    await DB.settings.set(KEY_CFG, _cfg);
+    Toast.show('语音配置已保存');
+  }
+
+  function getCfg() { return _cfg; }
+
+  // ── 核心 TTS：文字 → 播放 ──
+  // 返回 blob URL（可直接给 <audio> 或 AudioContext）
+  async function synthesize(text, voiceId) {
+    if (!_cfg?.apiKey || !_cfg?.groupId) {
+      Toast.show('请先在音画设置中填写 Key 和 GroupId');
+      return null;
+    }
+    if (!voiceId) {
+      Toast.show('请先在聊天设置中填写音色 ID');
+      return null;
+    }
+
+    const url = `https://api.minimax.chat/v1/t2a_v2?GroupId=${_cfg.groupId}`;
+    const body = {
+      model:      _cfg.model   || 'speech-01-turbo',
+      text,
+      stream:     false,
+      voice_setting: {
+        voice_id:   voiceId,
+        speed:      _cfg.speed || 1,
+        vol:        _cfg.vol   || 5,
+        pitch:      0
+      },
+      audio_setting: {
+        audio_sample_rate: 32000,
+        bitrate:           128000,
+        format:            'mp3'
+      },
+      language_boost: _cfg.lang !== 'auto' ? _cfg.lang : undefined
+    };
+
+    try {
+      const res = await fetch(url, {
+        method:  'POST',
+        headers: {
+          'Content-Type':  'application/json',
+          'Authorization': `Bearer ${_cfg.apiKey}`
+        },
+        body: JSON.stringify(body)
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        console.error('[VoiceModule] TTS error', err);
+        Toast.show('TTS 请求失败：' + (err?.base_resp?.status_msg || res.status));
+        return null;
+      }
+      const data = await res.json();
+      // MiniMax v2 返回 hex 编码音频
+      const hex = data?.data?.audio;
+      if (!hex) { Toast.show('未收到音频数据'); return null; }
+
+      // 用 data URL 代替 blob URL，兼容 iOS WKWebView 本地文件环境
+      const base64 = hex.match(/.{1,2}/g).map(b => String.fromCharCode(parseInt(b, 16))).join('');
+      return `data:audio/mpeg;base64,${btoa(base64)}`;
+    } catch(e) {
+      console.error('[VoiceModule] synthesize error', e);
+      Toast.show('TTS 请求失败，请检查网络或 Key');
+      return null;
+    }
+  }
+
+  // ── 播放语音条（懒加载 + 缓存）──
+  async function playAudioBubble(cacheKey, text, voiceId, btn) {
+    // 已缓存直接播
+    if (_audioCache.has(cacheKey)) {
+      _playUrl(_audioCache.get(cacheKey), btn);
+      return;
+    }
+
+    // iOS 手势解锁：必须在用户点击的同步上下文里先 play()，
+    // 否则 await 之后 iOS 会拒绝播放（PARSE_ERROR / 手势失效）
+    const audio = new Audio();
+    audio.play().catch(() => {}); // 解锁，失败静默忽略（无 src 是预期的）
+
+    // 加载中状态
+    if (btn) { btn.dataset.loading = '1'; btn.innerHTML = '<i class="ph ph-circle-notch" style="animation:spin .8s linear infinite"></i>'; }
+    const dataUrl = await synthesize(text, voiceId);
+    if (!dataUrl) {
+      if (btn) { btn.dataset.loading = ''; btn.innerHTML = '<i class="ph-fill ph-waveform"></i>'; }
+      return;
+    }
+    _audioCache.set(cacheKey, dataUrl);
+
+    // 复用已解锁的 audio 元素播放，而不是再 new Audio()
+    _playWithElement(audio, dataUrl, btn);
+  }
+
+  // 当前全局播放中的 Audio 实例（确保同时只有一个在播）
+  let _currentAudio = null;
+  let _currentBtn   = null;
+
+  // 停止当前播放并重置按钮（内部公共逻辑）
+  function _stopCurrent(nextBtn) {
+    if (_currentAudio) {
+      _currentAudio.pause();
+      _currentAudio.onended = null;
+      if (_currentBtn && _currentBtn !== nextBtn) {
+        _currentBtn.innerHTML = '<i class="ph-fill ph-waveform"></i>';
+        _currentBtn.onclick   = () => _playUrl(_currentBtn._cachedUrl, _currentBtn);
+      }
+      _currentAudio = null;
+      _currentBtn   = null;
+    }
+  }
+
+  // 接收已有 audio 元素（iOS 首次播放时用，元素已在手势上下文中解锁）
+  function _playWithElement(audio, url, btn) {
+    _stopCurrent(btn);
+    audio.src     = url;
+    _currentAudio = audio;
+    _currentBtn   = btn;
+    if (btn) {
+      btn._cachedUrl = url;
+      btn.innerHTML  = '<i class="ph-fill ph-stop"></i>';
+      const _reset = () => {
+        _currentAudio = null;
+        _currentBtn   = null;
+        btn.innerHTML = '<i class="ph-fill ph-waveform"></i>';
+        btn.onclick   = () => _playUrl(url, btn);
+      };
+      audio.onended = _reset;
+      btn.onclick   = () => { audio.pause(); audio.currentTime = 0; _reset(); };
+    }
+    audio.play().catch(e => console.warn('[VoiceModule] play error', e));
+  }
+
+  // 新建 audio 元素播放（缓存命中时，已在手势上下文内直接调用）
+  function _playUrl(url, btn) {
+    _stopCurrent(btn);
+    const audio = new Audio(url);
+    _currentAudio = audio;
+    _currentBtn   = btn;
+    if (btn) {
+      btn._cachedUrl = url;
+      btn.innerHTML  = '<i class="ph-fill ph-stop"></i>';
+      const _reset = () => {
+        _currentAudio = null;
+        _currentBtn   = null;
+        btn.innerHTML = '<i class="ph-fill ph-waveform"></i>';
+        btn.onclick   = () => _playUrl(url, btn);
+      };
+      audio.onended = _reset;
+      btn.onclick   = () => { audio.pause(); audio.currentTime = 0; _reset(); };
+    }
+    audio.play().catch(e => console.warn('[VoiceModule] play error', e));
+  }
+
+  // 清理缓存（清空聊天时调用）
+  function clearCache() {
+    _audioCache.clear(); // data URL 无需 revoke
+  }
+
+  return { init, save, getCfg, synthesize, playAudioBubble, clearCache };
+})();
+
+// ============================================================
+// NovelModule — NovelAI 图像生成（image.novelai.net）
+// ============================================================
+const NovelModule = (() => {
+  const KEY_CFG = 'novel-config';
+  const API = 'https://image.novelai.net/ai/generate-image';
+  const UC_V3 = 'nsfw, lowres, jpeg artifacts, worst quality, watermark, blurry, very displeasing';
+  const UC_V45C = 'blurry, lowres, upscaled, artistic error, scan artifacts, jpeg artifacts, logo, too many watermarks, negative space, blank page';
+  const UC_V45F = 'nsfw, blurry, lowres, error, worst quality, bad quality, jpeg artifacts, very displeasing, white blank page, blank page';
+
+  let _cfg = null;
+  let _testObjectUrl = null;
+  let _isGenerating = false; // 并发锁：同一时间只允许一个生图队列运行
+
+  function _readFormCfg() {
+    return {
+      apiKey: document.getElementById('novel-api-key')?.value.trim() || '',
+      model:  document.getElementById('novel-model')?.value || 'nai-diffusion-3',
+      steps:  parseInt(document.getElementById('novel-steps')?.value || '28', 10),
+      scale:  parseFloat(document.getElementById('novel-scale')?.value || '5'),
+      sampler: document.getElementById('novel-sampler')?.value || 'k_euler',
+      size:   document.getElementById('novel-size')?.value || '832x1216',
+      positivePrompt: document.getElementById('novel-prompt-positive')?.value.trim() || '',
+      negativePrompt: document.getElementById('novel-prompt-negative')?.value.trim() || '',
+    };
+  }
+
+  function _modelFamily(model) {
+    if (/nai-diffusion-4/.test(model)) return 'v4';
+    if (/furry-3/.test(model)) return 'furry3';
+    return 'v3';
+  }
+
+  function _augmentPrompt(model, prompt) {
+    const f = _modelFamily(model);
+    if (f === 'v3' || f === 'furry3') return `${prompt}, best quality, amazing quality, very aesthetic, absurdres`;
+    const curated = /curated/i.test(model);
+    if (curated) return `${prompt}, very aesthetic, location, masterpiece, no text, -0.8::feet::, rating:general`;
+    return `${prompt}, location, very aesthetic, masterpiece, no text`;
+  }
+
+  function _defaultUc(model) {
+    const f = _modelFamily(model);
+    if (f === 'v4') return /curated/i.test(model) ? UC_V45C : UC_V45F;
+    return UC_V3;
+  }
+
+  function _buildParameters(model, augmentedPrompt, cfg) {
+    const [sw, sh] = (cfg.size || '832x1216').split('x').map(Number);
+    const w = sw || 832;
+    const h = sh || 1216;
+    const base = {
+      width: w,
+      height: h,
+      steps: Number(cfg.steps) || 28,
+      scale: Number(cfg.scale) || 5,
+      sampler: cfg.sampler || 'k_euler',
+      n_samples: 1,
+      qualityToggle: true,
+      negative_prompt: (cfg.negativePrompt && cfg.negativePrompt.trim()) || _defaultUc(model),
+    };
+    const fam = _modelFamily(model);
+    if (fam === 'v4') {
+      const uc = base.negative_prompt;
+      return {
+        ...base,
+        params_version: 1,
+        ucPreset: /curated/i.test(model) ? 3 : 5,
+        v4_prompt: {
+          caption: { base_caption: augmentedPrompt, char_captions: [] },
+          use_coords: false,
+          use_order: true,
+        },
+        v4_negative_prompt: { caption: { base_caption: uc, char_captions: [] } },
+      };
+    }
+    return {
+      ...base,
+      noise_schedule: 'native',
+      params_version: 1,
+      legacy: false,
+      legacy_v3_extend: false,
+      ucPreset: 4,
+      sm: false,
+      sm_dyn: false,
+      deliberate_euler_ancestral_bug: true,
+    };
+  }
+
+  function _unzipFirstPng(arrayBuffer) {
+    const f = typeof fflate !== 'undefined' ? fflate : window.fflate;
+    if (!f || !f.unzipSync) throw new Error('fflate 未加载');
+    const files = f.unzipSync(new Uint8Array(arrayBuffer));
+    const name = Object.keys(files).find(k => /\.(png|webp)$/i.test(k));
+    if (!name) throw new Error('压缩包内无图片');
+    const bytes = files[name];
+    const MAX_BYTES = 20 * 1024 * 1024; // 20 MB 上限
+    if (bytes.byteLength > MAX_BYTES) throw new Error('图片文件过大（超过 20MB），已拒绝加载');
+    return bytes;
+  }
+
+  async function init() {
+    try {
+      const saved = await DB.settings.get(KEY_CFG);
+      if (saved) _cfg = saved;
+    } catch (e) { console.warn('[NovelModule] init failed', e); }
+    return _cfg;
+  }
+
+  function restoreUI() {
+    if (!_cfg) return;
+    const set = (id, val) => { const el = document.getElementById(id); if (el && val != null) el.value = val; };
+    set('novel-api-key', _cfg.apiKey || '');
+    set('novel-model', _cfg.model || 'nai-diffusion-3');
+    set('novel-steps', _cfg.steps ?? 28);
+    set('novel-scale', _cfg.scale ?? 5);
+    set('novel-sampler', _cfg.sampler || 'k_euler');
+    set('novel-size', _cfg.size || '832x1216');
+    set('novel-prompt-positive', _cfg.positivePrompt || '');
+    set('novel-prompt-negative', _cfg.negativePrompt || '');
+    const sv = document.getElementById('novel-steps-val');
+    if (sv) sv.textContent = String(_cfg.steps ?? 28);
+    const scv = document.getElementById('novel-scale-val');
+    if (scv) scv.textContent = parseFloat(_cfg.scale ?? 5).toFixed(1);
+  }
+
+  async function save() {
+    _cfg = _readFormCfg();
+    await DB.settings.set(KEY_CFG, _cfg);
+    Toast.show('Novel 配置已保存');
+  }
+
+  function getCfg() { return _cfg; }
+
+  async function generateImageBlob(mergedPrompt, runtimeCfg) {
+    const cfg = runtimeCfg || _cfg || await init();
+    if (!cfg?.apiKey) {
+      Toast.show('请先在设置 → Novel 设置中填写 Persistent Token');
+      return null;
+    }
+    const model = cfg.model || 'nai-diffusion-3';
+    const aug = _augmentPrompt(model, mergedPrompt);
+    const body = {
+      input: aug,
+      model,
+      action: 'generate',
+      parameters: _buildParameters(model, aug, cfg),
+    };
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 60000); // 60s 超时
+    let res;
+    try {
+      res = await fetch(API, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${cfg.apiKey}`,
+        },
+        body: JSON.stringify(body),
+        signal: controller.signal,
+      });
+    } catch (fetchErr) {
+      if (fetchErr.name === 'AbortError') {
+        Toast.show('Novel 生图超时，请稍后重试');
+      } else {
+        Toast.show('Novel 网络错误：' + (fetchErr.message || ''));
+      }
+      return null;
+    } finally {
+      clearTimeout(timeoutId);
+    }
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      const msg = err.message || err.error || `HTTP ${res.status}`;
+      Toast.show('Novel 生图失败：' + msg);
+      return null;
+    }
+    const buf = await res.arrayBuffer();
+    const pngBytes = _unzipFirstPng(buf);
+    return new Blob([pngBytes], { type: 'image/png' });
+  }
+
+  function clearTestPreview() {
+    if (_testObjectUrl) {
+      URL.revokeObjectURL(_testObjectUrl);
+      _testObjectUrl = null;
+    }
+    const img = document.getElementById('novel-test-preview-img');
+    if (img) {
+      img.removeAttribute('src');
+      img.style.display = 'none';
+    }
+    const ph = document.getElementById('novel-test-preview-placeholder');
+    if (ph) ph.style.display = '';
+  }
+
+  function downloadTestPreview() {
+    const img = document.getElementById('novel-test-preview-img');
+    const src = img?.src;
+    if (!img || img.style.display === 'none' || !src) {
+      Toast.show('请先生成测试图');
+      return;
+    }
+    const a = document.createElement('a');
+    a.href = src;
+    a.download = `novelai-test-${Date.now()}.png`;
+    a.rel = 'noopener';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    Toast.show('已开始下载');
+  }
+
+  async function testGenerate() {
+    const pos = document.getElementById('novel-prompt-positive')?.value.trim();
+    if (!pos) {
+      Toast.show('请填写正向提示词');
+      return;
+    }
+    const cfg = _readFormCfg();
+    if (!cfg.apiKey) {
+      Toast.show('请先填写 Persistent Token');
+      return;
+    }
+    const btn = document.getElementById('novel-test-btn');
+    if (btn) {
+      btn.disabled = true;
+      btn.textContent = '生成中…';
+    }
+    try {
+      const blob = await generateImageBlob(pos, cfg);
+      if (!blob) return;
+      clearTestPreview();
+      _testObjectUrl = URL.createObjectURL(blob);
+      const img = document.getElementById('novel-test-preview-img');
+      const ph = document.getElementById('novel-test-preview-placeholder');
+      if (img) {
+        img.src = _testObjectUrl;
+        img.style.display = 'block';
+      }
+      if (ph) ph.style.display = 'none';
+      Toast.show('测试生图成功');
+    } catch (e) {
+      console.error('[NovelModule] testGenerate', e);
+      Toast.show('测试失败：' + (e.message || '未知错误'));
+    } finally {
+      if (btn) {
+        btn.disabled = false;
+        btn.textContent = '测试生图';
+      }
+    }
+  }
+
+  /**
+   * 在对话中插入 AI 配图消息（每条 tag 一张）
+   * @param opts.mergeIntoMsgId 若设置，将配图 part 追加到该条助手消息（与正文同气泡）
+   */
+  async function attachImagesForChar(charId, innerPrompts, charPositive, charNegative, opts = {}) {
+    if (!innerPrompts?.length || !charId) return;
+    try {
+      const on = await DB.settings.get(`novel-toggle-${charId}`);
+      if (on !== true) return;
+    } catch (e) { return; }
+
+    // 并发锁：若已有生图任务在跑，排队等待而非同时发起多个请求
+    while (_isGenerating) {
+      await new Promise(r => setTimeout(r, 500));
+    }
+    _isGenerating = true;
+
+    const mergeIntoMsgId = opts.mergeIntoMsgId;
+
+    const charExclusivePos = (charPositive || '').trim();
+    const cfgForChat = _cfg || await init();
+    const globalPos = (cfgForChat?.positivePrompt || '').trim();
+    const stylePrefix = charExclusivePos || globalPos;
+
+    const charExclusiveNeg = (charNegative || '').trim();
+    const globalNeg = (cfgForChat?.negativePrompt || '').trim();
+    const effectiveNeg = charExclusiveNeg || globalNeg;
+    const mergedCfg = { ...(cfgForChat || {}), negativePrompt: effectiveNeg };
+
+    const screen = document.getElementById('conv-screen');
+    const convOpen = screen && (screen.classList.contains('active') || screen.classList.contains('qr-active'));
+    const pendingCount = innerPrompts.filter(p => {
+      const merged = [stylePrefix, String(p).trim()].filter(Boolean).join(', ');
+      return !!merged.trim();
+    }).length;
+    if (convOpen && String(screen.dataset.cvCharId) === String(charId) && pendingCount > 0 && window.ConvModule?._showNovelPending) {
+      ConvModule._showNovelPending(charId, pendingCount);
+    }
+
+    try {
+      for (const inner of innerPrompts) {
+        const merged = [stylePrefix, inner.trim()].filter(Boolean).join(', ');
+        if (!merged.trim()) continue;
+        let blob;
+        try {
+          blob = await generateImageBlob(merged, mergedCfg);
+        } catch (e) {
+          console.error('[NovelModule] generate', e);
+          Toast.show('Novel 请求异常：' + (e.message || ''));
+          continue;
+        }
+        if (!blob) continue;
+
+        const assetKey = `chat-img-${charId}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+        try {
+          await Assets.saveBlob(assetKey, blob, 1200, 0.88);
+        } catch (e) {
+          Toast.show('配图保存失败');
+          continue;
+        }
+
+        let sentRound = 0;
+        try {
+          const msgs = await DB.messages.getPage(charId, 0, 500);
+          sentRound = msgs.filter(m => m.role === 'assistant').length;
+        } catch (e) { /* ignore */ }
+
+        const imgPart = {
+          type: 'image',
+          assetKey,
+          description: '（NovelAI 配图）',
+          sentRound,
+          novelMergedPrompt: merged
+        };
+
+        if (mergeIntoMsgId != null) {
+          let existing = null;
+          try {
+            existing = await DB.messages.get(mergeIntoMsgId);
+          } catch (e) { existing = null; }
+          if (existing && String(existing.charId) === String(charId) && existing.role === 'assistant') {
+            const parts = [...(existing.parts || [{ type: 'text', content: existing.content || '' }])];
+            parts.push(imgPart);
+            const textPreview = parts.filter(p => p.type === 'text').map(p => p.content).join('\n').trim();
+            const updated = {
+              ...existing,
+              parts,
+              content: textPreview ? `${textPreview.slice(0, 80)}${textPreview.length > 80 ? '…' : ''} · [配图]` : '[配图]'
+            };
+            try {
+              await DB.messages.put(updated);
+            } catch (e) {
+              console.error('[NovelModule] merge put', e);
+              continue;
+            }
+            const screen2 = document.getElementById('conv-screen');
+            const open2 = screen2 && (screen2.classList.contains('active') || screen2.classList.contains('qr-active'));
+            if (open2 && String(screen2.dataset.cvCharId) === String(charId) && window.ConvModule?._replaceMessageBubble) {
+              await ConvModule._replaceMessageBubble(updated);
+            }
+            continue;
+          }
+        }
+
+        const msg = {
+          charId: String(charId),
+          role: 'assistant',
+          parts: [imgPart],
+          content: '[配图]',
+          timestamp: Date.now(),
+          status: 'sent',
+          recalled: false,
+          recallContent: '',
+          recallThought: '',
+        };
+        const newId = await DB.messages.add(msg);
+        msg.id = newId;
+
+        const screen3 = document.getElementById('conv-screen');
+        const open3 = screen3 && (screen3.classList.contains('active') || screen3.classList.contains('qr-active'));
+        if (open3 && String(screen3.dataset.cvCharId) === String(charId) && window.ConvModule?._appendNovelImageMessage) {
+          await ConvModule._appendNovelImageMessage(msg);
+        }
+      }
+    } finally {
+      _isGenerating = false; // 释放并发锁
+      if (window.ConvModule?._hideNovelPending) window.ConvModule._hideNovelPending();
+    }
+  }
+
+  return { init, save, getCfg, restoreUI, generateImageBlob, attachImagesForChar, testGenerate, clearTestPreview, downloadTestPreview };
+})();
+
+// ============================================================
 // ConvModule — 聊天页核心
 // ============================================================
 const ConvModule = (() => {
@@ -4681,7 +5595,7 @@ const ConvModule = (() => {
   let _totalMsgs = 0;
   let _isAiTyping = false;
   let _charImgUrl = '';
-  let _pendingImgs = []; // [{ file, objectUrl }]
+  let _pendingImgs = []; //[{ file, objectUrl }]
 
   // ── 进入聊天 ──
   async function enter(charId, personaId) {
@@ -4689,6 +5603,9 @@ const ConvModule = (() => {
     _personaId = personaId;
     _offset    = 0;
     _isAiTyping = false;
+
+    const _cvScr = document.getElementById('conv-screen');
+    if (_cvScr) _cvScr.dataset.cvCharId = String(charId);
 
     console.log(`[ConvModule] enter — charId: ${charId}, personaId: ${personaId}`);
 
@@ -4823,10 +5740,34 @@ const ConvModule = (() => {
       imgFileInput._bound = true;
       imgFileInput.addEventListener('change', _onImgSelected);
     }
+    const thumbRemove = document.getElementById('cv-img-thumb-remove');
+    if (thumbRemove && !thumbRemove._bound) {
+      thumbRemove._bound = true;
+      thumbRemove.addEventListener('click', _cancelPendingImg);
+    }
     const viewerClose = document.getElementById('cv-img-viewer-close');
     if (viewerClose && !viewerClose._bound) {
       viewerClose._bound = true;
-      viewerClose.addEventListener('click', () => document.getElementById('cv-img-viewer')?.classList.remove('active'));
+      viewerClose.addEventListener('click', e => {
+        e.stopPropagation();
+        document.getElementById('cv-img-viewer')?.classList.remove('active');
+      });
+    }
+    const viewerDl = document.getElementById('cv-img-viewer-download');
+    if (viewerDl && !viewerDl._bound) {
+      viewerDl._bound = true;
+      viewerDl.addEventListener('click', e => {
+        e.stopPropagation();
+        ConvModule._viewerDownloadImage();
+      });
+    }
+    const viewerRegen = document.getElementById('cv-img-viewer-regen');
+    if (viewerRegen && !viewerRegen._bound) {
+      viewerRegen._bound = true;
+      viewerRegen.addEventListener('click', e => {
+        e.stopPropagation();
+        ConvModule._regenerateNovelFromViewer();
+      });
     }
     document.getElementById('cv-img-viewer')?.addEventListener('click', e => {
       if (e.target === document.getElementById('cv-img-viewer')) document.getElementById('cv-img-viewer').classList.remove('active');
@@ -4860,11 +5801,15 @@ const ConvModule = (() => {
   let _isRecording = false;
   let _recStartTime = 0;
   let _recDuration = 0;
+  let _recTranscriptPrefix = '';
+  let _recSessionFinal = '';
 
   function openAudioModal() {
     document.getElementById('cv-audio-transcript').value = '';
     document.getElementById('cv-audio-status').textContent = 'Standby';
     _recDuration = 0;
+    _recTranscriptPrefix = '';
+    _recSessionFinal = '';
     document.getElementById('cv-audio-overlay').classList.add('active');
   }
 
@@ -4890,26 +5835,36 @@ const ConvModule = (() => {
       const status = document.getElementById('cv-audio-status');
       const transcriptEl = document.getElementById('cv-audio-transcript');
 
+      _recTranscriptPrefix = transcriptEl.value;
+      _recSessionFinal = '';
+
       _rec.onstart = () => {
         _isRecording = true;
         _recStartTime = Date.now();
         btn.classList.add('recording');
         status.textContent = 'Listening...';
-        transcriptEl.value = '';
       };
 
       _rec.onresult = (e) => {
-        let finalT = '';
+        let interim = '';
         for (let i = e.resultIndex; i < e.results.length; ++i) {
-          if (e.results[i].isFinal) finalT += e.results[i][0].transcript;
+          const piece = e.results[i][0].transcript;
+          if (e.results[i].isFinal) _recSessionFinal += piece;
+          else interim += piece;
         }
-        if (finalT) transcriptEl.value += finalT;
+        transcriptEl.value = _recTranscriptPrefix + _recSessionFinal + interim;
       };
 
       _rec.onerror = (e) => {
         console.error('Record error', e);
+        const err = e.error || '';
+        if (err === 'aborted' || err === 'no-speech') {
+          if (_isRecording) stopRecord();
+          if (err === 'no-speech') status.textContent = '未检测到语音，可再试或手打';
+          return;
+        }
         stopRecord();
-        Toast.show('识别出错: ' + e.error);
+        Toast.show('识别出错: ' + err);
       };
 
       _rec.onend = () => { if (_isRecording) stopRecord(); };
@@ -4976,7 +5931,7 @@ const ConvModule = (() => {
     document.getElementById('cv-transfer-overlay').classList.remove('active');
   }
 
-  // ── 图片选择回调（支持多选，追加不覆盖）──
+// ── 图片选择回调（支持多选，追加不覆盖）──
   function _onImgSelected(e) {
     const files = Array.from(e.target.files);
     e.target.value = '';
@@ -5012,10 +5967,10 @@ const ConvModule = (() => {
 
   function _cancelPendingImg() {
     _pendingImgs.forEach(p => URL.revokeObjectURL(p.objectUrl));
-    _pendingImgs = [];
+    _pendingImgs =[];
     _renderImgPreviewBar();
   }
-
+  
   // 统计当前对话里 AI 已回复次数（用于判断图片是否过期）
   async function _countAiReplies() {
     try {
@@ -5046,7 +6001,7 @@ const ConvModule = (() => {
     }
   }
 
-  // ── 发送图片消息（每张独立一条消息上屏）──
+// ── 发送图片消息（每张独立一条消息上屏）──
   async function sendImgMsg() {
     if (!_pendingImgs.length || !_charId) return;
     const imgs = [..._pendingImgs];
@@ -5060,7 +6015,7 @@ const ConvModule = (() => {
       const imgPart = { type: 'image', assetKey, description: null, sentRound };
       const msg = {
         charId: _charId, role: 'user',
-        parts: [imgPart], content: '[图片]', timestamp: Date.now()
+        parts:[imgPart], content: '[图片]', timestamp: Date.now()
       };
       const newId = await DB.messages.add(msg);
       msg.id = newId;
@@ -5233,7 +6188,7 @@ const ConvModule = (() => {
     if (parts.length === 1) {
       const part = parts[0];
       if (part.type === 'audio') {
-        row.innerHTML = `${avatarHtml}${_buildAudioHtml(part, msg.id)}`;
+        row.innerHTML = `${avatarHtml}${_buildAudioHtml(part, msg.id, msg.role)}`;
         return row;
       }
       if (part.type === 'transfer') {
@@ -5245,7 +6200,7 @@ const ConvModule = (() => {
         return row;
       }
       if (part.type === 'image') {
-        row.innerHTML = `${avatarHtml}${_buildImgHtml(part)}`;
+        row.innerHTML = `${avatarHtml}${_buildImgHtml(part, msg.id)}`;
         return row;
       }
       // text（可能带 quoteRef）
@@ -5256,10 +6211,10 @@ const ConvModule = (() => {
 
     // 多 part：用 bubbles-wrap 包裹
     const bubblesHtml = parts.map(part => {
-      if (part.type === 'audio')         return _buildAudioHtml(part, msg.id);
+      if (part.type === 'audio')         return _buildAudioHtml(part, msg.id, msg.role);
       if (part.type === 'transfer')      return _buildTransferHtml(part, msg.id);
       if (part.type === 'user_transfer') return _buildUserTransferHtml(part, msg.id);
-      if (part.type === 'image')         return _buildImgHtml(part);
+      if (part.type === 'image')         return _buildImgHtml(part, msg.id);
       const quoteHtml = part.quoteRef ? _buildQuoteRefHtml(part.quoteRef) : '';
       return `<div class="cv-bubble">${quoteHtml}${_escHtml(part.content)}</div>`;
     }).join('');
@@ -5275,10 +6230,18 @@ const ConvModule = (() => {
     </div>`;
   }
 
-  function _buildAudioHtml(part, msgId) {
+  function _buildAudioHtml(part, msgId, role) {
+    const cacheKey = `audio-${msgId}`;
+    const iconHtml = role === 'assistant'
+      ? `<span data-cache-key="${cacheKey}" data-transcript="${_escHtml(part.transcript)}"
+           onclick="event.stopPropagation();ConvModule.playAudio(this)"
+           style="cursor:pointer;font-size:1.1rem;flex-shrink:0;display:flex;align-items:center;">
+           <i class="ph-fill ph-waveform"></i>
+         </span>`
+      : `<i class="ph-fill ph-waveform" style="font-size:1.1rem;flex-shrink:0;"></i>`;
     return `<div class="cv-audio-bubble" onclick="ConvModule.toggleAudio(this)">
       <div class="cv-audio-core">
-        <i class="ph-fill ph-waveform"></i>
+        ${iconHtml}
         <span class="cv-audio-name">AUDIO_MEMO.WAV</span>
         <span class="cv-audio-dur">${_fmtDuration(part.duration)}</span>
       </div>
@@ -5324,10 +6287,11 @@ const ConvModule = (() => {
   let _personaAvatarUrl = '';
 
   // ── 图片气泡 HTML ──
-  function _buildImgHtml(part) {
-    // src 用 data-asset-key 懒加载（图片是 blob URL，需异步取）
+  function _buildImgHtml(part, msgId) {
+    const novel = part.novelMergedPrompt ? '1' : '';
     return `<img class="cv-img-msg" src="" data-asset-key="${_escHtml(part.assetKey)}"
-      alt="image" onclick="ConvModule._openImgViewer(this.src)">`;
+      data-msg-id="${msgId != null ? String(msgId) : ''}" data-novel="${novel}"
+      alt="image" onclick="ConvModule._openImgViewerFromEl(this)">`;
   }
 
   // 加载图片气泡的真实 src（_appendBubble / _renderMsgList 后调用）
@@ -5346,12 +6310,91 @@ const ConvModule = (() => {
     }
   }
 
+  const _viewerCtx = { assetKey: '', msgId: null };
+
+  function _openImgViewerFromEl(el) {
+    const viewer = document.getElementById('cv-img-viewer');
+    const img    = document.getElementById('cv-img-viewer-img');
+    const regen  = document.getElementById('cv-img-viewer-regen');
+    if (!viewer || !img || !el) return;
+    const src = el.src;
+    if (!src) return;
+    img.src = src;
+    _viewerCtx.assetKey = el.dataset.assetKey || '';
+    _viewerCtx.msgId = el.dataset.msgId ? Number(el.dataset.msgId) : null;
+    const showRegen = el.dataset.novel === '1' && _viewerCtx.msgId && _viewerCtx.assetKey;
+    if (regen) regen.style.display = showRegen ? 'inline-flex' : 'none';
+    viewer.classList.add('active');
+  }
+
   function _openImgViewer(src) {
     const viewer = document.getElementById('cv-img-viewer');
     const img    = document.getElementById('cv-img-viewer-img');
+    const regen  = document.getElementById('cv-img-viewer-regen');
     if (!viewer || !img || !src) return;
     img.src = src;
+    _viewerCtx.assetKey = '';
+    _viewerCtx.msgId = null;
+    if (regen) regen.style.display = 'none';
     viewer.classList.add('active');
+  }
+
+  function _viewerDownloadImage() {
+    const img = document.getElementById('cv-img-viewer-img');
+    const src = img?.src;
+    if (!src) return;
+    const a = document.createElement('a');
+    a.href = src;
+    a.download = `chat-img-${Date.now()}.jpg`;
+    a.rel = 'noopener';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    Toast.show('已开始下载');
+  }
+
+  async function _regenerateNovelFromViewer() {
+    const { msgId, assetKey } = _viewerCtx;
+    if (!msgId || !assetKey) return;
+    const msg = await DB.messages.get(msgId).catch(() => null);
+    if (!msg?.parts) return;
+    const part = msg.parts.find(p => p.type === 'image' && p.assetKey === assetKey);
+    if (!part?.novelMergedPrompt) {
+      Toast.show('无法重新生成：缺少 Novel 提示词');
+      return;
+    }
+    const btn = document.getElementById('cv-img-viewer-regen');
+    if (btn) btn.disabled = true;
+    Toast.show('Novel 重新生成中…');
+    try {
+      let base = NovelModule.getCfg?.();
+      if (!base?.apiKey) base = await NovelModule.init?.();
+      const charNeg = await _getNovelNegative();
+      const globalNeg = (base?.negativePrompt || '').trim();
+      const effectiveNeg = (charNeg || '').trim() || globalNeg;
+      const mergedCfg = { ...(base || {}), negativePrompt: effectiveNeg };
+      const blob = await NovelModule.generateImageBlob(part.novelMergedPrompt, mergedCfg);
+      if (!blob) return;
+      Assets.clearCache(assetKey);
+      await Assets.saveBlob(assetKey, blob, 1200, 0.88);
+      const row = document.querySelector(`#cv-feed [data-msg-id="${msgId}"]`);
+      if (row) {
+        const newRow = _buildBubble(msg);
+        row.replaceWith(newRow);
+        await _hydrateImgs();
+      }
+      const vimg = document.getElementById('cv-img-viewer-img');
+      if (vimg) {
+        const url = await Assets.getUrl(assetKey);
+        if (url) vimg.src = url;
+      }
+      Toast.show('已重新生成');
+    } catch (e) {
+      console.error('[ConvModule] viewer regen', e);
+      Toast.show('重新生成失败：' + (e.message || ''));
+    } finally {
+      if (btn) btn.disabled = false;
+    }
   }
 
   // ── 发消息（上屏，不触发AI）──
@@ -5426,7 +6469,9 @@ const ConvModule = (() => {
      // 组装历史
       const histMsgs    = await DB.messages.getPage(_charId, 0, 30).catch(() => []);
       const currentRound = await _countAiReplies(); // <---【修复】改成调用全局统计函数
-      const systemPrompt = _buildSystemPrompt(histMsgs);
+      let novelImgOnForPrompt = false;
+      try { novelImgOnForPrompt = (await DB.settings.get(`novel-toggle-${_charId}`)) === true; } catch (e) {}
+      const systemPrompt = _buildSystemPrompt(histMsgs, novelImgOnForPrompt);
       const apiMessages  = await _buildApiMessages(histMsgs, activeApi, currentRound);
       console.log(`[ConvModule] 历史消息数: ${histMsgs.length}, AI轮数: ${currentRound}`);
       // 打印每条 message 的 role 和 content 类型，方便 debug
@@ -5452,15 +6497,24 @@ const ConvModule = (() => {
       let isFirstBubble = true; // <--- 新增标记
 
       for (const rawContent of rawBubbles) {
-        // ── 解析各类特殊 tag ──
-        const isRecall      = rawContent.startsWith('[RECALL]');
-        const isAcceptXfer  = !isRecall && rawContent.trim() === '[ACCEPT_TRANSFER]';
-        const rejectXferMatch = !isRecall && !isAcceptXfer && rawContent.match(/^\[REJECT_TRANSFER:(.+)\]$/);
-        const audioMatch    = !isRecall && !isAcceptXfer && !rejectXferMatch && rawContent.match(/^\[AUDIO:(\d+):(.+)\]$/s);
-        const xferMatch     = !isRecall && !isAcceptXfer && !rejectXferMatch && !audioMatch && rawContent.match(/^\[TRANSFER:([0-9,，.]+):(.+)\]$/);
-        const quoteMatch    = !isRecall && !isAcceptXfer && !rejectXferMatch && !audioMatch && !xferMatch && rawContent.match(/^\[QUOTE:(.{1,40}?)\]/);
+        const { text: strippedText, prompts: novelPrompts } = _stripNovelImgTags(rawContent);
+        // 仅有 [NOVEL_IMG]、无其它正文：开启 Novel 时上屏交给配图；未开启时上屏中文画面描述（不展示标签内英文）
+        let src = strippedText || (novelPrompts.length
+          ? novelPrompts.map(p => String(p).trim()).filter(Boolean).join(' · ')
+          : '');
+        if (!strippedText.trim() && novelPrompts.length > 0 && !novelImgOnForPrompt) {
+          src = '发来了想象中的画面。';
+        }
 
-        let displayContent = rawContent;
+        // ── 解析各类特殊 tag ──
+        const isRecall      = src.startsWith('[RECALL]');
+        const isAcceptXfer  = !isRecall && src.trim() === '[ACCEPT_TRANSFER]';
+        const rejectXferMatch = !isRecall && !isAcceptXfer && src.match(/^\[REJECT_TRANSFER:(.+)\]$/);
+        const audioMatch    = !isRecall && !isAcceptXfer && !rejectXferMatch && src.match(/^\[AUDIO:(\d+):(.+)\]$/s);
+        const xferMatch     = !isRecall && !isAcceptXfer && !rejectXferMatch && !audioMatch && src.match(/^\[TRANSFER:([0-9,，.]+):(.+)\]$/);
+        const quoteMatch    = !isRecall && !isAcceptXfer && !rejectXferMatch && !audioMatch && !xferMatch && src.match(/^\[QUOTE:(.{1,40}?)\]/);
+
+        let displayContent = src;
         let recallContent  = '';
         let recallThought  = '';
         let recallNewMsg   = '';
@@ -5520,7 +6574,7 @@ const ConvModule = (() => {
           msgParts = [{ type: 'transfer', amount: xferMatch[1].trim(), memo: xferMatch[2].trim(), status: 'pending' }];
           displayContent = `[转账 ¥${xferMatch[1].trim()}]`;
         } else if (isRecall) {
-          const withoutTag = rawContent.replace('[RECALL]', '').trim();
+          const withoutTag = src.replace('[RECALL]', '').trim();
           const thoughtIdx = withoutTag.indexOf('[THOUGHT]');
           const newMsgIdx  = withoutTag.indexOf('[NEWMSG]');
 
@@ -5547,14 +6601,46 @@ const ConvModule = (() => {
           console.log(`[ConvModule] 撤回消息解析 — 原话: "${recallContent.slice(0,20)}", 内心: "${recallThought.slice(0,20)}", 新消息: "${recallNewMsg.slice(0,20)}"`);
         } else {
           // 普通文本（可能带 QUOTE）
-          let textContent = rawContent;
+          let textContent = src;
           let quoteRef    = null;
           if (quoteMatch) {
             quoteRef    = { name: 'You', text: quoteMatch[1] };
-            textContent = rawContent.slice(quoteMatch[0].length).trim();
+            textContent = src.slice(quoteMatch[0].length).trim();
           }
           displayContent = textContent;
           msgParts = [{ type: 'text', content: textContent, ...(quoteRef ? { quoteRef } : {}) }];
+        }
+
+        // 仅有 [NOVEL_IMG]… 无其它正文：开启 Novel 时不单独上屏英文提示词，只生成配图；未开启则上屏中文（见上文 src）
+        const novelOnly = novelPrompts.length > 0 && !strippedText.trim() &&
+          msgParts.length === 1 && msgParts[0].type === 'text' &&
+          !isRecall && !audioMatch && !xferMatch;
+
+        if (novelOnly) {
+          if (!novelImgOnForPrompt) {
+            /* fall through：气泡已为中文画面描述 */
+          } else {
+          const charPos = await _getNovelPrefix();
+          const charNeg = await _getNovelNegative();
+          NovelModule.attachImagesForChar(_charId, novelPrompts, charPos, charNeg).catch(err => console.error('[ConvModule] Novel attach', err));
+          if (isFirstBubble) {
+            const convScreen = document.getElementById('conv-screen');
+            const isConvActive = convScreen.classList.contains('active');
+            const isQuickReply = convScreen.classList.contains('qr-active');
+            if (!isConvActive && !isQuickReply) {
+              NotificationModule.show({
+                charId: _charId,
+                personaId: _personaId,
+                name: _char.name,
+                msg: '[配图]',
+                avatar: _charImgUrl
+              });
+            }
+            isFirstBubble = false;
+          }
+          if (rawBubbles.length > 1) await _sleep(400);
+          continue;
+          }
         }
 
         const msg = {
@@ -5575,6 +6661,12 @@ const ConvModule = (() => {
         _offset++;
         _appendBubble(msg);
         _scrollToBottom();
+
+        if (novelPrompts.length) {
+          const charPos = await _getNovelPrefix();
+          const charNeg = await _getNovelNegative();
+          NovelModule.attachImagesForChar(_charId, novelPrompts, charPos, charNeg, { mergeIntoMsgId: msg.id }).catch(err => console.error('[ConvModule] Novel attach', err));
+        }
         
           // 【新增】：判断当前是否在聊天页，如果不在，触发全局横幅！
         if (isFirstBubble) {
@@ -5682,7 +6774,11 @@ const ConvModule = (() => {
       if (p.type === 'audio')         return `[语音消息(${_fmtDuration(p.duration)}): ${p.transcript}]`;
       if (p.type === 'transfer')      return `[转账 ¥${p.amount}: ${p.memo}，状态:${p.status === 'collected' ? '已收款' : '待收款'}]`;
       if (p.type === 'user_transfer') return `[我给你转账 ¥${p.amount}: ${p.memo}，状态:${p.status === 'accepted' ? '你已接受' : p.status === 'rejected' ? '你已拒绝' : '待你决定'}]`;
-      if (p.type === 'image')         return p.description ? `[图片：${p.description}]` : '[用户发送了一张图片]';
+      if (p.type === 'image') {
+        if (m.role === 'assistant' && p.description === '（NovelAI 配图）')
+          return '[角色发送的配图（NovelAI 生成）]';
+        return p.description ? `[图片：${p.description}]` : (m.role === 'assistant' ? '[角色发送了一张图片]' : '[用户发送了一张图片]');
+      }
       if (p.type === 'system_ticket') return '';
       if (p.quoteRef) return `[引用 ${p.quoteRef.name}: "${p.quoteRef.text}"] ${p.content}`;
       return p.content;
@@ -5690,7 +6786,7 @@ const ConvModule = (() => {
   }
 
   // ── 组装 System Prompt ──
-  function _buildSystemPrompt(histMsgs) {
+  function _buildSystemPrompt(histMsgs, novelImgOn = false) {
     const now = new Date();
     const timeCtx = `现在是 ${now.getFullYear()}年${now.getMonth()+1}月${now.getDate()}日 ${_weekDay(now)} ${_fmtTime(now)}`;
 
@@ -5706,6 +6802,22 @@ const ConvModule = (() => {
           return `[${t.getFullYear()}-${String(t.getMonth()+1).padStart(2,'0')}-${String(t.getDate()).padStart(2,'0')} ${_fmtTime(t)}] ${label}: ${_formatMsgForAI(m)}`;
         }).join('\n')
       : '（暂无历史记录）';
+
+    const novelBehaviorBlock = novelImgOn
+      ? `# 高级行为：NovelAI 配图（本对话已开启）
+当你要发送**会被系统实际绘制成图片**的内容时（不是只用中文形容画面），必须使用以下标签；**标签内必须全部为英文**（英文关键词或标签式写法，逗号分隔），以利于 NovelAI 生图。**禁止在标签内写中文**；若需要中文口语、情绪或说明，请写在**另一条**中文气泡里，与本标签用 ||| 分隔。
+
+**格式（标签内仅英文）：**
+[NOVEL_IMG]1girl, solo, upper body, soft lighting, depth of field[/NOVEL_IMG]
+
+**示例：**
+你看这张。 ||| [NOVEL_IMG]1boy, casual clothes, coffee shop, window seat, warm tone[/NOVEL_IMG]
+
+**原则：** 需要真图 → 用英文标签气泡；只需聊天里形容场景 → 可只用中文普通气泡，不要用 [NOVEL_IMG] 包中文。
+`
+      : `# 高级行为：画面描述（本对话未开启 Novel 配图）
+本对话**未**接入自动生图。当你想描述你看到的画面、想让对方想象某个场景、或「用文字发图」时，请**只用中文自然语言**在普通气泡中叙述，如同真实聊天。**不要使用** [NOVEL_IMG]…[/NOVEL_IMG]，也不要用整段英文标签代替正常中文对话。
+`;
 
     return `# 核心使命
 你将扮演我的soulmate，你的名字是【${charName}】。你的唯一任务，是彻底"成为"这个角色，拥有他/她的灵魂、记忆和情感。你的扮演对我至关重要，绝对禁止脱离角色。
@@ -5792,6 +6904,7 @@ ${histSection}
 # 高级行为：图片识别 (Image Recognition)
 当你在对话中看到图片（直接的 image_url 或 [图片：描述]），请自然地融入对话中回应图片内容，就像真实聊天中对方发了一张图一样。不要刻意说"我看到你发了图片"，直接对内容作出有温度的反应即可。
 
+${novelBehaviorBlock}
 
 **当你看到"我给你转账 ¥XXX: 备注，待你决定"时，你必须用以下格式在本次回复的【第一个气泡】中表明你的决定，然后可以继续输出普通对话气泡。**
 
@@ -5810,7 +6923,7 @@ ${histSection}
 [REJECT_TRANSFER:这钱我不能收] ||| 放回去，我请你是因为想请，不是为了让你还。
 
 # 高级行为：组合使用说明
-以上四种高级行为（撤回、语音条、转账、引用回复）可以在同一轮回复中自由组合，用 ||| 分隔不同气泡即可。每个气泡只用一种格式。
+以上高级行为（撤回、语音条、转账、引用回复${novelImgOn ? '、NovelAI 配图（仅英文标签）' : ''}）可以在同一轮回复中自由组合，用 ||| 分隔不同气泡即可。每个气泡只用一种格式。
 
 **组合示例：**
 [AUDIO:8:等一下，我先转给你。] ||| [TRANSFER:200:今天的份]
@@ -5834,6 +6947,9 @@ ${histSection}
 // ── 组装 API messages（只传最近消息，不含 system）──
   async function _buildApiMessages(histMsgs, activeApi, currentRound) {
     const result =[];
+    let novelImgOn = false;
+    try { novelImgOn = (await DB.settings.get(`novel-toggle-${_charId}`)) === true; } catch (e) {}
+
     for (const m of histMsgs) {
       if (m.role !== 'user' && m.role !== 'assistant') continue;
       const parts = m.parts?.length ? m.parts :[{ type: 'text', content: m.content || '' }];
@@ -5884,6 +7000,42 @@ ${histSection}
           const textContent = textParts.map(p => p.content || '').join('\n').trim();
           const combined = `[用户发送了一张图片，内容：${desc}]${textContent ? '\n' + textContent : ''}`;
           console.log(`[IMG] ⚠️ 走文字替代 — ${combined}`);
+          msgContent = combined;
+        }
+      } else if (imgPart && m.role === 'assistant' && novelImgOn && imgPart.assetKey) {
+        // 开启 Novel 配图时：角色发送的配图必须以真实图像送入多模态 API，不得仅用「（NovelAI 配图）」等文字代替
+        const age = currentRound - (imgPart.sentRound ?? 0);
+        const charLabel = _char?.name || '角色';
+        if (age < 3) {
+          try {
+            const b64 = await Assets.getBase64(imgPart.assetKey);
+            if (b64) {
+              const textParts = parts.filter(p => p.type !== 'image');
+              const textContent = textParts.map(p => p.content || '').join('\n').trim();
+              const contentArr = [
+                { type: 'image_url', image_url: { url: `data:image/jpeg;base64,${b64}` } }
+              ];
+              if (textContent && textContent !== '[配图]') {
+                contentArr.push({ type: 'text', text: textContent });
+              } else {
+                contentArr.push({ type: 'text', text: `${charLabel}发送的配图` });
+              }
+              console.log(`[IMG assistant+Novel] age=${age}，Vision 已加入`);
+              msgContent = contentArr;
+            }
+          } catch (e) { console.warn('[IMG assistant+Novel] base64 异常', e); }
+        }
+        if (!msgContent) {
+          if (age >= 3 && (!imgPart.description || imgPart.description === '（NovelAI 配图）')) {
+            await _convertImgToDescription(m, imgPart, activeApi);
+          }
+          const desc = (imgPart.description && imgPart.description !== '（NovelAI 配图）')
+            ? imgPart.description
+            : '（配图）';
+          const textParts = parts.filter(p => p.type !== 'image');
+          const textContent = textParts.map(p => p.content || '').join('\n').trim();
+          const combined = `[${charLabel}发送了一张图片，内容：${desc}]${textContent ? '\n' + textContent : ''}`;
+          console.log(`[IMG assistant+Novel] ⚠️ 走文字替代 age=${age} — ${combined.slice(0, 60)}…`);
           msgContent = combined;
         }
       } else {
@@ -5982,16 +7134,233 @@ function back() {
       NotifModule.refresh();
     }
   }
-  // ── 设置（占位）──
+  function _stripNovelImgTags(raw) {
+    const prompts = [];
+    const text = raw.replace(/\[NOVEL_IMG\]([\s\S]*?)\[\/NOVEL_IMG\]/gi, (_, inner) => {
+      const t = inner.trim();
+      if (t) prompts.push(t);
+      return '';
+    }).replace(/\n{3,}/g, '\n\n').trim();
+    return { text, prompts };
+  }
+
+  function _novelPrefixKey() { return `novel-prefix-${_charId}`; }
+  function _novelNegativeKey() { return `novel-negative-${_charId}`; }
+  function _novelToggleKey() { return `novel-toggle-${_charId}`; }
+
+  function _syncNovelCharPromptsVisibility() {
+    const wrap = document.getElementById('cv-novel-char-prompts-wrap');
+    const t = document.getElementById('cv-novel-toggle');
+    if (!wrap || !t) return;
+    wrap.style.display = t.classList.contains('on') ? 'block' : 'none';
+  }
+
+  async function _loadNovelPrefix() {
+    try {
+      const v = await DB.settings.get(_novelPrefixKey());
+      const ta = document.getElementById('cv-novel-prefix');
+      if (ta) ta.value = v || '';
+    } catch (e) {}
+  }
+
+  async function _saveNovelPrefix() {
+    try {
+      const v = document.getElementById('cv-novel-prefix')?.value.trim() || '';
+      await DB.settings.set(_novelPrefixKey(), v);
+    } catch (e) {}
+  }
+
+  async function _loadNovelNegative() {
+    try {
+      const v = await DB.settings.get(_novelNegativeKey());
+      const ta = document.getElementById('cv-novel-negative');
+      if (ta) ta.value = v || '';
+    } catch (e) {}
+  }
+
+  async function _saveNovelNegative() {
+    try {
+      const v = document.getElementById('cv-novel-negative')?.value.trim() || '';
+      await DB.settings.set(_novelNegativeKey(), v);
+    } catch (e) {}
+  }
+
+  async function _loadNovelToggle() {
+    try {
+      const v = await DB.settings.get(_novelToggleKey());
+      const t = document.getElementById('cv-novel-toggle');
+      if (t) t.classList.toggle('on', v === true);
+    } catch (e) {}
+  }
+
+  async function _getNovelPrefix() {
+    try { return (await DB.settings.get(_novelPrefixKey())) || ''; } catch (e) { return ''; }
+  }
+
+  async function _getNovelNegative() {
+    try { return (await DB.settings.get(_novelNegativeKey())) || ''; } catch (e) { return ''; }
+  }
+
+  async function _toggleNovel(el) {
+    el.classList.toggle('on');
+    const on = el.classList.contains('on');
+    try { await DB.settings.set(_novelToggleKey(), on); } catch (e) {}
+    _syncNovelCharPromptsVisibility();
+    Toast.show(on ? 'Novel 配图已开启' : 'Novel 配图已关闭');
+  }
+
+  function _hideNovelPending() {
+    document.getElementById('cv-novel-pending-row')?.remove();
+  }
+
+  /** 在消息流底部显示 Novel 配图进行中的占位气泡（由 NovelModule.attachImagesForChar 调用） */
+  function _showNovelPending(charId, totalCount) {
+    if (!_charId || String(charId) !== String(_charId)) return;
+    const screen = document.getElementById('conv-screen');
+    const feed = document.getElementById('cv-feed');
+    if (!screen || !feed) return;
+    if (!screen.classList.contains('active') && !screen.classList.contains('qr-active')) return;
+    _hideNovelPending();
+    const n = Math.max(1, Number(totalCount) || 1);
+    const subLine = n > 1
+      ? `本次共 ${n} 张配图，依次绘制中 · ${n} images queued`
+      : '正在连接 NovelAI 绘制画面，通常需十余秒 · Rendering, please wait';
+    const row = document.createElement('div');
+    row.id = 'cv-novel-pending-row';
+    row.className = 'cv-msg-row ai cv-novel-pending';
+    const avatarUrl = _escHtml(_charImgUrl || '');
+    row.innerHTML = `
+      <div class="cv-avatar-wrap">
+        <img src="${avatarUrl}" class="cv-msg-avatar" alt="">
+        <span class="cv-msg-time">- -</span>
+      </div>
+      <div class="cv-bubble cv-novel-pending-wrap">
+        <div class="cv-novel-pending-line">
+          <i class="ph-thin ph-aperture cv-novel-pending-spin" aria-hidden="true"></i>
+          <span>配图生成中</span>
+          <span class="cv-novel-pending-dots" aria-hidden="true"><span>.</span><span>.</span><span>.</span></span>
+        </div>
+        <div class="cv-novel-pending-sub">${_escHtml(subLine)}</div>
+      </div>`;
+    feed.appendChild(row);
+    _scrollToBottom();
+  }
+
+  async function _appendNovelImageMessage(msg) {
+    if (!_charId || String(msg.charId) !== String(_charId)) return;
+    _totalMsgs++;
+    _offset++;
+    _appendBubble(msg);
+    _hydrateImgs();
+    _scrollToBottom();
+  }
+
+  async function _replaceMessageBubble(msg) {
+    if (!_charId || String(msg.charId) !== String(_charId)) return;
+    const row = document.querySelector(`#cv-feed [data-msg-id="${msg.id}"]`);
+    if (!row) return;
+    const newRow = _buildBubble(msg);
+    row.replaceWith(newRow);
+    await _hydrateImgs();
+    _scrollToBottom();
+  }
+
   // ── 设置面板 ──
   function openSettings() {
-    // 渲染面具列表
     _renderPersonaList();
+    // 恢复当前角色的 voice ID
+    // 恢复 TTS 开关状态（会同步音色 ID 区域显隐）
+    _loadTTSToggle();
+    _loadVoiceId();
+    _loadNovelToggle();
+    _loadNovelPrefix();
+    _loadNovelNegative();
+    _syncNovelCharPromptsVisibility();
     document.getElementById('cv-settings-panel')?.classList.add('active');
   }
 
   function closeSettings() {
+    // 保存 voice ID
+    _saveVoiceId();
+    _saveNovelPrefix();
+    _saveNovelNegative();
     document.getElementById('cv-settings-panel')?.classList.remove('active');
+  }
+
+  // voice ID 存储 key：每个角色独立
+  function _voiceIdKey() { return `voice-id-${_charId}`; }
+
+  async function _loadVoiceId() {
+    try {
+      const id = await DB.settings.get(_voiceIdKey());
+      const input = document.getElementById('cv-voice-id-input');
+      if (input) input.value = id || '';
+    } catch(e) {}
+  }
+
+  async function _saveVoiceId() {
+    try {
+      const val = document.getElementById('cv-voice-id-input')?.value.trim() || '';
+      await DB.settings.set(_voiceIdKey(), val);
+    } catch(e) {}
+  }
+
+  async function _getVoiceId() {
+    try { return await DB.settings.get(_voiceIdKey()); } catch(e) { return null; }
+  }
+
+  // ── 语音条播放按钮 ──
+  let _ttsEnabled = true; // MiniMax TTS 开关，默认开
+
+  function _syncVoiceOptionsVisibility() {
+    const wrap = document.getElementById('cv-voice-options-wrap');
+    const t = document.getElementById('cv-voice-tts-toggle');
+    if (!wrap || !t) return;
+    wrap.style.display = t.classList.contains('on') ? 'block' : 'none';
+  }
+
+  async function _loadTTSToggle() {
+    try {
+      const val = await DB.settings.get('voice-tts-enabled');
+      _ttsEnabled = (val !== false); // null（未设置）或 true 均视为开启
+    } catch(e) { _ttsEnabled = true; }
+    const toggle = document.getElementById('cv-voice-tts-toggle');
+    if (toggle) toggle.classList.toggle('on', _ttsEnabled);
+    _syncVoiceOptionsVisibility();
+  }
+
+  async function _toggleTTS(el) {
+    el.classList.toggle('on');
+    _ttsEnabled = el.classList.contains('on');
+    try { await DB.settings.set('voice-tts-enabled', _ttsEnabled); } catch(e) {}
+    _syncVoiceOptionsVisibility();
+    Toast.show(_ttsEnabled ? 'MiniMax 语音已开启' : 'MiniMax 语音已关闭');
+  }
+
+  async function playAudio(btn) {
+    if (!_ttsEnabled) {
+      Toast.show('MiniMax 语音已关闭，可在聊天设置中开启');
+      return;
+    }
+    const cacheKey  = btn.dataset.cacheKey;
+    const transcript = btn.dataset.transcript;
+    const voiceId   = await _getVoiceId();
+    await VoiceModule.playAudioBubble(cacheKey, transcript, voiceId, btn);
+  }
+
+  // ── 聊天设置里的试听 ──
+  async function previewVoice() {
+    const voiceId = document.getElementById('cv-voice-id-input')?.value.trim();
+    if (!voiceId) { Toast.show('请先填写音色 ID'); return; }
+    const btn = document.getElementById('cv-voice-preview-btn');
+    if (btn) { btn.disabled = true; }
+    await VoiceModule.playAudioBubble(
+      `preview-${voiceId}`,
+      '你好，这是试听效果，希望你喜欢。',
+      voiceId,
+      btn
+    );
+    if (btn) { btn.disabled = false; }
   }
 
   function _renderPersonaList() {
@@ -6323,7 +7692,7 @@ function back() {
     return ['星期日','星期一','星期二','星期三','星期四','星期五','星期六'][d.getDay()];
   }
   function _escHtml(str) {
-    return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>');
+    return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/\n/g,'<br>');
   }
   function _sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
   function _scrollToBottom() {
@@ -6374,8 +7743,10 @@ function back() {
   // 重新封装 enter 加载头像
   const _origEnter = enter;
 
-  return { enter, back, openQuickReply, closeQuickReply,openSettings, closeSettings, openFuncPanel, loadMore, sendUserMsg, sendAndTriggerAI, fetchModels, closeApiModal, confirmApi, openRecallModal, closeRecallModal, collectTransfer, sendUserTransfer, sendImgMsg, _openImgViewer, _removePendingImg, toggleAudio, clearWallpaper, clearHistory, _toggleAccordion, _selectRadio, _selectPersona };
+  return { enter, back, openQuickReply, closeQuickReply,openSettings, closeSettings, openFuncPanel, loadMore, sendUserMsg, sendAndTriggerAI, fetchModels, closeApiModal, confirmApi, openRecallModal, closeRecallModal, collectTransfer, sendUserTransfer, sendImgMsg, _openImgViewer, _openImgViewerFromEl, _viewerDownloadImage, _regenerateNovelFromViewer, toggleAudio, clearWallpaper, clearHistory, _toggleAccordion, _selectRadio, _selectPersona,_removePendingImg,playAudio, previewVoice, _toggleTTS, _toggleNovel, _appendNovelImageMessage, _replaceMessageBubble, _showNovelPending, _hideNovelPending };
 })();
+/** 供 NovelModule 等脚本用 window 访问；const 不会自动挂到 window */
+window.ConvModule = ConvModule;
 
 // DB keys:
 //   'system-font-size'  → number (px, 12-20)
@@ -6618,6 +7989,9 @@ const SystemModule = (() => {
 
 async function init() {
   try { await DB.init(); } catch(e) { console.error('DB init failed:', e); return; }
+  
+  try { await VoiceModule.init(); } catch(e) { console.warn('voice init failed', e); }
+  try { await NovelModule.init(); } catch(e) { console.warn('novel init failed', e); }
 
   // 系统设置（字体大小 / 自定义字体）
   try { await SystemModule.init(); } catch(e) { console.warn('system restore failed', e); }
