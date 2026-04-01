@@ -14,6 +14,11 @@
 <script src="https://unpkg.com/fflate@0.8.2/umd/index.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script src="music.js"></script>
+<script src="https://unpkg.com/vconsole@latest/dist/vconsole.min.js"></script>
+<script>
+  // 初始化 VConsole
+  var vConsole = new VConsole();
+</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Noto+Sans+SC:wght@300;400;500;700&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400;1,700&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Inter:wght@300;400;500;700;900&family=Cinzel:wght@500;700&family=Noto+Serif+SC:wght@500;700;900&family=Libre+Barcode+39+Text&display=swap" rel="stylesheet">
@@ -1439,6 +1444,256 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg-body);display:flex;jus
 
 @keyframes spin { 100% { transform: rotate(360deg); } }
 
+/* ============================================================
+   Ethereal Context Menu (高定失重菜单 & 长按交互)
+   ============================================================ */
+/* 彻底禁用移动端原生菜单和文字选中，保障沉浸感 */
+#conv-screen .cv-bubble, 
+#conv-screen .cv-transfer,
+#conv-screen .cv-audio-bubble,
+#conv-screen .cv-system-ticket {
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+/* ✨ 核心修复：解除层级结界，让气泡能浮出水面 */
+#conv-screen.menu-active .cv-feed { z-index: auto !important; }
+
+/* 玻璃遮罩 */
+#conv-screen .cv-glass-overlay {
+  position: absolute; inset: 0;
+  background: rgba(239, 236, 231, 0.85); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+  z-index: 400; opacity: 0; pointer-events: none; transition: opacity 0.3s ease;
+}
+#conv-screen .cv-glass-overlay.active { opacity: 1; pointer-events: auto; }
+
+/* 菜单呼出时，未选中的气泡变灰退后 */
+#conv-screen.menu-active .cv-bubble:not(.focused):not(.cv-audio-bubble),
+#conv-screen.menu-active .cv-transfer:not(.focused),
+#conv-screen.menu-active .cv-system-ticket:not(.focused),
+#conv-screen.menu-active .cv-avatar-wrap,
+#conv-screen.menu-active .cv-audio-bubble:not(.focused) {
+  filter: grayscale(80%); opacity: 0.35; transform: scale(0.98); transition: all 0.3s ease;
+}
+
+/* 菜单呼出时，底部输入框等区域也稍微淡化 */
+#conv-screen.menu-active .cv-footer { opacity: 0.3; pointer-events: none; transition: opacity 0.3s ease; }
+
+/* ✨ 核心修复：被选中的气泡赋予极高的层级 */
+#conv-screen .cv-msg-row.row-focused { z-index: 401; position: relative; }
+#conv-screen .cv-bubble.focused, 
+#conv-screen .cv-transfer.focused,
+#conv-screen .cv-audio-bubble.focused,
+#conv-screen .cv-system-ticket.focused { 
+  z-index: 402; position: relative; transform: scale(1.02); 
+  box-shadow: 0 16px 40px rgba(0,0,0,0.12), 0 0 0 1px rgba(0,0,0,0.05) !important; 
+  transition: all 0.3s cubic-bezier(0.19, 1, 0.22, 1);
+}
+
+/* 悬浮菜单本体 */
+#conv-screen .cv-ethereal-menu { 
+  position: absolute; display: none; flex-direction: column; z-index: 405; 
+  width: calc(100% - 100px); left: 70px; 
+}
+#conv-screen .cv-eth-item { 
+  display: flex; align-items: center; padding: 12px 0; border-bottom: 0.5px solid rgba(0,0,0,0.06); cursor: pointer; 
+  opacity: 0; transform: translateY(12px) scale(0.98); transition: opacity 0.2s ease, transform 0.2s ease; 
+}
+#conv-screen .cv-eth-item:last-child { border-bottom: none; }
+
+/* 菜单项梯次入场动画 */
+#conv-screen .cv-eth-item.show { opacity: 1; transform: translateY(0) scale(1); transition: opacity 0.5s cubic-bezier(0.19, 1, 0.22, 1), transform 0.5s cubic-bezier(0.19, 1, 0.22, 1); }
+#conv-screen .cv-eth-item.show:nth-child(1) { transition-delay: 0.00s; } 
+#conv-screen .cv-eth-item.show:nth-child(2) { transition-delay: 0.05s; } 
+#conv-screen .cv-eth-item.show:nth-child(3) { transition-delay: 0.10s; } 
+#conv-screen .cv-eth-item.show:nth-child(4) { transition-delay: 0.15s; } 
+#conv-screen .cv-eth-item.show:nth-child(5) { transition-delay: 0.20s; } 
+#conv-screen .cv-eth-item.show:nth-child(6) { transition-delay: 0.25s; }
+
+#conv-screen .cv-eth-item .cv-idx, 
+#conv-screen .cv-eth-item .cv-en, 
+#conv-screen .cv-eth-item .cv-cn { transition: all 0.3s cubic-bezier(0.19, 1, 0.22, 1); }
+#conv-screen .cv-eth-item .cv-idx { font-family: var(--font-sans); font-size: 8px; font-weight: 500; color: #999; margin-right: 16px; opacity: 0.6; }
+
+/* ✨ 核心修复：强制指派 Playfair Display 字体 */
+#conv-screen .cv-eth-item .cv-en { 
+  font-family: 'Playfair Display', serif; 
+  font-size: 22px; font-style: italic; color: #121212; line-height: 1; transform-origin: left center; 
+}
+
+#conv-screen .cv-eth-item .cv-spacer { flex-grow: 1; }
+#conv-screen .cv-eth-item .cv-cn { font-family: var(--font-sans); font-size: 10px; font-weight: 700; color: #999; letter-spacing: 2px; text-transform: uppercase; }
+
+#conv-screen .cv-eth-item:active .cv-en { transform: translateX(6px) scale(1.03); letter-spacing: 0.5px; }
+#conv-screen .cv-eth-item:active .cv-cn { color: #121212; }
+#conv-screen .cv-eth-item:active .cv-idx { color: #121212; opacity: 1; }
+
+/*  Quote Preview Box (输入框上方悬浮引用)   */
+#conv-screen .cv-quote-preview-box {
+  display: none; align-items: center; justify-content: space-between;
+  position: absolute; bottom: calc(100% + 12px); left: 0; right: 0;
+  background: rgba(239, 236, 231, 0.95);
+  backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px);
+  border: 0.5px solid rgba(18,18,18,0.1); border-radius: 16px; padding: 10px 14px;
+  font-size: 11px; line-height: 1.3; box-shadow: 0 8px 24px rgba(0,0,0,0.06); z-index: 10;
+}
+#conv-screen .cv-quote-preview-box.active { display: flex; animation: cv-fade-in-up 0.3s ease forwards; }
+@keyframes cv-fade-in-up { 0% { opacity: 0; transform: translateY(10px); } 100% { opacity: 1; transform: translateY(0); } }
+
+#conv-screen .cv-qp-content {
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex: 1; margin-right: 12px; color: #121212; opacity: 0.8;
+}
+#conv-screen .cv-qp-content .cv-ref-tag {
+  font-style: italic; margin-right: 4px; font-weight: 400; border: 0.3px solid currentColor; padding: 0 3px; font-size: 8px; border-radius: 2px;
+}
+#conv-screen .cv-qp-content b { font-weight: 900; text-transform: uppercase; margin-right: 4px; letter-spacing: 0.5px;}
+
+#conv-screen .cv-qp-close-btn {
+  background: none; border: none; color: #121212; opacity: 0.4; cursor: pointer;
+  display: flex; align-items: center; justify-content: center; padding: 2px; font-size: 14px; transition: 0.2s; flex-shrink: 0;
+}
+#conv-screen .cv-qp-close-btn:active { opacity: 1; transform: scale(0.9); }
+
+/*   System Ticket (撤回/转账的居中票根)   */
+/* 给撤回专门的红字警示感 (如果需要的话) 或者保持极简灰 */
+#conv-screen .cv-system-ticket.recalled { 
+  border-top-color: #bbb; border-bottom-color: #bbb; 
+}
+#conv-screen .cv-system-ticket.recalled .cv-ticket-label { color: #888; }
+#conv-screen .cv-system-ticket.recalled .cv-ticket-val { color: #888; font-size: 11px; }
+
+/* 动态显现动画 */
+#conv-screen .cv-system-ticket.dynamic-reveal { 
+  animation: cv-ticket-reveal 0.6s cubic-bezier(0.19, 1, 0.22, 1) forwards; transform-origin: top center; 
+}
+@keyframes cv-ticket-reveal { 
+  0% { opacity: 0; transform: translateY(-8px) scaleY(0.9); clip-path: inset(0 0 100% 0); } 
+  100% { opacity: 0.85; transform: translateY(0) scaleY(1); clip-path: inset(0 0 0 0); } 
+}
+
+/*   Multi-Select & Batch Action UI (多选与批量操作)   */
+/* 多选模式开启时，隐藏原底部栏 */
+#conv-screen.multi-select-mode .cv-footer {
+  transform: translateY(150px); opacity: 0; pointer-events: none;
+}
+
+/* 多选底部操作舱 */
+.cv-ms-footer {
+  position: absolute; bottom: 24px; left: 16px; right: 16px;
+  padding: 12px 20px; background: rgba(18, 18, 18, 0.92);
+  backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px);
+  border-radius: 36px; display: flex; justify-content: space-between; align-items: center;
+  z-index: 300; transition: transform 0.4s cubic-bezier(0.19, 1, 0.22, 1), opacity 0.4s ease;
+  transform: translateY(100px); opacity: 0; pointer-events: none;
+  box-shadow: 0 15px 40px rgba(0,0,0,0.15);
+}
+#conv-screen.multi-select-mode .cv-ms-footer {
+  transform: translateY(0); opacity: 1; pointer-events: auto;
+}
+
+.cv-ms-btn-cancel {
+  color: rgba(255,255,255,0.7); font-family: 'Inter','Noto Sans SC',sans-serif; font-size: 0.9rem; font-weight: 400;
+  border: none; background: transparent; cursor: pointer; transition: 0.2s;
+}
+.cv-ms-btn-cancel:active { opacity: 0.5; }
+
+.cv-ms-actions { display: flex; gap: 16px; align-items: center; }
+.cv-ms-btn-fav, .cv-ms-btn-delete {
+  color: #fff; font-family: 'Inter','Noto Sans SC',sans-serif; font-size: 0.9rem; font-weight: 500;
+  border: none; background: transparent; cursor: pointer; display: flex; align-items: center; gap: 6px; transition: 0.2s;
+}
+.cv-ms-btn-fav i, .cv-ms-btn-delete i { font-size: 1.2rem; }
+.cv-ms-btn-delete .cv-ms-count { 
+  background: #fff; color: #121212; border-radius: 10px; padding: 1px 7px; 
+  font-size: 0.7rem; font-family: 'Space Mono',monospace; font-weight: 700;
+}
+.cv-ms-btn-fav:active, .cv-ms-btn-delete:active { transform: scale(0.95); }
+.cv-ms-btn-disabled { opacity: 0.4; pointer-events: none; }
+
+/* 多选模式下未选中的气泡变暗退后 */
+#conv-screen.multi-select-mode .cv-bubble,
+#conv-screen.multi-select-mode .cv-transfer,
+#conv-screen.multi-select-mode .cv-audio-bubble,
+#conv-screen.multi-select-mode .cv-system-ticket,
+#conv-screen.multi-select-mode .cv-avatar-wrap {
+  filter: grayscale(80%); opacity: 0.35; transform: scale(0.98); transition: all 0.3s ease;
+}
+
+/* 选中态的伪元素(对勾) */
+#conv-screen.multi-select-mode .cv-bubble::after,
+#conv-screen.multi-select-mode .cv-transfer::after,
+#conv-screen.multi-select-mode .cv-audio-bubble::after,
+#conv-screen.multi-select-mode .cv-system-ticket::after {
+    content: ''; position: absolute; top: -6px; width: 18px; height: 18px;
+    background: #121212; border-radius: 50%; border: 2px solid #fff;
+    opacity: 0; transform: scale(0); transition: all 0.3s cubic-bezier(0.19, 1, 0.22, 1); z-index: 10;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 256 256'%3E%3Cpolyline points='216 72 104 184 48 128' fill='none' stroke='%23fff' stroke-linecap='round' stroke-linejoin='round' stroke-width='24'/%3E%3C/svg%3E");
+    background-size: 10px; background-position: center; background-repeat: no-repeat;
+}
+#conv-screen.multi-select-mode .cv-msg-row.ai .cv-bubble::after,
+#conv-screen.multi-select-mode .cv-msg-row.ai .cv-transfer::after,
+#conv-screen.multi-select-mode .cv-msg-row.ai .cv-audio-bubble::after { right: -6px; }
+#conv-screen.multi-select-mode .cv-msg-row.user .cv-bubble::after,
+#conv-screen.multi-select-mode .cv-msg-row.user .cv-transfer::after,
+#conv-screen.multi-select-mode .cv-msg-row.user .cv-audio-bubble::after { left: -6px; }
+
+#conv-screen.multi-select-mode .cv-system-ticket { position: relative; }
+#conv-screen.multi-select-mode .cv-system-ticket::after { top: 50%; right: -8px; transform: translateY(-50%) scale(0); }
+
+/* 被选中状态恢复高亮并展现对勾 */
+#conv-screen.multi-select-mode .cv-msg-row.selected .cv-bubble,
+#conv-screen.multi-select-mode .cv-msg-row.selected .cv-transfer,
+#conv-screen.multi-select-mode .cv-msg-row.selected .cv-audio-bubble,
+#conv-screen.multi-select-mode .cv-system-ticket.selected {
+    filter: grayscale(0%); opacity: 1; transform: scale(1.02);
+    box-shadow: 0 0 0 1.5px #121212 !important; 
+}
+#conv-screen.multi-select-mode .cv-msg-row.selected .cv-avatar-wrap { filter: grayscale(0%); opacity: 1; transform: scale(1); }
+#conv-screen.multi-select-mode .cv-msg-row.selected .cv-bubble::after,
+#conv-screen.multi-select-mode .cv-msg-row.selected .cv-transfer::after,
+#conv-screen.multi-select-mode .cv-msg-row.selected .cv-audio-bubble::after { opacity: 1; transform: scale(1); }
+#conv-screen.multi-select-mode .cv-system-ticket.selected::after { opacity: 1; transform: translateY(-50%) scale(1); }
+
+/*   Emote Suggestion Bar (打字表情联想条)   */
+#conv-screen .cv-emote-suggest-bar {
+  display: none; align-items: center; gap: 10px; padding: 0 4px 8px 4px;
+  overflow-x: auto; scrollbar-width: none; width: 100%;
+  animation: cv-fade-in-up 0.2s ease-out forwards;
+}
+#conv-screen .cv-emote-suggest-bar::-webkit-scrollbar { display: none; }
+#conv-screen .cv-emote-suggest-img {
+  width: 52px; height: 52px; border-radius: 8px; object-fit: contain; 
+  cursor: pointer; flex-shrink: 0; border: none; 
+  background: transparent; 
+  box-shadow: none; 
+  transition: transform 0.15s;
+  mix-blend-mode: multiply; /* ✨ 新增：去白底神器 */
+}
+#conv-screen .cv-emote-suggest-img:active { transform: scale(0.9); }
+
+/*   Emote Bindings UI (表情包角色高级绑定面板)   */
+#conv-screen .cv-emote-global-bar {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 10px 12px; background: rgba(0,0,0,0.03); 
+  border-radius: 8px; margin-bottom: 12px;
+  border: 0.5px solid rgba(18,18,18,0.05);
+}
+#conv-screen .cv-emote-bind-row { 
+  display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; 
+}
+#conv-screen .cv-emote-bind-pill {
+  font-family: 'Inter', 'Noto Sans SC', sans-serif; font-size: 0.65rem; font-weight: 500;
+  padding: 4px 12px; border-radius: 100px; border: 1px solid rgba(18,18,18,0.15);
+  color: #888; background: transparent; cursor: pointer; transition: all 0.2s;
+  user-select: none; -webkit-user-select: none;
+}
+#conv-screen .cv-emote-bind-pill:active { transform: scale(0.95); }
+#conv-screen .cv-emote-bind-pill.active { 
+  background: #121212; color: #fff; border-color: #121212; 
+  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+}
+
 </style>
 </head>
 <body>
@@ -2400,7 +2655,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg-body);display:flex;jus
             <div class="cv-pc-bottom"><span class="cv-pc-en">API Node</span><span class="cv-pc-cn">接口接入</span></div>
             <i class="ph-fill ph-cpu cv-card-wm"></i>
           </div>
-          <div class="cv-panel-card cv-pc-sq">
+         <div class="cv-panel-card cv-pc-sq" id="cv-btn-emote">
             <div class="cv-pc-top"><span class="cv-pc-idx">N°.02</span><i class="ph-thin ph-smiley"></i></div>
             <div class="cv-pc-bottom"><span class="cv-pc-en">Emote</span><span class="cv-pc-cn">情绪拟态</span></div>
           </div>
@@ -2423,10 +2678,19 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg-body);display:flex;jus
           </div>
         </div>
       </div>
+      <!-- 动态打字表情包联想条 -->
+      <div class="cv-emote-suggest-bar" id="cv-emote-suggest-bar"></div>
      <!-- 图片预览条（输入框上方，选图后显示）-->
       <div class="cv-img-preview-bar" id="cv-img-preview-bar"></div>
       <!-- 隐藏的图片 file input -->
       <input type="file" id="cv-img-file-input" accept="image/*" multiple style="display:none">
+      <!-- 悬浮版引用容器 -->
+      <div id="cv-quote-preview-box" class="cv-quote-preview-box">
+        <div class="cv-qp-content">
+          <span class="cv-ref-tag">REF</span><b id="cv-qp-name">Name</b> <span id="cv-qp-text">Text</span>
+        </div>
+        <button class="cv-qp-close-btn" onclick="ConvModule.cancelQuote()"><i class="ph ph-x"></i></button>
+      </div>
       <!-- 基础输入区 -->
       <div class="cv-footer-base">
         <button class="cv-func-btn" id="cv-btn-plus"><i class="ph-thin ph-plus cv-plus-icon"></i></button>
@@ -2521,6 +2785,85 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg-body);display:flex;jus
 
         </div>
         <button class="cv-btn-confirm" id="cv-transfer-send">Initiate Transfer</button>
+      </div>
+    </div>
+    
+   <!-- Emote Modal (情绪拟态浮窗) -->
+    <div class="cv-api-overlay" id="cv-emote-overlay">
+      <div class="cv-api-modal" id="cv-emote-modal" style="max-height:85vh; overflow-y:auto;">
+        <div class="cv-modal-bg-letter">M</div>
+        <div class="cv-modal-header">
+          <div>
+            <div class="cv-mh-title">Emote Matrix</div>
+            <div class="cv-mh-sub">Expression & Mimicry</div>
+          </div>
+          <button class="cv-btn-close" onclick="EmoteModule.close()"><i class="ph ph-x"></i></button>
+        </div>
+
+        <div style="position:relative; z-index:1; margin-bottom:32px; display:flex; flex-direction:column; gap:24px;">
+          <!-- 分类管理区 -->
+          <div>
+            <div style="font-family:'Space Mono',monospace; font-size:0.6rem; color:#999; text-transform:uppercase; letter-spacing:2px; margin-bottom:12px; display:flex; justify-content:space-between; align-items:center;">
+              <span>Categories / 分类字典</span>
+              <span onclick="EmoteModule.addDict()" style="cursor:pointer; color:#121212; font-weight:700; padding:2px 6px; border:1px solid rgba(18,18,18,0.1); border-radius:4px; transition:0.2s;" onmousedown="this.style.transform='scale(0.9)'" onmouseup="this.style.transform='scale(1)'">+ NEW</span>
+            </div>
+            
+            <div class="cv-api-list" style="margin-bottom:0; border-top:0.5px solid rgba(18,18,18,0.08);" id="cv-emote-cat-list">
+              <!-- JS 动态渲染 -->
+            </div>
+          </div>
+
+          <!-- 批量操作区 -->
+          <div>
+            <div style="font-family:'Space Mono',monospace; font-size:0.6rem; color:#999; text-transform:uppercase; letter-spacing:2px; margin-bottom:8px;">Batch Import / 批量指令</div>
+            <div style="font-size:0.65rem; color:#888; margin-bottom:10px; line-height:1.6; background:rgba(0,0,0,0.02); padding:10px; border-radius:8px; border-left:2px solid rgba(18,18,18,0.2);">
+              格式：关键词与链接同行，支持中英文冒号或空格分隔。<br>
+              <span style="color:#121212; font-family:monospace; display:block; margin-top:4px;">喜欢喜欢：https://i.postimg.cc/FsZjJ54h/IMG.jpg<br>
+              为什么? https://i.postimg.cc/rpWsxxr5/IMG.jpg</span>
+            </div>
+            
+            <textarea id="cv-emote-batch-input" placeholder="确保上方选中了要操作的字典，在此粘贴内容..." style="width:100%; height:100px; padding:12px; background:rgba(255,255,255,0.5); border:1px solid rgba(18,18,18,0.1); border-radius:12px; font-family:'Space Mono',monospace; font-size:0.75rem; color:#121212; resize:none; line-height:1.5; outline:none; box-shadow:inset 0 2px 4px rgba(0,0,0,0.01); white-space: pre; margin-bottom:12px;"></textarea>
+            
+            <div style="display:flex; justify-content:space-between; gap:12px;">
+              <button class="cv-btn-mod-confirm" style="flex:2; padding:12px 0;" onclick="EmoteModule.batchImport()">Import (导入)</button>
+              <button class="cv-btn-mod-cancel" style="flex:1; padding:12px 0; color:#D93A3A; border-color:rgba(217,58,58,0.3);" onclick="EmoteModule.batchDelete()">Batch Del</button>
+            </div>
+          </div>
+        </div>
+        <button class="cv-btn-confirm" onclick="EmoteModule.close()">Close Matrix</button>
+      </div>
+    </div>
+    
+    <!-- Edit Modal (编辑消息浮窗) -->
+    <div class="cv-api-overlay" id="cv-edit-overlay">
+      <div class="cv-api-modal" id="cv-edit-modal">
+        <div class="cv-modal-bg-letter">E</div>
+        <div class="cv-modal-header">
+          <div>
+            <div class="cv-mh-title">Edit Record</div>
+            <div class="cv-mh-sub">Modify Archive Content</div>
+          </div>
+          <button class="cv-btn-close" id="cv-edit-close"><i class="ph ph-x"></i></button>
+        </div>
+        <div style="position:relative; z-index:1; margin-bottom:24px;">
+          <textarea id="cv-edit-textarea" placeholder="修改档案内容..." style="width:100%; height:160px; padding:16px; background:rgba(0,0,0,0.02); border:0.5px solid rgba(18,18,18,0.1); border-radius:12px; font-family:'Inter','Noto Sans SC',sans-serif; font-size:0.95rem; color:#121212; resize:none; line-height:1.5; outline:none; box-shadow:inset 0 2px 4px rgba(0,0,0,0.02);"></textarea>
+        </div>
+        <button class="cv-btn-confirm" id="cv-edit-confirm">Save Changes</button>
+      </div>
+    </div>
+    <!-- 自定义新建字典弹窗 -->
+    <div class="cv-modal-overlay" id="cv-emote-prompt-overlay" style="z-index: 200;">
+      <div class="cv-mag-modal" style="text-align: left;">
+        <div class="cv-modal-bg-letter">N</div>
+        <h2 class="cv-mod-title" style="margin-bottom: 24px;">New Matrix</h2>
+        <input type="text" id="cv-emote-new-name" placeholder="输入分类名称..." 
+               style="width:100%; background:transparent; border:none; border-bottom:1px solid rgba(0,0,0,0.1); font-family:'Cormorant Garamond',serif; font-size:1.5rem; padding:0.5rem 0; color:#121212; outline:none; transition:border-color 0.3s; margin-bottom:32px;"
+               onfocus="this.style.borderBottomColor='#121212'" 
+               onblur="this.style.borderBottomColor='rgba(0,0,0,0.1)'">
+        <div class="cv-mod-actions">
+          <button class="cv-btn-mod-cancel" onclick="document.getElementById('cv-emote-prompt-overlay').classList.remove('active')">Cancel</button>
+          <button class="cv-btn-mod-confirm" onclick="EmoteModule.confirmAddDict()">Create</button>
+        </div>
       </div>
     </div>
     <!-- Settings Panel -->
@@ -2791,6 +3134,30 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg-body);display:flex;jus
         <div class="cv-rm-thought-label"><i class="ph-fill ph-eye"></i> Inner Monologue</div>
         <div class="cv-rm-thought" id="cv-rm-thought">—</div>
       </div>
+    </div>
+    
+    <!-- 多选控制底部栏 -->
+    <div class="cv-ms-footer" id="cv-ms-footer">
+      <button class="cv-ms-btn-cancel" onclick="ConvModule.cancelMultiSelect()">Cancel</button>
+      <div class="cv-ms-actions">
+        <button class="cv-ms-btn-fav cv-ms-btn-disabled" id="cv-ms-btn-fav" onclick="ConvModule.favoriteSelected()">
+          <i class="ph-fill ph-star"></i>
+        </button>
+        <button class="cv-ms-btn-delete cv-ms-btn-disabled" id="cv-ms-btn-delete" onclick="ConvModule.deleteSelected()">
+          <i class="ph-fill ph-trash"></i> Delete <span class="cv-ms-count" id="cv-ms-count">0</span>
+        </button>
+      </div>
+    </div>
+    
+    <!-- 气泡交互菜单 (Ethereal Menu) -->
+    <div class="cv-glass-overlay" id="cv-glass-overlay"></div>
+    <div class="cv-ethereal-menu" id="cv-ethereal-menu">
+      <div class="cv-eth-item" onclick="ConvModule.handleMenuAction('copy')"><span class="cv-idx">01</span><span class="cv-en">Copy</span><span class="cv-spacer"></span><span class="cv-cn">复制</span></div>
+      <div class="cv-eth-item" onclick="ConvModule.handleMenuAction('edit')"><span class="cv-idx">02</span><span class="cv-en">Edit</span><span class="cv-spacer"></span><span class="cv-cn">编辑</span></div>
+      <div class="cv-eth-item" onclick="ConvModule.handleMenuAction('quote')"><span class="cv-idx">03</span><span class="cv-en">Quote</span><span class="cv-spacer"></span><span class="cv-cn">引用</span></div>
+      <div class="cv-eth-item" onclick="ConvModule.handleMenuAction('recall')"><span class="cv-idx">04</span><span class="cv-en">Recall</span><span class="cv-spacer"></span><span class="cv-cn">撤回</span></div>
+      <div class="cv-eth-item" onclick="ConvModule.handleMenuAction('select')"><span class="cv-idx">05</span><span class="cv-en">Select</span><span class="cv-spacer"></span><span class="cv-cn">多选</span></div>
+      <div class="cv-eth-item" onclick="ConvModule.handleMenuAction('reroll')"><span class="cv-idx">06</span><span class="cv-en">Reroll</span><span class="cv-spacer"></span><span class="cv-cn">重roll</span></div>
     </div>
 
   </div><!-- #conv-screen -->
@@ -3137,6 +3504,15 @@ const DB = (() => {
     });
   }
 
+async function msgDel(id) {
+    await open();
+    return new Promise((resolve, reject) => {
+      const req = tx('messages', 'readwrite').delete(Number(id));
+      req.onsuccess = () => resolve();
+      req.onerror   = e => reject(e.target.error);
+    });
+  }
+
   // 👇 新增：根据 ID 单独获取某条消息
   async function msgGet(id) {
     await open();
@@ -3156,7 +3532,7 @@ const DB = (() => {
     groups:     { getAll: groupGetAll, put: groupPut, del: groupDel },
     bindings:   { get: bindingGet, set: bindingSet },
     // 👇 在此处增加暴露 get: msgGet
-    messages:   { get: msgGet, add: msgAdd, put: msgPut, getPage: msgGetPage, countByChar: msgCountByChar, delByChar: msgDelByChar },
+   messages:   { get: msgGet, add: msgAdd, put: msgPut, getPage: msgGetPage, countByChar: msgCountByChar, delByChar: msgDelByChar, del: msgDel },
     clearAll,
     init: open,
   };
@@ -3225,7 +3601,7 @@ const Assets = (() => {
     revoke(key);
   }
 
-  // 图片压缩函数（之前漏掉了这段，导致上传直接崩溃）
+ // 图片压缩函数（已修复 PNG 透明底丢失的问题）
   function compress(file, maxPx, quality) {
     return new Promise(resolve => {
       const reader = new FileReader();
@@ -3239,8 +3615,21 @@ const Assets = (() => {
           }
           const canvas = document.createElement('canvas');
           canvas.width = w; canvas.height = h;
-          canvas.getContext('2d').drawImage(img, 0, 0, w, h);
-          canvas.toBlob(blob => resolve(blob), 'image/jpeg', quality);
+          const ctx = canvas.getContext('2d');
+          
+          // 如果不是 PNG，才填充白色底（防止 JPEG 变黑底）
+          if (file.type !== 'image/png') {
+             ctx.fillStyle = '#FFFFFF';
+             ctx.fillRect(0, 0, w, h);
+          }
+          
+          ctx.drawImage(img, 0, 0, w, h);
+          
+          // 若原图是 PNG，保留 PNG 格式输出以维持透明度
+          const outType = file.type === 'image/png' ? 'image/png' : 'image/jpeg';
+          const outQuality = outType === 'image/png' ? undefined : quality;
+          
+          canvas.toBlob(blob => resolve(blob), outType, outQuality);
         };
         img.src = e.target.result;
       };
@@ -5577,6 +5966,247 @@ const NovelModule = (() => {
 })();
 
 // ============================================================
+// EmoteModule — 表情包字典管理 (重构版：高级多选与独立全局)
+// ============================================================
+const EmoteModule = (() => {
+  let _dicts = [];
+  let _activeDictId = null;
+
+  async function init() {
+    try {
+      const saved = await DB.settings.get('emote-dicts');
+      if (saved && saved.length > 0) {
+        // 数据结构平滑迁移：把旧的 bindId 转换为新的 isGlobal 和 boundChars
+        _dicts = saved.map(d => {
+          if (d.bindId !== undefined) {
+            d.isGlobal = (d.bindId === 'global');
+            d.boundChars = (d.bindId === 'global') ? [] : [String(d.bindId)];
+            delete d.bindId;
+          }
+          if (d.isGlobal === undefined) d.isGlobal = true;
+          if (!d.boundChars) d.boundChars = [];
+          return d;
+        });
+      } else {
+        _dicts = [{ id: 'd_default', name: '默认表情包', isGlobal: true, boundChars: [], items: [] }];
+      }
+    } catch(e) {}
+  }
+
+  async function open() {
+    if (!_activeDictId && _dicts.length > 0) _activeDictId = _dicts[0].id;
+    await _render();
+    document.getElementById('cv-emote-overlay').classList.add('active');
+  }
+
+  function close() {
+    document.getElementById('cv-emote-overlay').classList.remove('active');
+  }
+
+  async function _render() {
+    const list = document.getElementById('cv-emote-cat-list');
+    if (!list) return;
+    const chars = await DB.characters.getAll().catch(()=>[]);
+
+    list.innerHTML = _dicts.map((d, i) => {
+      const isExp = _activeDictId === d.id;
+      // 状态文本：全局优先显示 Global，否则显示绑定了几个角色，一个都没绑显示 Unbound
+      const statusText = d.isGlobal ? 'Global' : (d.boundChars.length > 0 ? `Spec(${d.boundChars.length})` : 'Unbound');
+      const statusClass = d.isGlobal ? 'active' : 'idle';
+
+      // 渲染角色多选筹码 (Pills)
+      const pillsHtml = chars.map(c => {
+        const isActive = d.boundChars.includes(String(c.id));
+        return `<div class="cv-emote-bind-pill ${isActive ? 'active' : ''}" onclick="event.stopPropagation(); EmoteModule.toggleCharBind('${d.id}', '${c.id}')">${c.name}</div>`;
+      }).join('');
+
+     // 渲染表情包缩略图
+      const itemsHtml = d.items.map(em => `
+        <div title="${em.k}" style="position:relative; width:52px; height:52px; border-radius:6px; overflow:hidden; border:1px solid rgba(0,0,0,0.1); cursor:pointer; background: #fff;" onclick="event.stopPropagation(); EmoteModule.pick('${em.k}', '${em.v}')">
+          <img src="${em.v}" style="width:100%;height:100%;object-fit:cover; mix-blend-mode: multiply;">
+          <div style="position:absolute; bottom:0; width:100%; background:rgba(0,0,0,0.6); color:#fff; font-size:8px; text-align:center; padding:2px 0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${em.k}</div>
+        </div>
+      `).join('');
+
+      return `
+      <div class="cv-api-item ${isExp ? 'expanded' : ''}" onclick="EmoteModule.toggleDict('${d.id}')">
+        <div class="cv-api-item-header">
+          <div class="cv-aih-left">
+            <span class="cv-aih-num">${String(i+1).padStart(2,'0')}</span>
+            <span class="cv-aih-name">${d.name}</span>
+          </div>
+          <span class="cv-aih-status ${statusClass}" style="font-weight:600;">${statusText}</span>
+        </div>
+        <div class="cv-api-item-body">
+          <div class="cv-aib-inner" onclick="event.stopPropagation()">
+            
+            <!-- 1. 全局开关栏 -->
+            <div class="cv-emote-global-bar">
+              <div style="display:flex; flex-direction:column; gap:2px;">
+                <span style="font-family:'Playfair Display',serif; font-size:0.95rem; font-weight:600; color:#121212;">Global Access</span>
+                <span style="font-size:0.55rem; color:#999; text-transform:uppercase; letter-spacing:1px;">全局通用（开启后不受下方专属限制）</span>
+              </div>
+              <div class="cv-mag-toggle ${d.isGlobal ? 'on' : ''}" onclick="event.stopPropagation(); EmoteModule.toggleGlobal('${d.id}')"></div>
+            </div>
+            
+            <!-- 2. 角色多选栏 -->
+            <div style="margin-bottom:16px;">
+              <span style="font-family:'Space Mono',monospace; font-size:0.55rem; color:#999; text-transform:uppercase; letter-spacing:1px;">Specific Cast / 专属绑定</span>
+              <div class="cv-emote-bind-row">
+                ${pillsHtml || '<span style="font-size:0.6rem; color:#ccc;">暂无可选角色，请先创建</span>'}
+              </div>
+            </div>
+
+            <!-- 3. 表情包预览矩阵 -->
+            <div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:12px; max-height:160px; overflow-y:auto; padding:4px;">
+              ${itemsHtml || '<div style="font-size:0.7rem;color:#999;width:100%;text-align:center;padding:10px 0;">此分类暂无表情，在下方批量导入</div>'}
+            </div>
+
+            <!-- 4. 操作区 -->
+            <div style="display:flex; gap:8px;">
+              <button class="cv-btn-mod-cancel" style="flex:1; padding:10px; font-size:0.75rem; color:#D93A3A; border-color:rgba(217,58,58,0.3);" onclick="EmoteModule.deleteDict('${d.id}')">Delete Matrix (删除字典)</button>
+            </div>
+          </div>
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  async function _save() {
+    await DB.settings.set('emote-dicts', _dicts);
+    _render();
+  }
+
+  function toggleDict(id) {
+    _activeDictId = _activeDictId === id ? null : id;
+    _render();
+  }
+
+ function addDict() {
+    const input = document.getElementById('cv-emote-new-name');
+    if (input) input.value = '';
+    document.getElementById('cv-emote-prompt-overlay').classList.add('active');
+    setTimeout(() => input?.focus(), 300); // 等动画完成后聚焦
+  }
+
+  // 新增：确认创建字典
+  function confirmAddDict() {
+    const name = document.getElementById('cv-emote-new-name').value.trim();
+    if (!name) {
+      Toast.show('名称不能为空');
+      return;
+    }
+    const newId = 'd_' + Date.now();
+    _dicts.push({ id: newId, name, isGlobal: false, boundChars: [], items: [] });
+    _activeDictId = newId;
+    _save();
+    document.getElementById('cv-emote-prompt-overlay').classList.remove('active');
+    Toast.show('新字典已创建');
+  }
+
+  function toggleGlobal(id) {
+    const d = _dicts.find(x => x.id === id);
+    if (d) { d.isGlobal = !d.isGlobal; _save(); }
+  }
+
+  function toggleCharBind(id, charId) {
+    const d = _dicts.find(x => x.id === id);
+    if (!d) return;
+    const cid = String(charId);
+    if (d.boundChars.includes(cid)) {
+      d.boundChars = d.boundChars.filter(x => x !== cid);
+    } else {
+      d.boundChars.push(cid);
+    }
+    _save();
+  }
+
+  function deleteDict(id) {
+    if (_dicts.length <= 1) { Toast.show('至少保留一个字典'); return; }
+    if (confirm('确认删除这个分类字典吗？')) {
+      _dicts = _dicts.filter(x => x.id !== id);
+      _activeDictId = _dicts[0].id;
+      _save();
+    }
+  }
+
+  function batchImport() {
+    if (!_activeDictId) { Toast.show('请先展开一个字典'); return; }
+    const text = document.getElementById('cv-emote-batch-input').value;
+    if (!text.trim()) return;
+    const d = _dicts.find(x => x.id === _activeDictId);
+    if (!d) return;
+
+    let added = 0;
+    for (let line of text.split('\n')) {
+      line = line.trim();
+      if (!line) continue;
+      const match = line.match(/^(.+?)[:：\s]+(https?:\/\/[^\s]+)$/);
+      if (match) {
+        const k = match[1].trim(); const v = match[2].trim();
+        const existing = d.items.find(x => x.k === k);
+        if (existing) existing.v = v; else d.items.push({ k, v });
+        added++;
+      }
+    }
+    if (added > 0) {
+      _save();
+      document.getElementById('cv-emote-batch-input').value = '';
+      Toast.show(`成功导入/更新 ${added} 个表情`);
+    } else Toast.show('没有解析到合法格式');
+  }
+
+  function batchDelete() {
+    if (!_activeDictId) return;
+    const text = document.getElementById('cv-emote-batch-input').value;
+    if (!text.trim()) return;
+    const d = _dicts.find(x => x.id === _activeDictId);
+    if (!d) return;
+
+    const keysToDel = new Set();
+    for (let line of text.split('\n')) {
+      line = line.trim(); if(!line) continue;
+      const match = line.match(/^(.+?)[:：\s]+(https?:\/\/[^\s]+)$/);
+      if (match) keysToDel.add(match[1].trim()); else keysToDel.add(line);
+    }
+    const originalLen = d.items.length;
+    d.items = d.items.filter(em => !keysToDel.has(em.k));
+    const delCount = originalLen - d.items.length;
+
+    if (delCount > 0) {
+      _save();
+      document.getElementById('cv-emote-batch-input').value = '';
+      Toast.show(`成功删除 ${delCount} 个表情`);
+    } else Toast.show('未匹配到要删除的关键词');
+  }
+
+  // 核心提取逻辑：字典开了全局，或者专属角色里包含了当前角色，该字典就生效！
+  function getActiveEmotes(charId) {
+    let results = [];
+    const cid = String(charId);
+    _dicts.forEach(d => {
+      if (d.isGlobal || d.boundChars.includes(cid)) results.push(...d.items);
+    });
+    return results;
+  }
+
+  function getUrlByKeyword(keyword, charId) {
+    const actives = getActiveEmotes(charId);
+    const em = actives.find(x => x.k === keyword);
+    return em ? em.v : null;
+  }
+
+  function pick(keyword, url) {
+    close();
+    if (window.ConvModule && window.ConvModule.addEmoteToPreview) {
+      window.ConvModule.addEmoteToPreview(keyword, url);
+    }
+  }
+
+ return { init, open, close, toggleDict, addDict, confirmAddDict, toggleGlobal, toggleCharBind, deleteDict, batchImport, batchDelete, getActiveEmotes, getUrlByKeyword, pick };
+})();
+
+// ============================================================
 // ConvModule — 聊天页核心
 // ============================================================
 const ConvModule = (() => {
@@ -5591,7 +6221,14 @@ const ConvModule = (() => {
   let _isAiTyping = false;
   let _charImgUrl = '';
   let _pendingImgs = []; //[{ file, objectUrl }]
-
+  let _activeBubble = null;
+  let _activeRow = null;
+  let _menuPressTimer = null;
+  let _editingMsgId = null;
+  let _currentQuote = null;
+  let _isMultiSelectMode = false;
+  let _selectedMsgIds = new Set();
+  
   // ── 进入聊天 ──
   async function enter(charId, personaId) {
     _charId    = String(charId);
@@ -5668,11 +6305,53 @@ const ConvModule = (() => {
     if (!input || input._bound) return;
     input._bound = true;
 
-    // 输入框自适应
+  // 输入框自适应 & 表情包【智能模糊联想】
     input.addEventListener('input', function() {
+      // 1. 自适应高度
       this.style.height = '44px';
       if (this.scrollHeight > 44) this.style.height = this.scrollHeight + 'px';
       if (!this.value) this.style.height = '44px';
+
+      const text = this.value.trim();
+      const suggestBar = document.getElementById('cv-emote-suggest-bar');
+
+      // 2. 侦测表情字典
+      if (typeof EmoteModule !== 'undefined' && _charId) {
+        if (!text) {
+          suggestBar.style.display = 'none';
+          return;
+        }
+
+        const activeEmotes = EmoteModule.getActiveEmotes(_charId);
+        
+        // 提取用户打出的最后一个词（以标点或空格分割）
+        const words = text.split(/[\s，。！？、,!?]+/);
+        const lastWord = words[words.length - 1];
+
+        // 只要最后一个词大于等于 1 个字，就开始模糊匹配
+        if (lastWord.length >= 1) {
+          // 模糊规则：字典关键词包含你打的字，或者你打的字包含字典关键词，都算中！
+          const matches = activeEmotes.filter(em =>
+            em.k.toLowerCase().includes(lastWord.toLowerCase()) ||
+            lastWord.toLowerCase().includes(em.k.toLowerCase())
+          );
+
+          if (matches.length > 0) {
+            // 最多展示 10 个最匹配的联想，横向排开
+            // 【细节神操作】：用 onmousedown="event.preventDefault()" 确保你点击表情时，手机键盘不会掉下去！
+            suggestBar.innerHTML = matches.slice(0, 10).map(em =>
+              `<img class="cv-emote-suggest-img" src="${em.v}" alt="${em.k}" title="${em.k}" 
+                    onmousedown="event.preventDefault();" 
+                    onclick="ConvModule.addEmoteToPreview('${em.k}', '${em.v}'); document.getElementById('cv-emote-suggest-bar').style.display='none';">`
+            ).join('');
+            suggestBar.style.display = 'flex';
+          } else {
+            suggestBar.style.display = 'none';
+          }
+        } else {
+          suggestBar.style.display = 'none';
+        }
+      }
     });
     input.addEventListener('keydown', e => {
       if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); _flushAndSendUser(); }
@@ -5767,9 +6446,19 @@ const ConvModule = (() => {
     document.getElementById('cv-img-viewer')?.addEventListener('click', e => {
       if (e.target === document.getElementById('cv-img-viewer')) document.getElementById('cv-img-viewer').classList.remove('active');
     });
+    
+   // Emote (情绪拟态) 卡片
+    const btnEmote = document.getElementById('cv-btn-emote');
+    if (btnEmote) {
+      btnEmote.addEventListener('click', e => {
+        e.stopPropagation();
+        footer.classList.remove('expanded');
+        setTimeout(() => EmoteModule.open(), 200); // <--- 这里改成 EmoteModule.open()
+      });
+    }
 
-    // 占位卡片 (排除掉已实现的 API、Audio、Transfer、Lens 卡片)
-    document.querySelectorAll('#cv-footer .cv-panel-card:not(#cv-btn-api-node):not(#cv-btn-audio):not(#cv-btn-transfer):not(#cv-btn-lens)').forEach(card => {
+   // 占位卡片 (排除掉已实现的 API、Audio、Transfer、Lens、Emote 卡片)
+    document.querySelectorAll('#cv-footer .cv-panel-card:not(#cv-btn-api-node):not(#cv-btn-audio):not(#cv-btn-transfer):not(#cv-btn-lens):not(#cv-btn-emote)').forEach(card => {
       card.addEventListener('click', e => {
         e.stopPropagation();
         Toast.show('功能即将上线 ✦');
@@ -5789,6 +6478,429 @@ const ConvModule = (() => {
     document.getElementById('cv-audio-close')?.addEventListener('click', closeAudioModal);
     document.getElementById('cv-audio-record-btn')?.addEventListener('click', toggleRecord);
     document.getElementById('cv-audio-send')?.addEventListener('click', sendAudioMsg);
+    
+    // Edit Modal 事件
+    document.getElementById('cv-edit-overlay')?.addEventListener('click', e => {
+      if (e.target === document.getElementById('cv-edit-overlay')) closeEditModal();
+    });
+    document.getElementById('cv-edit-close')?.addEventListener('click', closeEditModal);
+    document.getElementById('cv-edit-confirm')?.addEventListener('click', confirmEditMsg);
+  
+  // ── 长按气泡唤出高定菜单 ──
+    const feed = document.getElementById('cv-feed');
+    if (feed && !feed._menuBound) {
+      feed._menuBound = true;
+
+      // 1. 彻底拦截浏览器原生右键/长按菜单
+      feed.addEventListener('contextmenu', e => {
+        const bubble = e.target.closest('.cv-bubble:not(.typing-capsule), .cv-transfer, .cv-audio-bubble, .cv-system-ticket');
+        if (bubble) e.preventDefault(); 
+      });
+
+      // 2. 监听按下，启动计时器
+      feed.addEventListener('pointerdown', (e) => {
+        if (e.pointerType === 'mouse' && e.button !== 0) return; // 忽略鼠标右键
+
+        const bubble = e.target.closest('.cv-bubble:not(.typing-capsule), .cv-transfer, .cv-audio-bubble, .cv-system-ticket');
+        if (!bubble) return;
+
+        _menuPressTimer = setTimeout(() => {
+          if (_activeBubble === bubble) return;
+
+          if (_activeBubble) {
+            _activeBubble.classList.remove('focused');
+            if (_activeRow) _activeRow.classList.remove('row-focused');
+          }
+
+          _activeBubble = bubble;
+          _activeRow = bubble.closest('.cv-msg-row') || bubble;
+
+          const convScreen = document.getElementById('conv-screen');
+          const overlay = document.getElementById('cv-glass-overlay');
+          const menu = document.getElementById('cv-ethereal-menu');
+
+          // 震动反馈 (手机端有效)
+          if (navigator.vibrate) navigator.vibrate(50);
+
+          convScreen.classList.add('menu-active');
+          bubble.classList.add('focused');
+          if (_activeRow) _activeRow.classList.add('row-focused');
+
+          overlay.classList.add('active');
+          menu.style.display = 'flex';
+
+          // 动态计算菜单坐标，防溢出屏幕
+          requestAnimationFrame(() => {
+            const rect = bubble.getBoundingClientRect();
+            const screenRect = convScreen.getBoundingClientRect();
+            let top = rect.bottom - screenRect.top + 16; 
+            const estimatedMenuHeight = 6 * 45; 
+            
+            if (rect.bottom + estimatedMenuHeight > window.innerHeight && rect.top > estimatedMenuHeight) {
+              top = rect.top - screenRect.top - estimatedMenuHeight - 16;
+            }
+            if (top < 20) top = 20;
+
+            menu.style.top = `${top}px`;
+
+            const items = menu.querySelectorAll('.cv-eth-item');
+            items.forEach(item => item.classList.add('show'));
+          });
+        }, 400); // 400ms 触发长按
+      });
+
+      // 3. 防误触：松手或稍微滑动屏幕时取消长按判定
+      const cancelPress = () => { if (_menuPressTimer) clearTimeout(_menuPressTimer); };
+      feed.addEventListener('pointerup', cancelPress);
+      feed.addEventListener('pointercancel', cancelPress);
+      feed.addEventListener('pointermove', (e) => {
+        // 允许微小抖动，超过 5px 判定为滑动，取消触发
+        if (Math.abs(e.movementY) > 5 || Math.abs(e.movementX) > 5) cancelPress();
+      });
+    }
+
+    // 绑定点击遮罩关闭菜单
+    const glassOverlay = document.getElementById('cv-glass-overlay');
+    if (glassOverlay && !glassOverlay._menuBound) {
+      glassOverlay._menuBound = true;
+      glassOverlay.addEventListener('click', ConvModule.closeMenu);
+    }
+
+// ── 多选模式事件劫持 (利用捕获阶段拦截点击) ──
+    if (feed && !feed._multiSelectBound) {
+      feed._multiSelectBound = true;
+      feed.addEventListener('click', e => {
+        if (_isMultiSelectMode) {
+          const row = e.target.closest('.cv-msg-row, .cv-system-ticket');
+          if (!row) return;
+          
+          // 彻底拦截点击（不弹大图、不播语音）
+          e.stopPropagation();
+          e.preventDefault();
+
+          const msgId = row.dataset.msgId;
+          if (!msgId) return;
+
+          if (_selectedMsgIds.has(String(msgId))) {
+            _selectedMsgIds.delete(String(msgId));
+            row.classList.remove('selected');
+          } else {
+            _selectedMsgIds.add(String(msgId));
+            row.classList.add('selected');
+          }
+          ConvModule.updateMultiSelectUI();
+        }
+      }, true); // 注意这里的 true，事件捕获优先执行
+    }
+  }
+    
+    // ── 打开编辑浮窗并读取 DB ──
+  async function openEditModal(msgId) {
+    try {
+      // 强转成 Number，因为 IndexedDB 的主键是数字
+      const msg = await DB.messages.get(Number(msgId));
+      if (!msg) { Toast.show('档案读取失败'); return; }
+      
+      // 查找文本部分
+      const textPart = (msg.parts || []).find(p => p.type === 'text');
+      const rawText = textPart ? textPart.content : msg.content;
+      
+      _editingMsgId = msg.id;
+      const textarea = document.getElementById('cv-edit-textarea');
+      textarea.value = rawText || '';
+      
+      document.getElementById('cv-edit-overlay').classList.add('active');
+      
+      // 延迟一点聚焦，等动画加载完
+      setTimeout(() => { textarea.focus(); }, 300);
+    } catch (e) {
+      console.error('[ConvModule] openEditModal error', e);
+      Toast.show('读取消息异常');
+    }
+  }
+
+  // ── 关闭编辑浮窗 ──
+  function closeEditModal() {
+    document.getElementById('cv-edit-overlay').classList.remove('active');
+    _editingMsgId = null;
+  }
+
+  // ── 确认保存修改并同步 UI 和 DB ──
+  async function confirmEditMsg() {
+    if (!_editingMsgId) return;
+    
+    const textarea = document.getElementById('cv-edit-textarea');
+    const newText = textarea.value.trim();
+    
+    if (!newText) { 
+      Toast.show('档案内容不能为空'); 
+      return; 
+    }
+    
+    const btn = document.getElementById('cv-edit-confirm');
+    const originalBtnText = btn.textContent;
+    btn.textContent = 'Syncing...';
+    
+    try {
+      const msg = await DB.messages.get(_editingMsgId);
+      if (msg) {
+        // 同步更新 parts 里面的 text
+        let hasTextPart = false;
+        if (msg.parts) {
+          for (let p of msg.parts) {
+            if (p.type === 'text') {
+              p.content = newText;
+              hasTextPart = true;
+            }
+          }
+        }
+        // 如果原本没有 parts 结构（兼容老数据），就补一个
+        if (!hasTextPart) {
+          msg.parts = msg.parts || [];
+          msg.parts.push({ type: 'text', content: newText });
+        }
+        
+        // 同步更新外层 fallback 字段
+        msg.content = newText;
+        
+        // 写入数据库！
+        await DB.messages.put(msg);
+        
+        // 在 UI 层面找到这个气泡并原地替换，不用刷新页面
+        const row = document.querySelector(`.cv-msg-row[data-msg-id="${_editingMsgId}"]`);
+        if (row) {
+          const newRow = _buildBubble(msg); // 调用已有的气泡渲染函数
+          row.replaceWith(newRow);
+        }
+        
+        Toast.show('记忆归档已覆写');
+      }
+    } catch (e) {
+      console.error('[ConvModule] confirmEditMsg error', e);
+      Toast.show('覆写失败');
+    } finally {
+      btn.textContent = originalBtnText;
+      closeEditModal();
+    }
+  }
+    
+    // ── 取消当前的引用 ──
+  function cancelQuote() {
+    _currentQuote = null;
+    document.getElementById('cv-quote-preview-box')?.classList.remove('active');
+  }
+  
+ // ── 用户撤回消息并持久化系统票据 ──
+  async function recallUserMessage(msgId, rowElement) {
+    if (!msgId || !rowElement) return;
+
+    try {
+      const msg = await DB.messages.get(Number(msgId));
+      if (!msg) { Toast.show('消息已不存在'); return; }
+
+      // 提取原消息内容，供 AI 阅读
+      let rawContent = msg.content || '';
+      if (msg.parts && msg.parts.length > 0) {
+        const textPart = msg.parts.find(p => p.type === 'text');
+        if (textPart) rawContent = textPart.content;
+        else if (msg.parts.find(p => p.type === 'audio')) rawContent = '[一条语音消息]';
+        else if (msg.parts.find(p => p.type === 'image')) rawContent = '[一张图片]';
+      }
+
+      // 【核心修复】：保持 role='user' 不变，利用 recalled 标记来改变渲染，并将内容塞给 AI
+      msg.recalled = true;
+      msg.content = `[系统提示：用户刚刚撤回了一条消息，撤回的内容是：“${rawContent}”。请在接下来的回复中根据性格对此做出反应（比如调侃、好奇或安抚）。]`;
+      
+      // 更新数据库
+      await DB.messages.put(msg);
+
+      // 在 UI 层原地替换成票据
+      const ticketEl = document.createElement('div');
+      ticketEl.className = 'cv-system-ticket recalled dynamic-reveal';
+      ticketEl.dataset.msgId = msg.id; 
+      ticketEl.innerHTML = `
+        <div class="cv-ticket-row">
+          <span class="cv-ticket-label">SYSTEM NOTICE</span>
+          <span class="cv-ticket-val" style="font-size: 11px;">RECALLED</span>
+        </div>
+        <div class="cv-ticket-meta">
+          <span>用户撤回了一条消息</span>
+          <span class="cv-ticket-barcode"></span>
+        </div>
+      `;
+
+      rowElement.replaceWith(ticketEl);
+      
+    } catch (e) {
+      console.error('[ConvModule] recallUserMessage error', e);
+      Toast.show('撤回失败');
+    }
+  }
+  
+  // 更新多选底栏按钮状态
+  function updateMultiSelectUI() {
+    const count = _selectedMsgIds.size;
+    document.getElementById('cv-ms-count').innerText = count;
+    
+    const delBtn = document.getElementById('cv-ms-btn-delete');
+    const favBtn = document.getElementById('cv-ms-btn-fav');
+    
+    if (count === 0) {
+      delBtn.classList.add('cv-ms-btn-disabled');
+      favBtn.classList.add('cv-ms-btn-disabled');
+    } else {
+      delBtn.classList.remove('cv-ms-btn-disabled');
+      favBtn.classList.remove('cv-ms-btn-disabled');
+    }
+  }
+
+  // 退出多选模式
+  function cancelMultiSelect() {
+    _isMultiSelectMode = false;
+    _selectedMsgIds.clear();
+    document.getElementById('conv-screen').classList.remove('multi-select-mode');
+    document.querySelectorAll('#cv-feed .selected').forEach(el => el.classList.remove('selected'));
+  }
+
+  // 收藏占位
+  function favoriteSelected() {
+    Toast.show('收藏功能待接入 ✦');
+    cancelMultiSelect();
+  }
+
+  // 批量删除
+  async function deleteSelected() {
+    if (_selectedMsgIds.size === 0) return;
+    
+    // 1. 获取要删除的 DOM 元素并立刻播放消失动画
+    const rowsToDelete = [];
+    _selectedMsgIds.forEach(id => {
+      const row = document.querySelector(`#cv-feed [data-msg-id="${id}"]`);
+      if (row) {
+        rowsToDelete.push(row);
+        row.style.transition = 'all 0.3s cubic-bezier(0.19, 1, 0.22, 1)';
+        row.style.opacity = '0';
+        row.style.transform = 'scale(0.95)';
+      }
+    });
+    
+    // 2. 同步清理数据库 (连带清理图片资产防泄露)
+    try {
+      for (let id of _selectedMsgIds) {
+        const msg = await DB.messages.get(Number(id));
+        if (msg && msg.parts) {
+          for (let p of msg.parts) {
+            if (p.type === 'image' && p.assetKey) {
+              await Assets.remove(p.assetKey).catch(()=>{});
+            }
+          }
+        }
+        await DB.messages.del(Number(id));
+      }
+      _totalMsgs -= _selectedMsgIds.size;
+    } catch(e) {
+      console.error('Delete selected msgs error', e);
+    }
+    
+    // 3. 动画播完后移除 DOM，并清理孤立的时间分割线
+    setTimeout(() => {
+      rowsToDelete.forEach(row => row.remove());
+      cancelMultiSelect();
+      
+      const feed = document.getElementById('cv-feed');
+      const timeDivs = feed.querySelectorAll('.cv-time-div');
+      timeDivs.forEach(div => {
+        // 如果时间线下紧接着是下一条时间线，说明它变成了空线，删掉
+        if (!div.nextElementSibling || div.nextElementSibling.classList.contains('cv-time-div')) {
+          div.remove();
+        }
+      });
+      Toast.show('已删除');
+    }, 300);
+  }
+  
+  // ── 重置最新一轮 AI 回复 ──
+  async function rerollAiMessage(targetMsgId) {
+    try {
+      // 1. 获取所有消息，判断最新轮次
+      const msgs = await DB.messages.getPage(_charId, 0, 9999);
+      
+      // 从后往前找，找到最后一条用户消息的位置
+      let lastUserIdx = -1;
+      for (let i = msgs.length - 1; i >= 0; i--) {
+        if (msgs[i].role === 'user') {
+          lastUserIdx = i;
+          break;
+        }
+      }
+
+      // 最后一条用户消息【之后】的所有 AI 消息，就是“最新一轮”
+      const latestAiMsgs = msgs.slice(lastUserIdx + 1).filter(m => m.role === 'assistant');
+      
+      if (latestAiMsgs.length === 0) {
+        Toast.show('当前没有可重置的回复');
+        return;
+      }
+
+      // 验证用户点击的这条消息，是否包含在“最新一轮”里
+      const isLatestRound = latestAiMsgs.some(m => String(m.id) === String(targetMsgId));
+      if (!isLatestRound) {
+        Toast.show('只能重置最新一轮的回复');
+        return;
+      }
+
+      // 2. 清理这轮消息（UI消失动画 + 删图 + 删库）
+      for (const m of latestAiMsgs) {
+        // 如果有配图，删掉图片资产防堆积
+        if (m.parts) {
+          for (const p of m.parts) {
+            if (p.type === 'image' && p.assetKey) {
+              await Assets.remove(p.assetKey).catch(()=>{});
+            }
+          }
+        }
+        
+        // 删库并扣减计数器
+        await DB.messages.del(m.id);
+        _totalMsgs--;
+        _offset--;
+        
+        // 播放优雅的消失动画
+        const row = document.querySelector(`.cv-msg-row[data-msg-id="${m.id}"]`);
+        if (row) {
+          row.style.transition = 'all 0.3s cubic-bezier(0.19, 1, 0.22, 1)';
+          row.style.opacity = '0';
+          row.style.transform = 'scale(0.95) translateY(10px)';
+          setTimeout(() => row.remove(), 300);
+        }
+      }
+
+      // 顺手清理可能因为消息被删而落单的“时间分割线”
+      setTimeout(() => {
+        const feed = document.getElementById('cv-feed');
+        const timeDivs = feed.querySelectorAll('.cv-time-div');
+        timeDivs.forEach(div => {
+          if (!div.nextElementSibling || div.nextElementSibling.classList.contains('cv-time-div')) {
+            div.remove();
+          }
+        });
+      }, 310);
+
+      // 3. 延迟 400ms（等旧消息动画消失后），带上专属标记触发 AI 重新生成！
+      setTimeout(() => {
+        _triggerAI(true); 
+      }, 400);
+
+    } catch (e) {
+      console.error('[ConvModule] Reroll error', e);
+      Toast.show('重置失败');
+    }
+  }
+  
+  // ── 添加表情包到预览区 ──
+  function addEmoteToPreview(keyword, url) {
+    _pendingImgs.push({ isEmote: true, keyword, url });
+    _renderImgPreviewBar();
   }
 
   // ── 用户语音逻辑 ──
@@ -5937,8 +7049,7 @@ const ConvModule = (() => {
     _renderImgPreviewBar();
   }
 
-  // 渲染预览条（动态生成缩略图，每张有独立删除按钮）
-  function _renderImgPreviewBar() {
+ function _renderImgPreviewBar() {
     const bar = document.getElementById('cv-img-preview-bar');
     if (!bar) return;
     if (_pendingImgs.length === 0) {
@@ -5949,7 +7060,7 @@ const ConvModule = (() => {
     bar.classList.add('visible');
     bar.innerHTML = _pendingImgs.map((item, idx) => `
       <div class="cv-img-thumb-wrap">
-        <img class="cv-img-thumb" src="${item.objectUrl}" alt="">
+        <img class="cv-img-thumb" src="${item.isEmote ? item.url : item.objectUrl}" alt="" style="${item.isEmote ? 'mix-blend-mode: multiply;' : ''}">
         <button class="cv-img-thumb-remove" onclick="ConvModule._removePendingImg(${idx})"><i class="ph ph-x"></i></button>
       </div>`).join('');
   }
@@ -5997,26 +7108,31 @@ const ConvModule = (() => {
   }
 
 // ── 发送图片消息（每张独立一条消息上屏）──
-  async function sendImgMsg() {
+ async function sendImgMsg() {
     if (!_pendingImgs.length || !_charId) return;
     const imgs = [..._pendingImgs];
-    _cancelPendingImg(); // 先清空预览，立即给用户反馈
+    _cancelPendingImg(); 
     const sentRound = await _countAiReplies();
     for (const item of imgs) {
-      const assetKey = `chat-img-${_charId}-${Date.now()}-${Math.random().toString(36).slice(2,6)}`;
-      try {
-        await Assets.save(assetKey, item.file, 1200, 0.85);
-      } catch(e) { Toast.show('图片保存失败'); continue; }
-      const imgPart = { type: 'image', assetKey, description: null, sentRound };
-      const msg = {
-        charId: _charId, role: 'user',
-        parts:[imgPart], content: '[图片]', timestamp: Date.now()
-      };
-      const newId = await DB.messages.add(msg);
-      msg.id = newId;
-      _totalMsgs++; _offset++;
-      _appendBubble(msg);
-      console.log(`[ConvModule] ↑ 图片上屏 — ${assetKey}`);
+      if (item.isEmote) {
+        // 【情绪拟态】使用直链，直接作为 image part
+        const imgPart = { type: 'image', url: item.url, description: `[表情包:${item.keyword}]`, sentRound };
+        const msg = { charId: _charId, role: 'user', parts:[imgPart], content: '[表情包]', timestamp: Date.now() };
+        const newId = await DB.messages.add(msg);
+        msg.id = newId;
+        _totalMsgs++; _offset++;
+        _appendBubble(msg);
+      } else {
+        // 【普通发图】保存 blob 到 Assets 库
+        const assetKey = `chat-img-${_charId}-${Date.now()}-${Math.random().toString(36).slice(2,6)}`;
+        try { await Assets.save(assetKey, item.file, 1200, 0.85); } catch(e) { continue; }
+        const imgPart = { type: 'image', assetKey, description: null, sentRound };
+        const msg = { charId: _charId, role: 'user', parts:[imgPart], content: '[图片]', timestamp: Date.now() };
+        const newId = await DB.messages.add(msg);
+        msg.id = newId;
+        _totalMsgs++; _offset++;
+        _appendBubble(msg);
+      }
     }
     _hydrateImgs();
     _scrollToBottom();
@@ -6148,6 +7264,7 @@ const ConvModule = (() => {
             <span class="cv-ticket-barcode"></span>
           </div>`;
       }
+      
       return el;
     }
 
@@ -6164,15 +7281,33 @@ const ConvModule = (() => {
         <span class="cv-msg-time">${_fmtTime(d)}</span>
       </div>`;
 
-    // 撤回状态
+    // 撤回状态分流渲染
     if (msg.recalled) {
-      row.classList.add('recalled');
-      row.innerHTML = `
-        <div class="cv-recall-hint" onclick="ConvModule.openRecallModal(${msg.id})">
-          <i class="ph-thin ph-feather"></i>
-          <span>${_char?.name || '对方'} 收回了一丝念头</span>
-        </div>`;
-      return row;
+      // 1. 如果是用户的撤回，渲染成灰色的票据
+      if (msg.role === 'user') {
+        const ticketEl = document.createElement('div');
+        ticketEl.className = 'cv-system-ticket recalled'; 
+        ticketEl.dataset.msgId = msg.id;
+        ticketEl.innerHTML = `
+          <div class="cv-ticket-row">
+            <span class="cv-ticket-label">SYSTEM NOTICE</span>
+            <span class="cv-ticket-val" style="font-size: 11px;">RECALLED</span>
+          </div>
+          <div class="cv-ticket-meta">
+            <span>用户撤回了一条消息</span>
+            <span class="cv-ticket-barcode"></span>
+          </div>`;
+        return ticketEl;
+      } else {
+        // 2. 如果是 AI 的撤回，保留原来的“羽毛”提示
+        row.classList.add('recalled');
+        row.innerHTML = `
+          <div class="cv-recall-hint" onclick="ConvModule.openRecallModal(${msg.id})">
+            <i class="ph-thin ph-feather"></i>
+            <span>${_char?.name || '对方'} 收回了一丝念头</span>
+          </div>`;
+        return row;
+      }
     }
 
     const parts = msg.parts?.length
@@ -6281,9 +7416,12 @@ const ConvModule = (() => {
 
   let _personaAvatarUrl = '';
 
-  // ── 图片气泡 HTML ──
   function _buildImgHtml(part, msgId) {
     const novel = part.novelMergedPrompt ? '1' : '';
+    if (part.url) {
+      // 这是表情包直链，赋予它无边框的专属裸图贴纸样式 style，并开启正片叠底去白底！
+      return `<img class="cv-img-msg" style="width:140px; max-height:140px; background:transparent; pointer-events:none; border-radius:0; box-shadow:none; object-fit:contain; mix-blend-mode: multiply;" src="${_escHtml(part.url)}" data-msg-id="${msgId != null ? String(msgId) : ''}" alt="emote">`;
+    }
     return `<img class="cv-img-msg" src="" data-asset-key="${_escHtml(part.assetKey)}"
       data-msg-id="${msgId != null ? String(msgId) : ''}" data-novel="${novel}"
       alt="image" onclick="ConvModule._openImgViewerFromEl(this)">`;
@@ -6400,7 +7538,13 @@ const ConvModule = (() => {
 
     console.log(`[ConvModule] ↑ 用户消息上屏 — "${text.slice(0, 30)}${text.length > 30 ? '…' : ''}"`);
 
-    const textPart = { type: 'text', content: text };
+   const textPart = { type: 'text', content: text };
+
+    // 【新增这几行】：如果当前有引用状态，就把引用数据注入给这个气泡，并清除状态
+    if (_currentQuote) {
+      textPart.quoteRef = { name: _currentQuote.name, text: _currentQuote.text };
+      cancelQuote(); // 注入完毕后，关掉引用 UI
+    }
 
     const msg = {
       charId:         _charId,
@@ -6434,7 +7578,7 @@ const ConvModule = (() => {
     await _triggerAI();
   }
 
-  async function _triggerAI() {
+ async function _triggerAI(isReroll = false) {
     if (_isAiTyping || !_charId || !_char) return;
     _isAiTyping = true;
     console.log(`[ConvModule] ✦ 触发 AI — char: ${_char.name}`);
@@ -6449,9 +7593,9 @@ const ConvModule = (() => {
         <img src="${_charImgUrl}" class="cv-msg-avatar" alt="">
         <span class="cv-msg-time">- -</span>
       </div>
-      <div class="cv-bubble typing-capsule">
+     <div class="cv-bubble typing-capsule">
         <i class="ph-thin ph-asterisk cv-ticking"></i>
-        <span class="cv-typing-text">Synthesizing<span class="cv-cursor"></span></span>
+        <span class="cv-typing-text">${isReroll ? 'Re-synthesizing' : 'Synthesizing'}<span class="cv-cursor"></span></span>
       </div>`;
     feed.appendChild(typingRow);
     _scrollToBottom();
@@ -6506,8 +7650,9 @@ const ConvModule = (() => {
         const isAcceptXfer  = !isRecall && src.trim() === '[ACCEPT_TRANSFER]';
         const rejectXferMatch = !isRecall && !isAcceptXfer && src.match(/^\[REJECT_TRANSFER:(.+)\]$/);
         const audioMatch    = !isRecall && !isAcceptXfer && !rejectXferMatch && src.match(/^\[AUDIO:(\d+):(.+)\]$/s);
-        const xferMatch     = !isRecall && !isAcceptXfer && !rejectXferMatch && !audioMatch && src.match(/^\[TRANSFER:([0-9,，.]+):(.+)\]$/);
-        const quoteMatch    = !isRecall && !isAcceptXfer && !rejectXferMatch && !audioMatch && !xferMatch && src.match(/^\[QUOTE:(.{1,40}?)\]/);
+       const xferMatch     = !isRecall && !isAcceptXfer && !rejectXferMatch && !audioMatch && src.match(/^\[TRANSFER:([0-9,，.]+):(.+)\]$/);
+        const emoteMatch    = !isRecall && !isAcceptXfer && !rejectXferMatch && !audioMatch && !xferMatch && src.match(/^\[EMOTE:(.+)\]$/i);
+        const quoteMatch    = !isRecall && !isAcceptXfer && !rejectXferMatch && !audioMatch && !xferMatch && !emoteMatch && src.match(/^\[QUOTE:(.{1,40}?)\]/);
 
         let displayContent = src;
         let recallContent  = '';
@@ -6564,10 +7709,21 @@ const ConvModule = (() => {
           // 语音条
           msgParts = [{ type: 'audio', duration: parseInt(audioMatch[1]), transcript: audioMatch[2].trim() }];
           displayContent = `[语音消息 ${_fmtDuration(parseInt(audioMatch[1]))}]`;
-        } else if (xferMatch) {
+       } else if (xferMatch) {
           // 转账
           msgParts = [{ type: 'transfer', amount: xferMatch[1].trim(), memo: xferMatch[2].trim(), status: 'pending' }];
           displayContent = `[转账 ¥${xferMatch[1].trim()}]`;
+        } else if (emoteMatch) {
+          // 角色发表情包
+          const keyword = emoteMatch[1].trim();
+          const url = EmoteModule.getUrlByKeyword(keyword, _charId);
+          if (url) {
+            msgParts = [{ type: 'image', url: url, description: `[表情包:${keyword}]` }];
+            displayContent = `[表情包]`;
+          } else {
+            msgParts = [{ type: 'text', content: `*试图发送表情包：${keyword}*` }];
+            displayContent = `[表情包]`;
+          }
         } else if (isRecall) {
           const withoutTag = src.replace('[RECALL]', '').trim();
           const thoughtIdx = withoutTag.indexOf('[THOUGHT]');
@@ -6761,15 +7917,26 @@ const ConvModule = (() => {
   }
   
   // ── 格式化 AI 眼中的消息 ──
-  function _formatMsgForAI(m) {
-    if (m.recalled) return '[此消息已被撤回]';
+ function _formatMsgForAI(m) {
+    if (m.recalled) {
+      // 用户的撤回透传上面包装好的系统提示给 AI；AI 的撤回仅告诉 AI 它自己撤回了
+      return m.role === 'user' ? m.content : '[此消息已被撤回]';
+    }
     if (m.role === 'system_ticket') return ''; // 系统票据不送入上下文
     const parts = m.parts?.length ? m.parts : [{ type: 'text', content: m.content || '' }];
     return parts.map(p => {
       if (p.type === 'audio')         return `[语音消息(${_fmtDuration(p.duration)}): ${p.transcript}]`;
       if (p.type === 'transfer')      return `[转账 ¥${p.amount}: ${p.memo}，状态:${p.status === 'collected' ? '已收款' : '待收款'}]`;
       if (p.type === 'user_transfer') return `[我给你转账 ¥${p.amount}: ${p.memo}，状态:${p.status === 'accepted' ? '你已接受' : p.status === 'rejected' ? '你已拒绝' : '待你决定'}]`;
-      if (p.type === 'image') {
+     if (p.type === 'image') {
+        // 【新增】：如果这是个表情包，修正 AI 的历史记忆格式
+        if (p.description && p.description.startsWith('[表情包:')) {
+          const kw = p.description.slice(5, -1); // 提取出表情包的关键词
+          // AI 自己的历史还原成指令格式，加深肌肉记忆；用户的则正常转述
+          return m.role === 'assistant' ? `[EMOTE:${kw}]` : `[用户发送了表情包：${kw}]`;
+        }
+        
+        // 普通配图的处理
         if (m.role === 'assistant' && p.description === '（NovelAI 配图）')
           return '[角色发送的配图（NovelAI 生成）]';
         return p.description ? `[图片：${p.description}]` : (m.role === 'assistant' ? '[角色发送了一张图片]' : '[用户发送了一张图片]');
@@ -6813,6 +7980,16 @@ const ConvModule = (() => {
       : `# 高级行为：画面描述（本对话未开启 Novel 配图）
 本对话**未**接入自动生图。当你想描述你看到的画面、想让对方想象某个场景、或「用文字发图」时，请**只用中文自然语言**在普通气泡中叙述，如同真实聊天。**不要使用** [NOVEL_IMG]…[/NOVEL_IMG]，也不要用整段英文标签代替正常中文对话。
 `;
+
+const emotes = typeof EmoteModule !== 'undefined' ? EmoteModule.getActiveEmotes(_charId) : [];
+    let emoteBlock = '';
+    if (emotes.length > 0) {
+      const emoteList = emotes.map(e => `- [EMOTE:${e.k}]`).join('\n');
+      emoteBlock = `\n# 高级行为：发送表情包 (Emote)\n你目前拥有以下专属表情包，可根据情绪适时使用。\n【严格白名单】：\n${emoteList}\n\n【使用规则】：\n1. 只能使用上方列表里存在的词，绝对禁止自己编造表情包描述（绝不允许手打 [图片:xxx]）。\n2. 格式必须为 [EMOTE:关键词]，且用 ||| 单独分出一个气泡。\n示例：\n太好了！ ||| [EMOTE:${emotes[0].k}]\n`;
+    } else {
+      // 没绑定表情包时的兜底防御
+      emoteBlock = `\n# 高级行为：发送表情包 (Emote)\n由于你的图库目前为空，【绝对禁止】你尝试发送任何表情包或自己编造图片代码。如果对方索要，请以符合角色的口吻自然地婉拒或用文字表达情绪。\n`;
+    }
 
     return `# 核心使命
 你将扮演我的soulmate，你的名字是【${charName}】。你的唯一任务，是彻底"成为"这个角色，拥有他/她的灵魂、记忆和情感。你的扮演对我至关重要，绝对禁止脱离角色。
@@ -6917,6 +8094,7 @@ ${novelBehaviorBlock}
 **示例（拒绝）：**
 [REJECT_TRANSFER:这钱我不能收] ||| 放回去，我请你是因为想请，不是为了让你还。
 
+${emoteBlock}
 # 高级行为：组合使用说明
 以上高级行为（撤回、语音条、转账、引用回复${novelImgOn ? '、NovelAI 配图（仅英文标签）' : ''}）可以在同一轮回复中自由组合，用 ||| 分隔不同气泡即可。每个气泡只用一种格式。
 
@@ -7737,8 +8915,201 @@ function back() {
 
   // 重新封装 enter 加载头像
   const _origEnter = enter;
+  
+  // 关闭气泡菜单
+  function closeMenu() {
+    const convScreen = document.getElementById('conv-screen');
+    const overlay = document.getElementById('cv-glass-overlay');
+    const menu = document.getElementById('cv-ethereal-menu');
 
-  return { enter, back, openQuickReply, closeQuickReply,openSettings, closeSettings, openFuncPanel, loadMore, sendUserMsg, sendAndTriggerAI, fetchModels, closeApiModal, confirmApi, openRecallModal, closeRecallModal, collectTransfer, sendUserTransfer, sendImgMsg, _openImgViewer, _openImgViewerFromEl, _viewerDownloadImage, _regenerateNovelFromViewer, toggleAudio, clearWallpaper, clearHistory, _toggleAccordion, _selectRadio, _selectPersona,_removePendingImg,playAudio, previewVoice, _toggleTTS, _toggleNovel, _appendNovelImageMessage, _replaceMessageBubble, _showNovelPending, _hideNovelPending };
+    if (!overlay || !overlay.classList.contains('active')) return;
+
+    convScreen.classList.remove('menu-active');
+    overlay.classList.remove('active');
+
+    const items = menu.querySelectorAll('.cv-eth-item');
+    items.forEach(item => item.classList.remove('show'));
+
+    if (_activeBubble) _activeBubble.classList.remove('focused');
+    if (_activeRow) _activeRow.classList.remove('row-focused');
+
+    setTimeout(() => {
+      if (!overlay.classList.contains('active')) { menu.style.display = 'none'; }
+    }, 300);
+
+    _activeBubble = null;
+    _activeRow = null;
+  }
+// 菜单功能入口
+  function handleMenuAction(action) {
+    if (!_activeBubble || !_activeRow) return;
+    
+    // 获取当前操作的消息 ID
+    const msgId = _activeRow.dataset.msgId || _activeBubble.dataset.msgId;
+    
+    // 1. Copy 复制逻辑
+    
+    if (action === 'copy') {
+      let textToCopy = '';
+      
+      if (_activeBubble.classList.contains('cv-bubble')) {
+        // 普通文本气泡：克隆一个节点用来安全处理内容
+        const clone = _activeBubble.cloneNode(true);
+        // 剔除引用框
+        const quoteRef = clone.querySelector('.cv-quote-ref');
+        if (quoteRef) quoteRef.remove();
+        // 将 HTML 的 <br> 转换为文本的换行符 \n
+        clone.innerHTML = clone.innerHTML.replace(/<br\s*[\/]?>/gi, '\n');
+        textToCopy = clone.textContent.trim();
+        
+      } else if (_activeBubble.classList.contains('cv-audio-bubble')) {
+        // 语音条：提取听写字幕
+        const transcript = _activeBubble.querySelector('.cv-transcript-text');
+        if (transcript) textToCopy = transcript.textContent.trim();
+        
+      } else {
+        Toast.show('该类型气泡无法提取文本');
+        closeMenu();
+        return;
+      }
+
+      if (textToCopy) {
+        const input = document.getElementById('cv-input');
+        if (input) {
+          if (input.value.trim() !== '') {
+            input.value += '\n' + textToCopy;
+          } else {
+            input.value = textToCopy;
+          }
+          input.dispatchEvent(new Event('input', { bubbles: true }));
+          input.focus();
+          
+          if (navigator.clipboard && window.isSecureContext) {
+            navigator.clipboard.writeText(textToCopy).catch(() => {});
+          }
+        }
+      }
+      
+      closeMenu();
+      return;
+    }
+
+    // 2. Edit 编辑逻辑
+
+    if (action === 'edit') {
+      // 避免误编辑纯音频或纯转账卡片
+      if (!_activeBubble.classList.contains('cv-bubble')) {
+        Toast.show('非文本气泡暂不支持编辑');
+        closeMenu();
+        return;
+      }
+      
+      // 呼出我们刚才写好的编辑浮窗
+      openEditModal(msgId);
+      closeMenu();
+      return;
+    }
+    
+    // 3. Quote 引用逻辑
+
+    if (action === 'quote') {
+      let textToQuote = '';
+      
+      // 提取引用文本 (剔除旧引用框 / 兼容语音条)
+      if (_activeBubble.classList.contains('cv-bubble')) {
+        const clone = _activeBubble.cloneNode(true);
+        const quoteRef = clone.querySelector('.cv-quote-ref');
+        if (quoteRef) quoteRef.remove();
+        textToQuote = clone.textContent.trim();
+      } else if (_activeBubble.classList.contains('cv-audio-bubble')) {
+        const transcript = _activeBubble.querySelector('.cv-transcript-text');
+        if (transcript) textToQuote = transcript.textContent.trim();
+      } else {
+        Toast.show('该类型气泡暂不支持引用');
+        closeMenu();
+        return;
+      }
+
+      if (textToQuote) {
+        // 限制引用的展示长度，过长加省略号
+        let shortText = textToQuote;
+        if (shortText.length > 40) shortText = shortText.substring(0, 40) + '...';
+
+        // 判断是被引用的谁：判断气泡的父容器(row)有没有 'user' 的 class
+        const isUser = _activeRow.classList.contains('user');
+        const quoteName = isUser ? 'ME' : (_char?.name || '对方');
+
+        // 把数据存入内存变量
+        _currentQuote = { name: quoteName, text: shortText };
+
+        // 更新 UI
+        document.getElementById('cv-qp-name').textContent = quoteName;
+        document.getElementById('cv-qp-text').textContent = `“${shortText}”`;
+        document.getElementById('cv-quote-preview-box').classList.add('active');
+
+        // 自动聚焦输入框方便打字
+        document.getElementById('cv-input')?.focus();
+      }
+      
+      closeMenu();
+      return;
+    }
+    
+    // 4. Recall 撤回逻辑
+    
+    if (action === 'recall') {
+      // 只能撤回用户自己的消息
+      if (!_activeRow.classList.contains('user')) {
+        Toast.show('只能撤回自己发送的消息');
+        closeMenu();
+        return;
+      }
+
+      // 执行撤回逻辑 (传入数据库 ID 和被撤回的 DOM 行)
+      recallUserMessage(msgId, _activeRow);
+      closeMenu();
+      return;
+    }
+  
+    // 5. Select 多选逻辑
+   
+    if (action === 'select') {
+      _isMultiSelectMode = true;
+      _selectedMsgIds.clear();
+      document.getElementById('conv-screen').classList.add('multi-select-mode');
+      
+      // 把当前长按的气泡直接加进选择列表
+      const targetRow = _activeRow || _activeBubble;
+      const msgId = targetRow.dataset.msgId;
+      if (msgId) {
+        _selectedMsgIds.add(String(msgId));
+        targetRow.classList.add('selected');
+      }
+      
+      updateMultiSelectUI();
+      closeMenu();
+      return;
+    }
+    
+    // 6. Reroll 重置逻辑
+    
+    if (action === 'reroll') {
+      if (_activeRow.classList.contains('user')) {
+        Toast.show('只能重置角色的回复');
+        closeMenu();
+        return;
+      }
+      
+      // 执行重roll逻辑
+      rerollAiMessage(msgId);
+      closeMenu();
+      return;
+    }
+    
+    closeMenu();
+  }
+  
+  return { enter, back, openQuickReply, closeQuickReply,openSettings, closeSettings, openFuncPanel, loadMore, sendUserMsg, sendAndTriggerAI, fetchModels, closeApiModal, confirmApi, openRecallModal, closeRecallModal, collectTransfer, sendUserTransfer, sendImgMsg, closeMenu,handleMenuAction,cancelQuote, updateMultiSelectUI, cancelMultiSelect, favoriteSelected, deleteSelected,addEmoteToPreview,_openImgViewer, _openImgViewerFromEl, _viewerDownloadImage, _regenerateNovelFromViewer, toggleAudio, clearWallpaper, clearHistory, _toggleAccordion, _selectRadio, _selectPersona,_removePendingImg,playAudio, previewVoice, _toggleTTS, _toggleNovel, _appendNovelImageMessage, _replaceMessageBubble, _showNovelPending, _hideNovelPending };
 })();
 /** 供 NovelModule 等脚本用 window 访问；const 不会自动挂到 window */
 window.ConvModule = ConvModule;
@@ -7984,9 +9355,9 @@ const SystemModule = (() => {
 
 async function init() {
   try { await DB.init(); } catch(e) { console.error('DB init failed:', e); return; }
-  
   try { await VoiceModule.init(); } catch(e) { console.warn('voice init failed', e); }
   try { await NovelModule.init(); } catch(e) { console.warn('novel init failed', e); }
+  try { await EmoteModule.init(); } catch(e) { console.warn('emote init failed', e); }
 
   // 系统设置（字体大小 / 自定义字体）
   try { await SystemModule.init(); } catch(e) { console.warn('system restore failed', e); }
