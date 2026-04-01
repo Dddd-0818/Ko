@@ -2819,9 +2819,8 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg-body);display:flex;jus
             
             <textarea id="cv-emote-batch-input" placeholder="确保上方选中了要操作的字典，在此粘贴内容..." style="width:100%; height:100px; padding:12px; background:rgba(255,255,255,0.5); border:1px solid rgba(18,18,18,0.1); border-radius:12px; font-family:'Space Mono',monospace; font-size:0.75rem; color:#121212; resize:none; line-height:1.5; outline:none; box-shadow:inset 0 2px 4px rgba(0,0,0,0.01); white-space: pre; margin-bottom:12px;"></textarea>
             
-            <div style="display:flex; justify-content:space-between; gap:12px;">
-              <button class="cv-btn-mod-confirm" style="flex:2; padding:12px 0;" onclick="EmoteModule.batchImport()">Import (导入)</button>
-              <button class="cv-btn-mod-cancel" style="flex:1; padding:12px 0; color:#D93A3A; border-color:rgba(217,58,58,0.3);" onclick="EmoteModule.batchDelete()">Batch Del</button>
+           <div style="display:flex;">
+              <button class="cv-btn-mod-confirm" style="width:100%; padding:12px 0;" onclick="EmoteModule.batchImport()">Import Matrix (批量导入)</button>
             </div>
           </div>
         </div>
@@ -5966,12 +5965,14 @@ const NovelModule = (() => {
 const EmoteModule = (() => {
   let _dicts = [];
   let _activeDictId = null;
+  // 新增：多选状态控制
+  let _isEditMode = false;
+  let _selectedEmotes = new Set(); // 存放被选中的表情 keyword
 
   async function init() {
     try {
       const saved = await DB.settings.get('emote-dicts');
       if (saved && saved.length > 0) {
-        // 数据结构平滑迁移：把旧的 bindId 转换为新的 isGlobal 和 boundChars
         _dicts = saved.map(d => {
           if (d.bindId !== undefined) {
             d.isGlobal = (d.bindId === 'global');
@@ -5990,14 +5991,46 @@ const EmoteModule = (() => {
 
   async function open() {
     if (!_activeDictId && _dicts.length > 0) _activeDictId = _dicts[0].id;
+    _isEditMode = false;
+    _selectedEmotes.clear();
     await _render();
     document.getElementById('cv-emote-overlay').classList.add('active');
   }
 
   function close() {
     document.getElementById('cv-emote-overlay').classList.remove('active');
+    _isEditMode = false;
+    _selectedEmotes.clear();
   }
 
+  // --- 新增的多选控制方法 ---
+  function toggleEditMode() {
+    _isEditMode = !_isEditMode;
+    _selectedEmotes.clear();
+    _render();
+  }
+
+  function toggleSelect(keyword) {
+    if (_selectedEmotes.has(keyword)) {
+      _selectedEmotes.delete(keyword);
+    } else {
+      _selectedEmotes.add(keyword);
+    }
+    _render();
+  }
+
+  function deleteSelected() {
+    if (_selectedEmotes.size === 0) return;
+    const d = _dicts.find(x => x.id === _activeDictId);
+    if (!d) return;
+
+    d.items = d.items.filter(em => !_selectedEmotes.has(em.k));
+    _isEditMode = false;
+    _selectedEmotes.clear();
+    _save();
+    Toast.show('已删除选中的表情');
+  }
+  
   async function _render() {
     const list = document.getElementById('cv-emote-cat-list');
     if (!list) return;
@@ -6015,13 +6048,21 @@ const EmoteModule = (() => {
         return `<div class="cv-emote-bind-pill ${isActive ? 'active' : ''}" onclick="event.stopPropagation(); EmoteModule.toggleCharBind('${d.id}', '${c.id}')">${c.name}</div>`;
       }).join('');
 
-     // 渲染表情包缩略图
-      const itemsHtml = d.items.map(em => `
-        <div title="${em.k}" style="position:relative; width:52px; height:52px; border-radius:6px; overflow:hidden; border:1px solid rgba(0,0,0,0.1); cursor:pointer; background: #fff;" onclick="event.stopPropagation(); EmoteModule.pick('${em.k}', '${em.v}')">
-          <img src="${em.v}" style="width:100%;height:100%;object-fit:cover; mix-blend-mode: multiply;">
+   // 判断当前字典是否处于多选模式
+      const isCurrentEdit = _isEditMode && _activeDictId === d.id;
+
+      // 渲染表情包缩略图 (加入选中状态和点击逻辑分流)
+      const itemsHtml = d.items.map(em => {
+        const isSel = isCurrentEdit && _selectedEmotes.has(em.k);
+        const clickAction = isCurrentEdit ? `EmoteModule.toggleSelect('${em.k}')` : `EmoteModule.pick('${em.k}', '${em.v}')`;
+        
+        return `
+        <div title="${em.k}" style="position:relative; width:52px; height:52px; border-radius:6px; overflow:hidden; border:2px solid ${isSel ? '#121212' : 'rgba(0,0,0,0.1)'}; cursor:pointer; background: #fff;" onclick="event.stopPropagation(); ${clickAction}">
+          <img src="${em.v}" style="width:100%;height:100%;object-fit:cover; mix-blend-mode: multiply; ${isSel ? 'opacity:0.4;' : ''}">
+          ${isSel ? `<div style="position:absolute;top:2px;right:2px;background:#121212;color:#fff;border-radius:50%;width:14px;height:14px;display:flex;align-items:center;justify-content:center;"><i class="ph-bold ph-check" style="font-size:10px;"></i></div>` : ''}
           <div style="position:absolute; bottom:0; width:100%; background:rgba(0,0,0,0.6); color:#fff; font-size:8px; text-align:center; padding:2px 0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${em.k}</div>
         </div>
-      `).join('');
+      `}).join('');
 
       return `
       <div class="cv-api-item ${isExp ? 'expanded' : ''}" onclick="EmoteModule.toggleDict('${d.id}')">
@@ -6052,9 +6093,20 @@ const EmoteModule = (() => {
               </div>
             </div>
 
-            <!-- 3. 表情包预览矩阵 -->
-            <div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:12px; max-height:160px; overflow-y:auto; padding:4px;">
-              ${itemsHtml || '<div style="font-size:0.7rem;color:#999;width:100%;text-align:center;padding:10px 0;">此分类暂无表情，在下方批量导入</div>'}
+            <!-- 3. 表情包预览矩阵 (支持可视化多选) -->
+            <div style="margin-bottom:12px;">
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                <span style="font-family:'Space Mono',monospace; font-size:0.55rem; color:#999; text-transform:uppercase; letter-spacing:1px;">Matrix Gallery / 矩阵图库</span>
+                <div style="display:flex; gap:8px;">
+                  ${isCurrentEdit && _selectedEmotes.size > 0 ? `<button onclick="event.stopPropagation(); EmoteModule.deleteSelected()" style="font-size:0.6rem; color:#D93A3A; background:transparent; border:1px solid rgba(217,58,58,0.3); padding:2px 8px; border-radius:4px; cursor:pointer;">删 (${_selectedEmotes.size})</button>` : ''}
+                  <span onclick="event.stopPropagation(); EmoteModule.toggleEditMode()" style="cursor:pointer; font-size:0.6rem; color:#121212; font-weight:700; padding:2px 8px; border:1px solid rgba(18,18,18,0.15); border-radius:4px; transition:0.2s;">
+                    ${isCurrentEdit ? 'Done' : 'Select'}
+                  </span>
+                </div>
+              </div>
+              <div style="display:flex; gap:8px; flex-wrap:wrap; max-height:160px; overflow-y:auto; padding:4px;">
+                ${itemsHtml || '<div style="font-size:0.7rem;color:#999;width:100%;text-align:center;padding:10px 0;">此分类暂无表情，在下方批量导入</div>'}
+              </div>
             </div>
 
             <!-- 4. 操作区 -->
@@ -6072,7 +6124,11 @@ const EmoteModule = (() => {
     _render();
   }
 
-  function toggleDict(id) {
+ function toggleDict(id) {
+    if (_activeDictId !== id) {
+      _isEditMode = false;
+      _selectedEmotes.clear();
+    }
     _activeDictId = _activeDictId === id ? null : id;
     _render();
   }
@@ -6151,30 +6207,6 @@ const EmoteModule = (() => {
     } else Toast.show('没有解析到合法格式');
   }
 
-  function batchDelete() {
-    if (!_activeDictId) return;
-    const text = document.getElementById('cv-emote-batch-input').value;
-    if (!text.trim()) return;
-    const d = _dicts.find(x => x.id === _activeDictId);
-    if (!d) return;
-
-    const keysToDel = new Set();
-    for (let line of text.split('\n')) {
-      line = line.trim(); if(!line) continue;
-      const match = line.match(/^(.+?)[:：\s]+(https?:\/\/[^\s]+)$/);
-      if (match) keysToDel.add(match[1].trim()); else keysToDel.add(line);
-    }
-    const originalLen = d.items.length;
-    d.items = d.items.filter(em => !keysToDel.has(em.k));
-    const delCount = originalLen - d.items.length;
-
-    if (delCount > 0) {
-      _save();
-      document.getElementById('cv-emote-batch-input').value = '';
-      Toast.show(`成功删除 ${delCount} 个表情`);
-    } else Toast.show('未匹配到要删除的关键词');
-  }
-
   // 核心提取逻辑：字典开了全局，或者专属角色里包含了当前角色，该字典就生效！
   function getActiveEmotes(charId) {
     let results = [];
@@ -6198,7 +6230,7 @@ const EmoteModule = (() => {
     }
   }
 
- return { init, open, close, toggleDict, addDict, confirmAddDict, toggleGlobal, toggleCharBind, deleteDict, batchImport, batchDelete, getActiveEmotes, getUrlByKeyword, pick };
+return { init, open, close, toggleDict, addDict, confirmAddDict, toggleGlobal, toggleCharBind, deleteDict, batchImport, getActiveEmotes, getUrlByKeyword, pick, toggleEditMode, toggleSelect, deleteSelected };
 })();
 
 // ============================================================
