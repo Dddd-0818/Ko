@@ -48,13 +48,34 @@
 }
 
 /* ============================================================
-   基础 Reset
+   基础 Reset (已修复安卓全局滑动问题)
    ============================================================ */
-html{font-size:var(--base-font-size);}
-*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;outline:none;}
-body{font-family:'DM Sans',sans-serif;background:var(--bg-body);display:flex;justify-content:center;align-items:center;min-height:100vh;transition:background-color .3s;color:var(--text-main);overscroll-behavior-y:none;}
-.serif{font-family:'Playfair Display',serif;}
-.device{width:390px;height:844px;background:var(--bg-device);border-radius:44px;position:relative;box-shadow:0 0 0 10px #222,0 20px 50px rgba(0,0,0,.2);overflow:hidden;}
+html {
+  font-size: var(--base-font-size);
+  /* 限制高度，防止安卓计算误差 */
+  height: 100%; 
+  overflow: hidden; 
+}
+
+* {
+  box-sizing: border-box; margin: 0; padding: 0;
+  -webkit-tap-highlight-color: transparent; outline: none;
+}
+
+body {
+  font-family: 'DM Sans', sans-serif;
+  background: var(--bg-body);
+  display: flex; justify-content: center; align-items: center;
+  /* 核心修改：使用 100% 替代 min-height:100vh，并锁死溢出 */
+  width: 100%; height: 100%; overflow: hidden; 
+  position: fixed; /* 进一步锁死 body 在视口内，防止虚拟键盘顶起整个页面 */
+  inset: 0;
+  transition: background-color .3s;
+  color: var(--text-main);
+  overscroll-behavior-y: none;
+  /* 禁用浏览器的原生下拉刷新和左右滑动前进后退 */
+  touch-action: none; 
+}
 
 /* ============================================================
    Screen / Router 层
@@ -413,207 +434,22 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg-body);display:flex;jus
 .modal-btn:active{opacity:.7;}
 
 @media(max-width:768px){
-  body{background:var(--bg-device);align-items:flex-start;}
-  .device{width:100%;height:100vh;border:none;border-radius:0;box-shadow:none;}
-  .dock-wrapper{position:fixed;bottom:0;}
-  .details-panel,.overlay,.modal-overlay{position:fixed;}
-}
-
-/* ============================================================
-   Android 性能优化 — 全局 Patch
-   ============================================================ */
-
-/* ① Screen 切换：去掉 opacity 动画，只用 transform，消双闪 */
-.screen {
-  transition: transform 0.42s cubic-bezier(0.19,1,0.22,1),
-              visibility 0s 0.42s;
-  opacity: 1 !important;
-  will-change: transform;
-  -webkit-backface-visibility: hidden;
-  backface-visibility: hidden;
-}
-.screen.active {
-  transition: transform 0.42s cubic-bezier(0.19,1,0.22,1),
-              visibility 0s 0s;
-  opacity: 1 !important;
-  visibility: visible !important;
-}
-#home-screen {
-  transition: none;
-}
-#settings-screen {
-  transition: transform 0.42s cubic-bezier(0.19,1,0.22,1),
-              visibility 0s 0.42s;
-  opacity: 1 !important;
-  will-change: transform;
-}
-#settings-screen.active {
-  transition: transform 0.42s cubic-bezier(0.19,1,0.22,1),
-              visibility 0s 0s;
-  opacity: 1 !important;
-  visibility: visible !important;
-}
-
-/* ② details-panel / modal-sheet：提前建 GPU 层 */
-.details-panel, .modal-sheet {
-  will-change: transform;
-  -webkit-backface-visibility: hidden;
-  backface-visibility: hidden;
-}
-
-/* ③ settings 子页面：提前建层 */
-.settings-page {
-  will-change: transform;
-  -webkit-backface-visibility: hidden;
-  backface-visibility: hidden;
-}
-
-/* ④ cv-settings-panel：right → transform，消卡顿最关键一条 */
-#conv-screen .cv-settings-panel {
-  right: 0 !important;
-  transform: translateX(100%);
-  transition: transform 0.5s cubic-bezier(0.19,1,0.22,1);
-  will-change: transform;
-  -webkit-backface-visibility: hidden;
-  backface-visibility: hidden;
-}
-#conv-screen .cv-settings-panel.active {
-  transform: translateX(0);
-}
-
-/* ⑤ character screen view-layer：加 will-change */
-#character-screen .view-layer {
-  will-change: transform, opacity;
-}
-
-/* ⑥ ch-edit-modal / ch-modal-overlay / ch-vault-overlay：加 will-change */
-#chat-screen .ch-edit-modal,
-#chat-screen .ch-modal-overlay,
-#chat-screen .ch-vault-overlay {
-  will-change: opacity;
-}
-#chat-screen .ch-edit-sheet {
-  will-change: transform;
-}
-
-/* ⑦ 移动端：大量 backdrop-filter 降级，这是安卓卡顿主因 */
-@media (max-width: 768px) {
-  /* icon-box 毛玻璃关掉，视觉影响最小，性能收益最大 */
-  .icon-box {
-    backdrop-filter: none;
-    -webkit-backdrop-filter: none;
+  body { 
+    background: var(--bg-device); 
+    align-items: flex-start; 
   }
-  /* dock 降低模糊半径 */
-  .dock {
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
+  
+  .device {
+    width: 100%;
+    height: 100vh; /* 兜底老版本浏览器 */
+    height: 100dvh; /* 核心修改：动态适应安卓底部导航栏和键盘 */
+    border: none; 
+    border-radius: 0; 
+    box-shadow: none;
   }
-  /* stack-card 降级 */
-  .stack-card {
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
-  }
-  /* settings 子页面降级 */
-  .settings-page {
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
-  }
-  /* conv header/footer 降低模糊 */
-  #conv-screen .cv-header,
-  #conv-screen .cv-footer {
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-  }
-  /* cv-settings-panel 降级 */
-  #conv-screen .cv-settings-panel {
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    background: rgba(239,236,231,0.98);
-  }
-  [data-theme="dark"] #conv-screen .cv-settings-panel {
-    background: rgba(20,20,20,0.98);
-  }
-  /* 各类 overlay 降级 */
-  #conv-screen .cv-api-overlay {
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
-    background: rgba(239,236,231,0.97);
-  }
-  #conv-screen .cv-modal-overlay {
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
-    background: rgba(239,236,231,0.97);
-  }
-  #cv-recall-overlay {
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
-  }
-  #chat-screen .ch-edit-modal {
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
-  }
-  #chat-screen .ch-modal-overlay {
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
-  }
-  #chat-screen .ch-vault-overlay {
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
-  }
-  .modal-overlay {
-    backdrop-filter: blur(4px);
-    -webkit-backdrop-filter: blur(4px);
-  }
-  /* char-action-btn 关掉毛玻璃 */
-  .char-action-btn {
-    backdrop-filter: none;
-    -webkit-backdrop-filter: none;
-  }
-  /* 滚动容器加 contain，减少 layout 重计算 */
-  .scroll-content,
-  .panel-list,
-  .char-roster-scroll,
-  #conv-screen .cv-sp-content,
-  #conv-screen .cv-messages {
-    contain: layout style;
-  }
-}
-
-/* ⑧ 不支持 backdrop-filter 的安卓设备：纯色兜底 */
-@supports not (backdrop-filter: blur(1px)) {
-  .stack-card {
-    backdrop-filter: none !important;
-    -webkit-backdrop-filter: none !important;
-    background: rgba(255,255,255,0.96) !important;
-  }
-  [data-theme="dark"] .stack-card {
-    background: rgba(40,40,40,0.96) !important;
-  }
-  .icon-box {
-    backdrop-filter: none !important;
-    -webkit-backdrop-filter: none !important;
-  }
-  .settings-page {
-    backdrop-filter: none !important;
-    -webkit-backdrop-filter: none !important;
-    background: var(--s-panel-bg) !important;
-  }
-  #conv-screen .cv-settings-panel {
-    backdrop-filter: none !important;
-    -webkit-backdrop-filter: none !important;
-    background: rgba(239,236,231,1) !important;
-  }
-  #conv-screen .cv-api-overlay,
-  #conv-screen .cv-modal-overlay {
-    backdrop-filter: none !important;
-    -webkit-backdrop-filter: none !important;
-    background: rgba(239,236,231,0.99) !important;
-  }
-  #cv-recall-overlay {
-    backdrop-filter: none !important;
-    -webkit-backdrop-filter: none !important;
-    background: rgba(18,18,18,0.7) !important;
-  }
+  
+  .dock-wrapper { position: fixed; bottom: 0; }
+  .details-panel, .overlay, .modal-overlay { position: fixed; }
 }
 
 /* ============================================================
@@ -1473,17 +1309,45 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg-body);display:flex;jus
 /* 隐藏转账金额输入框的上下箭头 */
 #cv-transfer-amount-input::-webkit-outer-spin-button,
 #cv-transfer-amount-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
-#cv-transfer-amount-input { -moz-appearance: textfield; }/* ============================================================
-   Conv Settings Panel
+#cv-transfer-amount-input { -moz-appearance: textfield; }
+
+/* ============================================================
+   Conv Settings Panel (已修复安卓卡顿双闪)
    ============================================================ */
 #conv-screen .cv-settings-panel {
-  position:absolute;top:0;right:-100%;width:100%;height:100%;
-  background:rgba(239,236,231,0.95);backdrop-filter:blur(30px);-webkit-backdrop-filter:blur(30px);
-  border-left:0.5px solid rgba(18,18,18,0.1);box-shadow:-20px 0 50px rgba(0,0,0,0.05);
-  z-index:80;display:flex;flex-direction:column;transition:right 0.6s cubic-bezier(0.19,1,0.22,1);
+  position: absolute; top: 0; right: 0; /* 初始就靠右，不要写 -100% */
+  width: 100%; height: 100%;
+  background: rgba(239,236,231,0.95);
+  backdrop-filter: blur(30px); -webkit-backdrop-filter: blur(30px);
+  border-left: 0.5px solid rgba(18,18,18,0.1); 
+  box-shadow: -20px 0 50px rgba(0,0,0,0.05);
+  z-index: 80; display: flex; flex-direction: column;
+  
+  /* 核心修改 1：使用 translate3d 开启 GPU 硬件加速 */
+  transform: translate3d(100%, 0, 0); 
+  
+  /* 核心修改 2：隐藏时彻底移出渲染树，避免后台持续消耗性能 */
+  visibility: hidden; 
+  transition: transform 0.6s cubic-bezier(0.19,1,0.22,1), visibility 0.6s;
+  
+  /* 核心修改 3：解决安卓毛玻璃动画双闪/黑屏的玄学补丁 */
+  backface-visibility: hidden;
+  perspective: 1000;
+  will-change: transform;
 }
-#conv-screen .cv-settings-panel.active { right:0; }
-#conv-screen .cv-sp-header { padding:calc(env(safe-area-inset-top,20px) + 30px) 24px 20px;display:flex;justify-content:space-between;align-items:flex-end;border-bottom:0.5px solid rgba(18,18,18,0.1); }
+
+#conv-screen .cv-settings-panel.active { 
+  transform: translate3d(0, 0, 0); 
+  visibility: visible;
+  /* 移入时取消 visibility 的延迟 */
+  transition: transform 0.6s cubic-bezier(0.19,1,0.22,1); 
+}
+#conv-screen .cv-sp-header { 
+  padding: calc(env(safe-area-inset-top, 20px) + 30px) 24px 20px; 
+  display: flex; justify-content: space-between; align-items: flex-end; 
+  border-bottom: 0.5px solid rgba(18,18,18,0.1); 
+}
+
 #conv-screen .cv-sp-title-en { font-family:'Playfair Display',serif;font-size:2.4rem;font-style:italic;font-weight:500;color:#121212;line-height:1; }
 #conv-screen .cv-sp-title-cn { font-size:0.65rem;color:#999;letter-spacing:2px;text-transform:uppercase;margin-top:8px;font-weight:700; }
 #conv-screen .cv-sp-close { width:44px;height:44px;border-radius:50%;border:0.5px solid #121212;background:transparent;color:#121212;font-size:1.2rem;display:flex;justify-content:center;align-items:center;cursor:pointer;transition:0.3s; }
@@ -3864,9 +3728,7 @@ const Router = (() => {
       const map = { settings:'settings-screen', character:'character-screen', chat:'chat-screen', conv:'conv-screen' };
       const screenId = map[target];
       TOP_SCREENS.forEach(id => { if (id !== screenId) document.getElementById(id)?.classList.remove('active'); });
-      const _targetScreen = document.getElementById(screenId);
-      void _targetScreen.offsetWidth; // 强制 reflow，消首帧闪（Android fix）
-      _targetScreen.classList.add('active');
+      document.getElementById(screenId).classList.add('active');
       _onEnterScreen(target);
       return;
     }
@@ -3879,7 +3741,6 @@ const Router = (() => {
     const stack = _subStack[parentScreen];
     // 隐藏当前栈顶页
     if (stack.length) document.getElementById(stack[stack.length - 1])?.classList.remove('active');
-    void el.offsetWidth; // 强制 reflow，消首帧闪（Android fix）
     el.classList.add('active');
     stack.push(target);
     if (watermark) {
@@ -4342,13 +4203,7 @@ document.querySelector('.device').addEventListener('click', () => {
 // ============================================================
 // Panel
 // ============================================================
-function openPanel()  {
-  const _overlay = document.getElementById('overlay');
-  const _panel   = document.getElementById('panel');
-  void _overlay.offsetWidth; // Android fix
-  _overlay.classList.add('active');
-  _panel.classList.add('active');
-}
+function openPanel()  { document.getElementById('overlay').classList.add('active');    document.getElementById('panel').classList.add('active'); }
 function closePanel() { document.getElementById('overlay').classList.remove('active'); document.getElementById('panel').classList.remove('active'); }
 
 // ============================================================
@@ -4457,8 +4312,7 @@ const CharacterModule = (() => {
   function showView(view) {
     const map = { list: 'char-view-list', detail: 'char-view-detail', form: 'char-view-form' };
     document.querySelectorAll('#character-screen .view-layer').forEach(el => el.classList.remove('active'));
-    const _viewEl = document.getElementById(map[view]);
-    if (_viewEl) { void _viewEl.offsetWidth; _viewEl.classList.add('active'); } // Android fix
+    document.getElementById(map[view])?.classList.add('active');
   }
 
   // ── 渲染列表 ──
@@ -4852,9 +4706,7 @@ const PersonaModule = (() => {
 
   function openVault() {
     _renderVaultList();
-    const _vault = document.getElementById('ch-vault-overlay');
-    void _vault.offsetWidth; // Android fix
-    _vault.classList.add('active');
+    document.getElementById('ch-vault-overlay').classList.add('active');
   }
 
   function closeVault() {
@@ -8685,8 +8537,7 @@ function back() {
     _loadNovelPrefix();
     _loadNovelNegative();
     _syncNovelCharPromptsVisibility();
-    const _sp = document.getElementById('cv-settings-panel');
-    if (_sp) { void _sp.offsetWidth; _sp.classList.add('active'); } // Android fix
+    document.getElementById('cv-settings-panel')?.classList.add('active');
   }
 
   function closeSettings() {
