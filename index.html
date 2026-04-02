@@ -48,12 +48,13 @@
 }
 
 /* ============================================================
-   基础 Reset (已修复安卓全局滑动问题)
+   基础 Reset (完美兼容 iOS PWA 与 安卓)
    ============================================================ */
 html {
   font-size: var(--base-font-size);
-  /* 限制高度，防止安卓计算误差 */
-  height: 100%; 
+  width: 100%;
+  height: 100vh; /* 兜底老设备 */
+  height: 100dvh; /* 现代视口适配，解决白边 */
   overflow: hidden; 
 }
 
@@ -66,15 +67,11 @@ body {
   font-family: 'DM Sans', sans-serif;
   background: var(--bg-body);
   display: flex; justify-content: center; align-items: center;
-  /* 核心修改：使用 100% 替代 min-height:100vh，并锁死溢出 */
-  width: 100%; height: 100%; overflow: hidden; 
-  position: fixed; /* 进一步锁死 body 在视口内，防止虚拟键盘顶起整个页面 */
-  inset: 0;
+  width: 100%; height: 100%; 
+  overflow: hidden; /* 锁死外部滚动，防安卓整体滑动 */
   transition: background-color .3s;
   color: var(--text-main);
   overscroll-behavior-y: none;
-  /* 禁用浏览器的原生下拉刷新和左右滑动前进后退 */
-  touch-action: none; 
 }
 
 /* ============================================================
@@ -314,7 +311,20 @@ body {
    Settings Screen
    ============================================================ */
 .bg-watermark{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-family:'Playfair Display',serif;font-size:500px;font-style:italic;color:var(--s-watermark);pointer-events:none;z-index:0;line-height:1;white-space:nowrap;transition:opacity 0.3s ease;}
-.main-view{position:relative;z-index:1;padding:calc(env(safe-area-inset-top,40px) + 80px) 40px 40px 40px;height:100%;display:flex;flex-direction:column;justify-content:flex-start;}
+.main-view {
+  position: relative; z-index: 1;
+  /* 底部增加安全区 padding，防止被 iOS 小黑条挡住 */
+  padding: calc(env(safe-area-inset-top,40px) + 80px) 40px calc(env(safe-area-inset-bottom, 24px) + 60px) 40px;
+  height: 100%; display: flex; flex-direction: column; justify-content: flex-start;
+  /* 核心：开启内部滚动，装不下时可以丝滑滚动到底 */
+  overflow-y: auto; 
+  -webkit-overflow-scrolling: touch;
+}
+
+/* 隐藏滚动条让视觉更干净 */
+.main-view::-webkit-scrollbar {
+  display: none;
+}
 .main-back-btn{position:absolute;top:calc(env(safe-area-inset-top,40px) + 20px);right:30px;border:none;background:transparent;cursor:pointer;transition:opacity .3s;z-index:20;font-family:'DM Sans',sans-serif;font-size:0.8rem;font-weight:500;text-transform:uppercase;letter-spacing:2px;color:var(--s-text-primary);text-decoration:underline;text-underline-offset:4px;padding:4px 0;}
 .main-back-btn:active{opacity:.4;}
 .sub-back-btn{background:transparent;border:none;color:var(--s-text-primary);cursor:pointer;transition:opacity .3s;font-family:'DM Sans',sans-serif;font-size:0.8rem;font-weight:500;text-transform:uppercase;letter-spacing:2px;text-decoration:underline;text-underline-offset:4px;padding:4px 0;}
@@ -438,16 +448,13 @@ body {
     background: var(--bg-device); 
     align-items: flex-start; 
   }
-  
   .device {
     width: 100%;
-    height: 100vh; /* 兜底老版本浏览器 */
-    height: 100dvh; /* 核心修改：动态适应安卓底部导航栏和键盘 */
+    height: 100%; /* 直接继承外层完美计算的视口高度 */
     border: none; 
     border-radius: 0; 
     box-shadow: none;
   }
-  
   .dock-wrapper { position: fixed; bottom: 0; }
   .details-panel, .overlay, .modal-overlay { position: fixed; }
 }
