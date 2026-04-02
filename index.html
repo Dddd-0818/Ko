@@ -24,7 +24,7 @@
    ============================================================ */
 :root {
   --bg-body:#f2f2f2; --bg-device:#fafafa; --bg-card:#fff;
-  --glass-bg:rgba(255,255,255,0.65); --glass-border:rgba(255,255,255,0.8); --glass-blur:blur(20px);
+  --glass-bg:rgba(255,255,255,0.85); --glass-border:rgba(255,255,255,0.8); --glass-blur:blur(20px);
   --text-main:#1a1a1a; --text-sub:#666; --border-line:#e0e0e0;
   --shadow-card:0 4px 20px rgba(0,0,0,.03); --dock-bg:rgba(255,255,255,0.85);
   --panel-bg:#fff; --photo-paper:#fff; --photo-caption:#1a1a1a; --clip-color:#1a1a1a;
@@ -37,7 +37,7 @@
 }
 [data-theme="dark"] {
   --bg-body:#111; --bg-device:#1a1a1a; --bg-card:#222;
-  --glass-bg:rgba(45,45,45,0.8); --glass-border:rgba(255,255,255,0.1);
+  --glass-bg:rgba(45,45,45,0.9); --glass-border:rgba(255,255,255,0.1);
   --text-main:#f0f0f0; --text-sub:#888; --border-line:#333;
   --shadow-card:0 4px 20px rgba(0,0,0,.3); --dock-bg:rgba(30,30,30,0.8);
   --panel-bg:#1c1c1c; --photo-paper:#1c1c1e; --photo-caption:#f0f0f0; --clip-color:#f0f0f0;
@@ -175,7 +175,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg-body);display:flex;jus
 .icon-cell:active .icon-box{transform:scale(.9);}
 .icon-label{font-size:0.6rem;color:var(--text-sub);letter-spacing:0.5px;text-align:center;line-height:1;transition:opacity .2s;}
 .icon-labels-hidden .icon-label{display:none;}
-.icon-box{width:100%;max-width:52px;aspect-ratio:1;margin:0 auto;background:rgba(255,255,255,0.88);border:1px solid var(--glass-border);border-radius:18px;display:flex;align-items:center;justify-content:center;color:var(--text-main);transition:transform .2s;overflow:hidden;position:relative;}
+.icon-box{width:100%;max-width:52px;aspect-ratio:1;margin:0 auto;background:var(--glass-bg);border:1px solid var(--glass-border);border-radius:18px;display:flex;align-items:center;justify-content:center;color:var(--text-main);transition:transform .2s;overflow:hidden;position:relative;}
 .icon-box i{font-size:1.4667rem;opacity:.9;}
 .icon-box img.icon-custom{width:100%;height:100%;object-fit:cover;position:absolute;inset:0;border-radius:18px;}
 .icon-box:has(img.icon-custom){background:transparent;border-color:transparent;backdrop-filter:none;-webkit-backdrop-filter:none;}
