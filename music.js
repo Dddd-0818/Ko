@@ -1,15 +1,44 @@
 // ============================================================
-// music.js — Moon Story 音乐模块
+// music.js — Moon Story 音乐模块 (集成桌面悬浮先锋播放器)
 // 用法：主文件引入后调用 MusicModule.open() / MusicModule.close()
 // ============================================================
 const MusicModule = (() => {
 
-  // ── 注入 CSS（全部 scope 在 #music-root 下）──
+  // ================================================================
+  // MusicDB — 独立 IndexedDB，持久化音频/歌词/歌单
+  // ================================================================
+  const MusicDB = (() => {
+    let _db = null;
+    function _open() {
+      return new Promise((res, rej) => {
+        const req = indexedDB.open('MusicModuleDB_v2', 1);
+        req.onupgradeneeded = e => {
+          const db = e.target.result;
+          ['playlists', 'audio', 'lyrics'].forEach(n => {
+            if (!db.objectStoreNames.contains(n)) db.createObjectStore(n, { keyPath: 'id' });
+          });
+        };
+        req.onsuccess = e => { _db = e.target.result; res(); };
+        req.onerror = () => rej(req.error);
+      });
+    }
+    function _s(name, mode) { return _db.transaction(name, mode).objectStore(name); }
+    const init    = () => _db ? Promise.resolve() : _open();
+    const get     = (s, k) => new Promise((r,j) => { const q=_s(s,'readonly').get(k); q.onsuccess=()=>r(q.result); q.onerror=()=>j(q.error); });
+    const getAll  = s     => new Promise((r,j) => { const q=_s(s,'readonly').getAll(); q.onsuccess=()=>r(q.result||[]); q.onerror=()=>j(q.error); });
+    const put     = (s,v) => new Promise((r,j) => { const q=_s(s,'readwrite').put(v); q.onsuccess=()=>r(); q.onerror=()=>j(q.error); });
+    const del     = (s,k) => new Promise((r,j) => { const q=_s(s,'readwrite').delete(k); q.onsuccess=()=>r(); q.onerror=()=>j(q.error); });
+    return { init, get, getAll, put, del };
+  })();
+
+  // ── 注入 CSS（全部 scope 在 #music-root 下，除悬浮窗外）──
   const _injectCSS = () => {
     if (document.getElementById('music-module-style')) return;
     const style = document.createElement('style');
     style.id = 'music-module-style';
     style.textContent = `
+      @import url('https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@0,6..96,400;0,6..96,700&family=Courier+Prime:ital,wght@0,400;0,700&family=Space+Grotesk:wght@300;400;600&family=VT323&display=swap');
+
       #music-root {
         --ms-bg: #030305;
         --ms-text-main: #f4f4f5;
@@ -79,7 +108,27 @@ const MusicModule = (() => {
       #ms-local-view { padding:0; }
       #music-root .ms-local-top-bar { display:flex; justify-content:space-between; align-items:center; padding:calc(env(safe-area-inset-top, 0px) + 25px) 25px 20px; position:sticky; top:0; z-index:20; background:linear-gradient(to bottom,rgba(3,3,5,1) 30%,rgba(3,3,5,0) 100%); }
       #music-root .ms-local-top-bar .ms-title-en { font-size:1.5rem; letter-spacing:3px; }
-      #music-root .ms-top-bar-actions { display:flex; gap:10px; }
+      #music-root .ms-top-bar-actions { display:flex; align-items:center; gap:20px; }
+      
+      /* 优化：带有下划线动画的 BACK 按钮 */
+      #music-root .ms-text-back-btn { font-family:var(--ms-font-en); font-size:0.95rem; color:var(--ms-text-main); letter-spacing:2px; cursor:pointer; position:relative; padding-bottom:4px; transition:color 0.3s; }
+      #music-root .ms-text-back-btn::after { content:''; position:absolute; bottom:0; left:0; width:100%; height:1px; background:var(--ms-text-main); transition:transform 0.3s cubic-bezier(0.2,1,0.2,1); transform-origin:right; }
+      #music-root .ms-text-back-btn:hover { color:var(--ms-text-sub); }
+      #music-root .ms-text-back-btn:hover::after { transform:scaleX(0.6); background:var(--ms-text-sub); }
+
+      /* 优化：收纳菜单胶囊按钮 */
+      #music-root .ms-dropdown-wrap { position:relative; }
+      #music-root .ms-menu-trigger { display:flex; align-items:center; justify-content:center; width:38px; height:38px; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.1); border-radius:50%; cursor:pointer; font-size:1.2rem; color:var(--ms-text-main); backdrop-filter:blur(10px); transition:all 0.3s; }
+      #music-root .ms-menu-trigger:active { background:rgba(255,255,255,0.1); transform:scale(0.92); }
+      
+      /* 下拉菜单面板 */
+      #music-root .ms-dropdown-menu { position:absolute; top:calc(100% + 10px); right:0; background:rgba(15,15,20,0.85); border:1px solid var(--ms-border); border-radius:12px; padding:6px; min-width:120px; backdrop-filter:blur(25px); -webkit-backdrop-filter:blur(25px); box-shadow:0 10px 30px rgba(0,0,0,0.5); opacity:0; pointer-events:none; transform:translateY(-10px); transition:all 0.3s cubic-bezier(0.2,0.8,0.2,1); z-index:100; }
+      #music-root .ms-dropdown-menu.active { opacity:1; pointer-events:auto; transform:translateY(0); }
+      
+      /* 菜单项 */
+      #music-root .ms-dropdown-item { display:flex; align-items:center; gap:10px; padding:12px 16px; border-radius:8px; font-size:0.9rem; color:var(--ms-text-main); cursor:pointer; transition:background 0.2s; white-space:nowrap; letter-spacing:1px; }
+      #music-root .ms-dropdown-item i { font-size:1.1rem; color:var(--ms-text-sub); }
+      #music-root .ms-dropdown-item:active { background:rgba(255,255,255,0.08); }
       #music-root .ms-local-page-title { padding:10px 25px 30px; }
       #music-root .ms-local-page-title h2 { font-family:var(--ms-font-en); font-size:2.2rem; font-weight:400; color:#fff; letter-spacing:2px; line-height:1.2; }
       #music-root .ms-local-page-title p { color:var(--ms-text-sub); font-size:0.85rem; margin-top:8px; letter-spacing:2px; text-transform:uppercase; font-family:var(--ms-font-en); }
@@ -128,7 +177,7 @@ const MusicModule = (() => {
       #music-root .ms-home-grid { padding:0 25px 40px; display:flex; flex-direction:column; gap:15px; }
       #music-root .ms-grid-card { position:relative; border-radius:16px; overflow:hidden; cursor:pointer; border:1px solid rgba(255,255,255,0.08); box-shadow:0 8px 25px rgba(0,0,0,0.5); background-size:cover; background-position:center; transition:transform 0.2s; }
       #music-root .ms-grid-card:active { transform:scale(0.97); }
-      #music-root .ms-card-overlay { position:absolute; inset:0; background:linear-gradient(135deg,rgba(15,15,20,0.85) 0%,rgba(15,15,20,0.4) 50%,rgba(15,15,20,0.8) 100%); backdrop-filter:blur(2px); z-index:1; pointer-events:none; }
+      #music-root .ms-card-overlay { position:absolute; inset:0; background:linear-gradient(135deg,rgba(15,15,20,0.85) 0%,rgba(15,15,20,0.4) 50%,rgba(15,15,20,0.8) 100%); z-index:1; pointer-events:none; }
       #music-root .ms-card-content { position:relative; z-index:2; padding:22px; display:flex; flex-direction:column; height:100%; justify-content:space-between; }
       #music-root .ms-card-icon-top { align-self:flex-end; font-size:1.5rem; color:rgba(255,255,255,0.4); }
       #music-root .ms-card-text { margin-top:auto; }
@@ -262,6 +311,123 @@ const MusicModule = (() => {
       @keyframes ms-fadeIn { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:translateY(0)} }
       @keyframes ms-flowLight { 0%{background-position:100% 0} 100%{background-position:-100% 0} }
       #music-root .ms-fade-in { animation:ms-fadeIn 0.6s ease forwards; opacity:0; }
+
+      /* ── 歌曲操作按钮 ── */
+      #music-root .ms-song-actions { display:flex; align-items:center; gap:8px; flex-shrink:0; }
+      #music-root .ms-lrc-badge { font-size:0.55rem; padding:2px 5px; border:1px solid rgba(255,255,255,0.25); border-radius:3px; color:rgba(180,220,180,0.8); font-family:var(--ms-font-en); cursor:pointer; letter-spacing:1px; transition:all 0.2s; }
+      #music-root .ms-lrc-badge:active { color:#ff6b6b; border-color:#ff6b6b; }
+      #music-root .ms-song-del { font-size:1.1rem; color:rgba(255,255,255,0.2); cursor:pointer; padding:4px; transition:color 0.2s; }
+      #music-root .ms-song-del:active { color:#ff6b6b; }
+      /* ── 待上传列表匹配标签 ── */
+      #music-root .ms-lrc-match { font-size:0.65rem; color:rgba(120,200,120,0.9); font-family:var(--ms-font-en); letter-spacing:0.5px; white-space:nowrap; }
+      #music-root .ms-lrc-match.unmatched { color:rgba(255,140,100,0.8); }
+
+      /* =========================================
+         桌面悬浮播放器皮肤样式 (全局)
+         ========================================= */
+      #ms-floating-widget { position: fixed; z-index: 9999; top: 100px; left: 50%; transform: translateX(-50%); cursor: grab; user-select: none; touch-action: none; transition: transform 0.1s; }
+      #ms-floating-widget:active { cursor: grabbing; }
+      #ms-floating-widget.dragging { transform: translateX(-50%) scale(0.97) rotate(-1deg); }
+      
+      .ms-player-card { position: relative; box-shadow: 0 30px 60px rgba(0,0,0,0.5); }
+      .ms-player-card .p-btn { background: none; border: none; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; transition: opacity 0.2s, transform 0.1s; }
+      .ms-player-card .p-btn:active { transform: scale(0.85); }
+      .ms-player-card .close-btn { position: absolute; z-index: 10; }
+
+      /* 风格 A: The Wash Label (修复版) */
+.ms-style-label { width: 260px; background: #FDFDFB; color: #1A1A1A; padding: 25px 20px; border-radius: 1px; }
+.ms-style-label::before { content: ''; position: absolute; top: 6px; left: 6px; right: 6px; bottom: 6px; border: 1px dashed #D0D0D0; pointer-events: none; }
+.ms-style-label .close-btn { top: 12px; right: 12px; font-size: 14px; color: #999; }
+.ms-style-label .margiela-numbers { font-family: 'Space Grotesk', sans-serif; font-size: 11px; letter-spacing: 3px; text-align: center; color: #B0B0B0; margin-bottom: 25px; line-height: 1.8; }
+.ms-style-label .margiela-numbers span.active { display: inline-flex; justify-content: center; align-items: center; width: 16px; height: 16px; border: 1px solid #1A1A1A; border-radius: 50%; color: #1A1A1A; transform: translateY(1px); }
+.ms-style-label .song-title { font-family: 'Bodoni Moda', serif; font-size: 18px; text-align: center; margin-bottom: 25px; font-style: italic; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ms-style-label .controls { display: flex; justify-content: center; gap: 30px; position: relative; z-index: 2; }
+.ms-style-label .p-btn { font-size: 20px; color: #1A1A1A; }
+
+      /* 风格 B: Thermal Receipt */
+      .ms-style-receipt { width: 240px; background: #FDF1F5; color: #2B2829; padding: 30px 20px 20px 20px; mask-image: radial-gradient(circle at 4px 0px, transparent 4px, black 4.5px); mask-size: 12px 100%; mask-position: top; -webkit-mask-image: radial-gradient(circle at 4px 0px, transparent 4px, black 4.5px); -webkit-mask-size: 12px 100%; -webkit-mask-position: top; }
+      .ms-style-receipt .close-btn { top: 15px; right: 15px; font-size: 16px; }
+      .ms-style-receipt .receipt-header { font-family: 'Courier Prime', monospace; font-size: 10px; text-align: center; text-transform: uppercase; border-bottom: 1px dashed #CFAEB8; padding-bottom: 15px; margin-bottom: 20px; }
+      .ms-style-receipt .barcode { width: 100%; height: 40px; margin-bottom: 15px; opacity: 0.8; background: repeating-linear-gradient(to right, #2B2829, #2B2829 2px, transparent 2px, transparent 4px, #2B2829 4px, #2B2829 5px, transparent 5px, transparent 8px, #2B2829 8px, #2B2829 12px, transparent 12px, transparent 14px); }
+      .ms-style-receipt .song-title { font-family: 'Courier Prime', monospace; font-size: 15px; font-weight: bold; text-align: center; margin-bottom: 20px; text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+      .ms-style-receipt .controls { display: flex; justify-content: space-between; padding: 0 10px; }
+      .ms-style-receipt .p-btn { font-size: 24px; color: #2B2829; }
+
+      /* 风格 C: Y2K Chrome */
+      .ms-style-chrome { width: 270px; background: linear-gradient(135deg, #E6E6E6 0%, #FFFFFF 20%, #B3B3B3 50%, #E6E6E6 80%, #8C8C8C 100%); border-radius: 8px; padding: 20px; box-shadow: inset 2px 2px 3px rgba(255,255,255,0.8), inset -2px -2px 5px rgba(0,0,0,0.3); border: 1px solid #A0A0A0; }
+      .ms-style-chrome .close-btn { top: 5px; right: 25px; font-size: 14px; color: #555; text-shadow: 1px 1px 0 #fff; }
+      .ms-style-chrome .lcd-screen { background: #8FA491; border: 2px solid #5A6A5C; box-shadow: inset 2px 2px 5px rgba(0,0,0,0.5), 1px 1px 0 rgba(255,255,255,0.8); padding: 15px; text-align: center; margin-bottom: 20px; border-radius: 3px; position: relative; }
+      .ms-style-chrome .song-title { font-family: 'VT323', monospace; font-size: 20px; color: #111; text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+      .ms-style-chrome .controls { display: flex; justify-content: space-around; background: #D0D0D0; padding: 10px; border-radius: 40px; box-shadow: inset 1px 1px 4px rgba(0,0,0,0.3), 1px 1px 2px #fff; }
+      .ms-style-chrome .p-btn { width: 40px; height: 40px; border-radius: 50%; background: linear-gradient(180deg, #F0F0F0, #B0B0B0); box-shadow: 2px 2px 5px rgba(0,0,0,0.4), inset 1px 1px 2px #fff; font-size: 18px; color: #222; border: 1px solid #999; }
+
+      /* 风格 D: Cassette (修复版) */
+.ms-style-cassette { width: 290px; height: 160px; background: rgba(255, 255, 255, 0.05); backdrop-filter: blur(25px); -webkit-backdrop-filter: blur(25px); border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 12px; color: #fff; padding: 15px; display: flex; flex-direction: column; justify-content: space-between; overflow: hidden; }
+.ms-style-cassette .close-btn { top: 12px; right: 12px; font-size: 16px; opacity: 0.6; color: #fff; }
+.ms-style-cassette .tape-reels { display: flex; justify-content: space-between; padding: 0 40px; position: absolute; top: 45px; left: 0; width: 100%; pointer-events: none; }
+.ms-style-cassette .reel { width: 50px; height: 50px; border: 3px solid rgba(255,255,255,0.3); border-radius: 50%; display: flex; align-items: center; justify-content: center; background: repeating-conic-gradient(from 0deg, transparent 0deg 30deg, rgba(255,255,255,0.15) 30deg 60deg); }
+.ms-style-cassette.spinning .reel { animation: ms-rotateCover 2.5s linear infinite; }
+.ms-style-cassette .reel::after { content: ''; width: 12px; height: 12px; background: rgba(255,255,255,0.6); border-radius: 50%; }
+.ms-style-cassette .center-window { position: absolute; top: 50px; left: 50%; transform: translateX(-50%); width: 100px; height: 40px; background: rgba(0,0,0,0.4); border-radius: 4px; box-shadow: inset 0 0 12px rgba(0,0,0,0.8); pointer-events:none; }
+.ms-style-cassette .song-title { font-family: 'Space Grotesk', sans-serif; font-size: 13px; font-weight: 600; background: rgba(0,0,0,0.5); padding: 4px 12px; border-radius: 20px; text-align: center; margin: 0 auto; width: max-content; max-width: 200px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; position: relative; z-index: 2;}
+.ms-style-cassette .controls { display: flex; justify-content: center; gap: 20px; position: relative; z-index: 2; background: rgba(0,0,0,0.3); padding: 6px 15px; border-radius: 30px; margin: 0 auto; width: max-content; border: 1px solid rgba(255,255,255,0.1); }
+.ms-style-cassette .p-btn { font-size: 18px; color: #fff; }
+
+      /* 风格 E: Hangtag */
+      .ms-style-hangtag { width: 170px; background: #ECEAE4; color: #1A1A1A; padding: 65px 20px 20px 20px; border-radius: 2px; }
+      .ms-style-hangtag .hangtag-string { position: absolute; top: -45px; left: 50%; transform: translateX(-50%); width: 20px; height: 60px; border: 2px solid #222; border-bottom: none; border-radius: 10px 10px 0 0; z-index: -1; pointer-events: none; }
+      .ms-style-hangtag::before { content: ''; position: absolute; top: 15px; left: 50%; transform: translateX(-50%); width: 16px; height: 16px; border-radius: 50%; background: #111; border: 3px solid #C5C2BA; box-shadow: inset 1px 1px 5px rgba(0,0,0,0.9); z-index: 2; }
+      .ms-style-hangtag .close-btn { top: -15px; right: -15px; font-size: 14px; color: #000; background: #fff; width: 24px; height: 24px; border-radius: 50%; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
+      .ms-style-hangtag .brand-name { font-family: 'Space Grotesk', sans-serif; font-size: 14px; font-weight: 600; text-align: center; margin-bottom: 5px; }
+      .ms-style-hangtag .song-title { font-family: 'Bodoni Moda', serif; font-size: 18px; font-style: italic; text-align: center; margin: 15px 0 20px; line-height: 1.1; word-wrap: break-word; }
+      .ms-style-hangtag .mini-barcode { width: 100%; height: 15px; background: repeating-linear-gradient(to right, #1A1A1A, #1A1A1A 2px, transparent 2px, transparent 3px, #1A1A1A 3px, #1A1A1A 4px, transparent 4px, transparent 6px, #1A1A1A 6px, #1A1A1A 8px, transparent 8px, transparent 9px); margin-bottom: 25px; opacity: 0.8; }
+      .ms-style-hangtag .controls { display: flex; justify-content: space-between; align-items: center; padding: 0 5px; }
+      .ms-style-hangtag .p-btn { font-size: 20px; color: #1A1A1A; }
+      
+      /* UI 选择页 - 专属展示台背景 */
+      #ms-ui-view .ms-ui-grid { display: flex; flex-direction: column; gap: 30px; padding: 20px 25px 60px; align-items: center; }
+      
+      .ms-ui-preview-card { 
+        position: relative; 
+        transform: scale(0.85); 
+        transform-origin: center center; 
+        transition: all 0.4s cubic-bezier(0.19, 1, 0.22, 1); 
+        opacity: 0.5; 
+        cursor: pointer; 
+        
+        /* 核心：添加深灰网格展示台背景 */
+        width: 100%; 
+        max-width: 360px; 
+        min-height: 240px; 
+        display: flex; 
+        align-items: center; 
+        justify-content: center; 
+        background: linear-gradient(135deg, #1c1c1e 0%, #121214 100%);
+        border: 1px solid rgba(255,255,255,0.08);
+        border-radius: 20px;
+        box-shadow: inset 0 0 30px rgba(0,0,0,0.8);
+        overflow: hidden;
+      }
+      
+      /* 给展示台加一点网格底纹，让亚克力材质透底更清晰 */
+      .ms-ui-preview-card::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background-image: radial-gradient(rgba(255,255,255,0.06) 1px, transparent 1px);
+        background-size: 14px 14px;
+        pointer-events: none;
+      }
+
+      .ms-ui-preview-card.active { 
+        transform: scale(1); 
+        opacity: 1; 
+        border-color: rgba(255,255,255,0.25);
+        box-shadow: 0 20px 40px rgba(0,0,0,0.6), inset 0 0 30px rgba(0,0,0,0.8);
+        z-index: 10; 
+      }
+      
+      .ms-ui-preview-card .ms-player-card { pointer-events: none; z-index: 2; }
     `;
     document.head.appendChild(style);
   };
@@ -277,17 +443,36 @@ const MusicModule = (() => {
       
       <audio id="ms-audio" preload="metadata" style="display:none"></audio>
       <input type="file" id="ms-file-img" accept="image/*" style="display:none">
-      <input type="file" id="ms-file-music" accept="audio/*" multiple style="display:none">
-      <input type="file" id="ms-file-lrc" accept=".lrc,.txt" multiple style="display:none">
+      <input type="file" id="ms-file-music" multiple style="display:none">
+      <input type="file" id="ms-file-lrc" multiple style="display:none">
 
       <!-- 本地 Hub -->
       <div id="ms-local-view" class="ms-view active">
         <div class="ms-local-top-bar">
           <div class="ms-title-en" style="font-size:1.5rem;letter-spacing:3px;">Moon</div>
           <div class="ms-top-bar-actions">
-            <i class="ph ph-plus ms-icon-btn" id="ms-btn-create-pl" title="新建故事"></i>
-            <i class="ph ph-link ms-icon-btn" id="ms-btn-go-api" title="云端连接"></i>
-            <i class="ph ph-x ms-icon-btn" id="ms-btn-exit" title="关闭模块"></i>
+            
+            <!-- 收纳下拉菜单 -->
+            <div class="ms-dropdown-wrap" id="ms-local-dropdown">
+              <div class="ms-menu-trigger" id="ms-menu-trigger" title="操作">
+                <i class="ph ph-dots-three"></i>
+              </div>
+              <div class="ms-dropdown-menu" id="ms-dropdown-menu">
+                <div class="ms-dropdown-item" id="ms-btn-create-pl">
+                  <i class="ph ph-folder-plus"></i> 歌单
+                </div>
+                <div class="ms-dropdown-item" id="ms-btn-go-api">
+                  <i class="ph ph-cloud-sun"></i> 云端
+                </div>
+                <div class="ms-dropdown-item" id="ms-btn-go-ui">
+                  <i class="ph ph-palette"></i> 皮肤
+                </div>
+              </div>
+            </div>
+
+            <!-- BACK 按钮 -->
+            <div class="ms-text-back-btn" id="ms-btn-exit" title="关闭模块">BACK</div>
+
           </div>
         </div>
         <div class="ms-local-page-title ms-fade-in">
@@ -397,6 +582,86 @@ const MusicModule = (() => {
                   <div class="ms-card-title-en">SEEK<br>STARS</div>
                   <div class="ms-card-title-zh">搜索</div>
                 </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 皮肤选择页 -->
+      <div id="ms-ui-view" class="ms-view">
+        <div class="ms-header">
+          <i class="ph ph-caret-left ms-back-btn" id="ms-btn-ui-back"></i>
+          <span class="ms-title-en" style="font-size:1.2rem;">Skins</span>
+          <div style="font-family:var(--ms-font-en);font-size:0.8rem;cursor:pointer;" id="ms-btn-apply-ui">APPLY</div>
+        </div>
+        <div style="text-align:center; color:var(--ms-text-sub); font-size:0.8rem; margin-bottom:20px;">退出音乐模块后，播放器将悬浮于桌面</div>
+        <div class="ms-ui-grid" id="ms-ui-grid">
+          <!-- A -->
+<div class="ms-ui-preview-card" data-skin="label">
+  <div class="ms-player-card ms-style-label">
+    <!-- 还原了 margiela-numbers 的完整三行 -->
+    <div class="margiela-numbers">
+      0 1 2 3 4 5 6 7 8 9<br>
+      10 11 12 13 14 15 16<br>
+      17 18 19 <span class="active">20</span> 21 22 23
+    </div>
+    <div class="song-title">The Wash Label</div>
+    <div class="controls">
+      <div class="p-btn"><i class="ph-light ph-skip-back"></i></div>
+      <div class="p-btn"><i class="ph-light ph-play"></i></div>
+      <div class="p-btn"><i class="ph-light ph-skip-forward"></i></div>
+    </div>
+  </div>
+</div>
+          <!-- B -->
+          <div class="ms-ui-preview-card" data-skin="receipt">
+            <div class="ms-player-card ms-style-receipt">
+              <div class="receipt-header">Chill OS Player</div>
+              <div class="barcode"></div>
+              <div class="song-title">Thermal Receipt</div>
+              <div class="controls">
+                <div class="p-btn"><i class="ph ph-arrow-left"></i></div>
+                <div class="p-btn"><i class="ph ph-play"></i></div>
+                <div class="p-btn"><i class="ph ph-arrow-right"></i></div>
+              </div>
+            </div>
+          </div>
+          <!-- C -->
+          <div class="ms-ui-preview-card" data-skin="chrome">
+            <div class="ms-player-card ms-style-chrome">
+              <div class="lcd-screen"><div class="song-title">Y2K Chrome</div></div>
+              <div class="controls">
+                <div class="p-btn"><i class="ph-fill ph-rewind"></i></div>
+                <div class="p-btn"><i class="ph-fill ph-play"></i></div>
+                <div class="p-btn"><i class="ph-fill ph-fast-forward"></i></div>
+              </div>
+            </div>
+          </div>
+          <!-- D -->
+          <div class="ms-ui-preview-card" data-skin="cassette">
+            <div class="ms-player-card ms-style-cassette">
+              <div class="tape-reels"><div class="reel"></div><div class="reel"></div></div>
+              <div class="center-window"></div>
+              <div class="song-info"><div class="song-title">Cassette</div></div>
+              <div class="controls">
+                <div class="p-btn"><i class="ph-fill ph-caret-left"></i></div>
+                <div class="p-btn"><i class="ph-fill ph-play"></i></div>
+                <div class="p-btn"><i class="ph-fill ph-caret-right"></i></div>
+              </div>
+            </div>
+          </div>
+          <!-- E -->
+          <div class="ms-ui-preview-card" data-skin="hangtag">
+            <div class="ms-player-card ms-style-hangtag">
+              <div class="hangtag-string"></div>
+              <div class="brand-info"><div class="brand-name">ARTICLE</div></div>
+              <div class="song-title">The Hangtag</div>
+              <div class="mini-barcode"></div>
+              <div class="controls">
+                <div class="p-btn"><i class="ph ph-skip-back"></i></div>
+                <div class="p-btn"><i class="ph ph-play"></i></div>
+                <div class="p-btn"><i class="ph ph-skip-forward"></i></div>
               </div>
             </div>
           </div>
@@ -565,13 +830,16 @@ const MusicModule = (() => {
   
   let _viewStack =[]; // 页面栈管理
   let _initialized = false;
+  let _dbReady = false; // DB 初始化标志
 
   // 歌词状态
   let _lyrics =[]; 
   let _currentLyricIdx = -1;
 
+  const _DEFAULT_COVER = 'https://images.unsplash.com/photo-1519681393784-d120267933ba?auto=format&fit=crop&w=600&q=80';
+
   let _localPlaylists =[
-    { id: 'l1', name: '默认漫游指南', titleEn: 'DEFAULT', count: 0, cover: 'https://images.unsplash.com/photo-1519681393784-d120267933ba?auto=format&fit=crop&w=600&q=80', songs: [], isLocal: true }
+    { id: 'l1', name: '默认漫游指南', titleEn: 'DEFAULT', count: 0, cover: _DEFAULT_COVER, songs: [], isLocal: true }
   ];
   let _currentPlaylistObj = null;
   let _currentPlaylist =[];
@@ -584,9 +852,125 @@ const MusicModule = (() => {
   let _uploadImgTargetId = null;
   let _tempCover = '';
   const _playModeIcons = ['ph-repeat', 'ph-shuffle', 'ph-repeat-once'];
+  
+  let _activeSkin = localStorage.getItem('ms_active_skin') || null;
+  let _floatingWidget = null; // 挂载在主页 body 上的悬浮窗实例
+
+  // 本地音频 Blob URL 缓存（key=songId, val=blobUrl）
+  const _blobCache = new Map();
 
   // DOM 快捷访问
   const _$ = id => document.getElementById(id);
+
+  // ================================================================
+  // DB 持久化辅助
+  // ================================================================
+  async function _ensureDB() {
+    if (_dbReady) return;
+    await MusicDB.init();
+    _dbReady = true;
+  }
+
+  async function _loadPlaylistsFromDB() {
+    try {
+      await _ensureDB();
+      const rows = await MusicDB.getAll('playlists');
+      if (rows && rows.length > 0) _localPlaylists = rows;
+    } catch(e) { console.warn('[MusicModule] 读取歌单失败:', e); }
+  }
+
+  async function _savePlaylistToDB(pl) {
+    try {
+      await _ensureDB();
+      // 存储时排除 session-only 的 blob url
+      const meta = { ...pl, songs: (pl.songs || []).map(s => { const {url,...r}=s; return r; }) };
+      await MusicDB.put('playlists', meta);
+    } catch(e) { console.warn('[MusicModule] 保存歌单失败:', e); }
+  }
+
+  async function _getLocalPlaybackUrl(song) {
+    if (_blobCache.has(song.id)) return _blobCache.get(song.id);
+    try {
+      const data = await MusicDB.get('audio', song.id);
+      if (data && data.data) {
+        const blob = new Blob([data.data], { type: data.mimeType || 'audio/mpeg' });
+        const url = URL.createObjectURL(blob);
+        _blobCache.set(song.id, url);
+        return url;
+      }
+    } catch(e) { console.warn('[MusicModule] 加载本地音频失败:', e); }
+    return null;
+  }
+
+  async function _deleteSong(songId) {
+    if (!_currentPlaylistObj) return;
+    _currentPlaylistObj.songs = _currentPlaylistObj.songs.filter(s => s.id !== songId);
+    _currentPlaylistObj.count = _currentPlaylistObj.songs.length;
+    try { await MusicDB.del('audio', songId); } catch(e) {}
+    try { await MusicDB.del('lyrics', `lrc_${songId}`); } catch(e) {}
+    if (_blobCache.has(songId)) { URL.revokeObjectURL(_blobCache.get(songId)); _blobCache.delete(songId); }
+    await _savePlaylistToDB(_currentPlaylistObj);
+    _renderLocalPlaylists();
+    _renderSongList(_currentPlaylistObj.songs, _$('ms-song-list-render'));
+    if (typeof Toast !== 'undefined') Toast.show('已删除');
+  }
+
+  async function _deleteSongLrc(songId) {
+    if (!_currentPlaylistObj) return;
+    const song = _currentPlaylistObj.songs.find(s => s.id === songId);
+    if (!song) return;
+    try { await MusicDB.del('lyrics', song.lrcId || `lrc_${songId}`); } catch(e) {}
+    song.hasLrc = false; song.lrcId = null;
+    if (_currentIdx >= 0 && _currentPlaylist[_currentIdx]?.id === songId) {
+      _lyrics = []; _renderLyricsDOM();
+    }
+    await _savePlaylistToDB(_currentPlaylistObj);
+    _renderSongList(_currentPlaylistObj.songs, _$('ms-song-list-render'));
+    if (typeof Toast !== 'undefined') Toast.show('歌词已删除');
+  }
+
+  // ================================================================
+  // 智能 LRC 文件名匹配
+  // ================================================================
+  function _normalizeName(name) {
+    return (name || '')
+      .replace(/\.[^.]+$/, '')        // 去扩展名
+      .replace(/[-_·•]/g, ' ')        // 统一分隔符
+      .replace(/[（(【\[《<][^）)\]】>《]*[）)\]】>]/g, '')  // 去括号内容
+      .replace(/\s+/g, ' ')
+      .trim()
+      .toLowerCase();
+  }
+
+  function _nameSimilarity(a, b) {
+    if (!a || !b) return 0;
+    if (a === b) return 1.0;
+    if (a.includes(b) || b.includes(a)) return 0.85;
+    const ta = a.split(/\s+/).filter(t => t.length > 0);
+    const tb = b.split(/\s+/).filter(t => t.length > 0);
+    if (!ta.length || !tb.length) return 0;
+    const common = ta.filter(t => tb.includes(t) && t.length > 1);
+    return (2 * common.length) / (ta.length + tb.length);
+  }
+
+  function _updatePendingMatches() {
+    const audioItems = _pendingFiles.filter(f => f.type === 'AUDIO');
+    const lrcItems = _pendingFiles.filter(f => f.type === 'LRC');
+    const candidates = [
+      ...audioItems.map(a => ({ id: a.songId, title: _normalizeName(a.file.name), display: a.file.name.replace(/\.[^.]+$/, '') })),
+      ...(_currentPlaylistObj?.songs || []).map(s => ({ id: s.id, title: _normalizeName(s.title), display: s.title }))
+    ];
+    lrcItems.forEach(lrc => {
+      const lrcName = _normalizeName(lrc.file.name);
+      let best = null, bestScore = 0.3;
+      candidates.forEach(c => {
+        const sc = _nameSimilarity(lrcName, c.title);
+        if (sc > bestScore) { bestScore = sc; best = c; }
+      });
+      lrc.matchedId = best?.id || null;
+      lrc.matchedName = best?.display || null;
+    });
+  }
 
   // ── 配置本地持久化 ──
   function _saveConfig() {
@@ -630,6 +1014,148 @@ const MusicModule = (() => {
   function _openModal(id) { _$(id)?.classList.add('active'); }
   function _closeModal(id) { _$(id)?.classList.remove('active'); }
   function _toggleFullPlayer() { _$('ms-full-player')?.classList.toggle('expanded'); }
+
+  // ── 桌面悬浮窗逻辑 ──
+  const _getSkinHTML = (skin, songName, isPlay) => {
+    const playIcon = isPlay ? 'ph-pause' : 'ph-play';
+    const title = songName || 'No Music';
+    
+    switch(skin) {
+      case 'label': return `
+  <div class="ms-player-card ms-style-label" id="ms-floating-skin">
+    <button class="p-btn close-btn" id="ms-fw-close"><i class="ph ph-x"></i></button>
+    <div class="margiela-numbers">
+      0 1 2 3 4 5 6 7 8 9<br>
+      10 11 12 13 14 15 16<br>
+      17 18 19 <span class="active" id="ms-fw-label-num">20</span> 21 22 23
+    </div>
+    <div class="song-title" id="ms-fw-title">${title}</div>
+    <div class="controls">
+      <button class="p-btn" id="ms-fw-prev"><i class="ph-light ph-skip-back"></i></button>
+      <button class="p-btn" id="ms-fw-play"><i class="ph-light ${playIcon}"></i></button>
+      <button class="p-btn" id="ms-fw-next"><i class="ph-light ph-skip-forward"></i></button>
+    </div>
+  </div>`;
+      case 'receipt': return `
+        <div class="ms-player-card ms-style-receipt" id="ms-floating-skin">
+          <button class="p-btn close-btn" id="ms-fw-close"><i class="ph ph-x"></i></button>
+          <div class="receipt-header">Chill OS Player</div>
+          <div class="barcode"></div>
+          <div class="song-title" id="ms-fw-title">${title}</div>
+          <div class="controls">
+            <button class="p-btn" id="ms-fw-prev"><i class="ph ph-arrow-left"></i></button>
+            <button class="p-btn" id="ms-fw-play"><i class="ph ${playIcon}"></i></button>
+            <button class="p-btn" id="ms-fw-next"><i class="ph ph-arrow-right"></i></button>
+          </div>
+        </div>`;
+      case 'chrome': return `
+        <div class="ms-player-card ms-style-chrome" id="ms-floating-skin">
+          <button class="p-btn close-btn" id="ms-fw-close"><i class="ph-fill ph-x-circle"></i></button>
+          <div class="lcd-screen"><div class="song-title" id="ms-fw-title">${title}</div></div>
+          <div class="controls">
+            <button class="p-btn" id="ms-fw-prev"><i class="ph-fill ph-rewind"></i></button>
+            <button class="p-btn" id="ms-fw-play"><i class="ph-fill ${playIcon}"></i></button>
+            <button class="p-btn" id="ms-fw-next"><i class="ph-fill ph-fast-forward"></i></button>
+          </div>
+        </div>`;
+      case 'cassette': return `
+        <div class="ms-player-card ms-style-cassette ${isPlay ? 'spinning' : ''}" id="ms-floating-skin">
+          <button class="p-btn close-btn" id="ms-fw-close"><i class="ph ph-x"></i></button>
+          <div class="tape-reels"><div class="reel"></div><div class="reel"></div></div>
+          <div class="center-window"></div>
+          <div class="song-info"><div class="song-title" id="ms-fw-title">${title}</div></div>
+          <div class="controls">
+            <button class="p-btn" id="ms-fw-prev"><i class="ph-fill ph-caret-left"></i></button>
+            <button class="p-btn" id="ms-fw-play"><i class="ph-fill ${playIcon}"></i></button>
+            <button class="p-btn" id="ms-fw-next"><i class="ph-fill ph-caret-right"></i></button>
+          </div>
+        </div>`;
+      case 'hangtag': return `
+        <div class="ms-player-card ms-style-hangtag" id="ms-floating-skin">
+          <div class="hangtag-string"></div>
+          <button class="p-btn close-btn" id="ms-fw-close"><i class="ph ph-x"></i></button>
+          <div class="brand-info"><div class="brand-name">Chill OS</div></div>
+          <div class="song-title" id="ms-fw-title">${title}</div>
+          <div class="mini-barcode"></div>
+          <div class="controls">
+            <button class="p-btn" id="ms-fw-prev"><i class="ph ph-skip-back"></i></button>
+            <button class="p-btn" id="ms-fw-play"><i class="ph ${playIcon}"></i></button>
+            <button class="p-btn" id="ms-fw-next"><i class="ph ph-skip-forward"></i></button>
+          </div>
+        </div>`;
+      default: return '';
+    }
+  };
+
+  const _renderFloatingWidget = () => {
+    if (!_activeSkin) return;
+    if (_floatingWidget) _floatingWidget.remove();
+    
+    let songName = 'No Music';
+    if (_currentIdx >= 0 && _currentPlaylist[_currentIdx]) {
+      const s = _currentPlaylist[_currentIdx];
+      songName = s.title || s.name || 'Unknown';
+    }
+
+    _floatingWidget = document.createElement('div');
+    _floatingWidget.id = 'ms-floating-widget';
+    _floatingWidget.innerHTML = _getSkinHTML(_activeSkin, songName, _isPlaying);
+    
+    // 挂载到 body (Main OS 桌面)
+    document.body.appendChild(_floatingWidget);
+
+    // 绑定内部播放器控制
+    _floatingWidget.querySelector('#ms-fw-close').onclick = (e) => {
+      e.stopPropagation();
+      _floatingWidget.remove();
+      _floatingWidget = null;
+      const audio = _$('ms-audio');
+      if (audio) audio.pause();
+      _isPlaying = false;
+      _updatePlayUI();
+    };
+    
+    _floatingWidget.querySelector('#ms-fw-prev').onclick = (e) => { e.stopPropagation(); _prevSong(); };
+    _floatingWidget.querySelector('#ms-fw-next').onclick = (e) => { e.stopPropagation(); _nextSong(); };
+    _floatingWidget.querySelector('#ms-fw-play').onclick = (e) => { e.stopPropagation(); _togglePlay(); };
+
+    // 绑定拖拽逻辑
+    let isDragging = false, startX, startY, currentX = 0, currentY = 0;
+    
+    const dragStart = (e) => {
+      if (e.target.closest('.p-btn')) return;
+      isDragging = true;
+      _floatingWidget.classList.add('dragging');
+      const touch = e.type.includes('mouse') ? e : e.touches[0];
+      startX = touch.clientX;
+      startY = touch.clientY;
+    };
+    
+    const dragMove = (e) => {
+      if (!isDragging) return;
+      e.preventDefault();
+      const touch = e.type.includes('mouse') ? e : e.touches[0];
+      const dx = touch.clientX - startX;
+      const dy = touch.clientY - startY;
+      _floatingWidget.style.transform = `translateX(-50%) translate(${currentX + dx}px, ${currentY + dy}px)`;
+    };
+    
+    const dragEnd = (e) => {
+      if (!isDragging) return;
+      isDragging = false;
+      _floatingWidget.classList.remove('dragging');
+      const touch = e.type.includes('mouse') ? e : e.changedTouches[0];
+      currentX += touch.clientX - startX;
+      currentY += touch.clientY - startY;
+    };
+
+    _floatingWidget.addEventListener('mousedown', dragStart);
+    _floatingWidget.addEventListener('touchstart', dragStart, { passive: false });
+    document.addEventListener('mousemove', dragMove);
+    document.addEventListener('touchmove', dragMove, { passive: false });
+    document.addEventListener('mouseup', dragEnd);
+    document.addEventListener('touchend', dragEnd);
+  };
 
   // ── API 请求 ──
   async function _api(path) {
@@ -685,10 +1211,8 @@ const MusicModule = (() => {
     }, 2000);
   }
 
-// ── 登录成功后的处理 ──
   async function _afterLogin() {
     try {
-      // 加上时间戳，强制拉取最新状态，防止刚刚扫码完却拿到未登录的缓存
       const data = await _api('/user/account?timestamp=' + Date.now());
       if (data.profile) {
         _userProfile = data.profile;
@@ -710,29 +1234,18 @@ const MusicModule = (() => {
     btn.textContent = '登录中...';
     btn.disabled = true;
 
-    console.log(`[MusicModule] 🚀 开始密码登录: 手机号=${phone}`);
-
     try {
       const url = `/login/cellphone?phone=${phone}&password=${encodeURIComponent(pass)}&timestamp=${Date.now()}`;
-      console.log(`[MusicModule] 📡 请求API:`, url);
-      
       const data = await _api(url);
-      console.log('[MusicModule] 📦 密码登录 API 返回结果:', data);
-
       if (data.code === 200) {
-        console.log('[MusicModule] 🎉 登录 API 校验成功！');
         _cookie = data.cookie || '';
         await _afterLogin();
       } else if (data.code === 10004 || (data.message && data.message.includes('安全风险'))) {
-        // === 处理网易云风控 ===
-        console.warn('[MusicModule] ⚠️ 触发网易云风控拦截！');
         alert("⚠️ 触发网易云风控拦截！\n\n原因：API部署在云端，异地IP登录被网易云判断为安全风险（Code: 10004）。\n\n💡 强烈建议：请切换到【扫码登录】，使用网易云 App 扫码，扫码模式不受异地IP限制！");
       } else {
-        console.warn('[MusicModule] ⚠️ 登录失败，状态码:', data.code);
         alert(data.message || data.msg || `登录失败，错误码：${data.code}`);
       }
     } catch (e) {
-      console.error('[MusicModule] ❌ 密码登录网络请求异常:', e);
       alert('网络请求出错，请按 F12 查看控制台报错');
     } finally {
       btn.textContent = '登 录';
@@ -748,15 +1261,11 @@ const MusicModule = (() => {
     const btn = _$('ms-btn-send-code');
     btn.disabled = true;
     
-    console.log(`[MusicModule] 🚀 准备发送验证码到手机: ${phone}`);
-
     try {
       const url = `/captcha/sent?phone=${phone}&timestamp=${Date.now()}`;
       const data = await _api(url);
-      console.log('[MusicModule] 📦 发送验证码 API 返回结果:', data);
 
       if (data.code === 200) {
-        console.log('[MusicModule] 🎉 验证码发送成功，开启 60s 倒计时');
         let countdown = 60;
         btn.textContent = `${countdown}s`;
         const timer = setInterval(() => {
@@ -770,12 +1279,10 @@ const MusicModule = (() => {
           }
         }, 1000);
       } else {
-        console.warn('[MusicModule] ⚠️ 验证码发送失败');
         alert(data.message || data.msg || `发送失败，错误码：${data.code}`);
         btn.disabled = false;
       }
     } catch (e) {
-      console.error('[MusicModule] ❌ 发送验证码网络请求异常:', e);
       alert('请求出错，请按 F12 查看控制台报错');
       btn.disabled = false;
     }
@@ -791,29 +1298,19 @@ const MusicModule = (() => {
     btn.textContent = '登录中...';
     btn.disabled = true;
 
-    console.log(`[MusicModule] 🚀 开始验证码登录: 手机号=${phone}, 验证码=${code}`);
-
     try {
       const url = `/login/cellphone?phone=${phone}&captcha=${code}&timestamp=${Date.now()}`;
-      console.log(`[MusicModule] 📡 请求API:`, url);
-      
       const data = await _api(url);
-      console.log('[MusicModule] 📦 验证码登录 API 返回结果:', data);
 
       if (data.code === 200) {
-        console.log('[MusicModule] 🎉 登录 API 校验成功！');
         _cookie = data.cookie || '';
         await _afterLogin();
       } else if (data.code === 10004 || (data.message && data.message.includes('安全风险'))) {
-        // === 处理网易云风控 ===
-        console.warn('[MusicModule] ⚠️ 触发网易云风控拦截！');
         alert("⚠️ 触发网易云风控拦截！\n\n原因：API部署在云端，异地IP登录被网易云判断为安全风险（Code: 10004）。\n\n💡 强烈建议：请切换到【扫码登录】，使用网易云 App 扫码，扫码模式不受异地IP限制！");
       } else {
-        console.warn('[MusicModule] ⚠️ 登录失败，状态码:', data.code);
         alert(data.message || data.msg || `登录失败，错误码：${data.code}`);
       }
     } catch (e) {
-      console.error('[MusicModule] ❌ 验证码登录网络请求异常:', e);
       alert('网络请求出错，请按 F12 查看控制台报错');
     } finally {
       btn.textContent = '登 录';
@@ -862,14 +1359,12 @@ const MusicModule = (() => {
     const container = _$('ms-pl-list-render');
     container.innerHTML = '<div class="ms-text-light" style="text-align:center;padding:40px;">加载中...</div>';
     
-    // 1. 先拦截一下，确保能拿到用户ID
     if (!_userProfile || !_userProfile.userId) {
       container.innerHTML = '<div class="ms-text-light" style="text-align:center;padding:40px;">未获取到用户ID，请尝试重新登录</div>';
       return;
     }
 
     try {
-      // 2. 将 userId 作为参数传给接口，顺便加上 limit=100 获取更多歌单
       const data = await _api(`/user/playlist?uid=${_userProfile.userId}&limit=100`);
       const lists = data.playlist ||[];
       container.innerHTML = '';
@@ -961,6 +1456,7 @@ const MusicModule = (() => {
 
   function _renderSongList(songs, container) {
     container.innerHTML = '';
+    const isLocal = !!_currentPlaylistObj?.isLocal;
     if (!songs.length) {
       container.innerHTML = '<div class="ms-text-light" style="text-align:center;padding:40px;">这片星域有些安静</div>';
       return;
@@ -969,14 +1465,35 @@ const MusicModule = (() => {
       const el = document.createElement('div');
       el.className = 'ms-song-item ms-fade-in';
       el.style.animationDelay = `${i * 0.03}s`;
+      const rightSide = isLocal
+        ? `<div class="ms-song-actions">
+             ${song.hasLrc ? `<span class="ms-lrc-badge" data-id="${song.id}" title="点击删除歌词">LRC</span>` : ''}
+             <i class="ph ph-trash ms-song-del" data-id="${song.id}"></i>
+           </div>`
+        : `<i class="ph ph-play-circle ms-text-light"></i>`;
       el.innerHTML = `
         <div class="ms-song-index">${String(i + 1).padStart(2, '0')}</div>
         <div class="ms-song-info">
           <div class="ms-song-name">${song.title || song.name}</div>
           <div class="ms-song-artist">${song.artist || ''}</div>
         </div>
-        <i class="ph ph-play-circle ms-text-light"></i>`;
-      el.onclick = () => _playSong(i);
+        ${rightSide}`;
+      el.onclick = (e) => {
+        if (e.target.closest?.('.ms-song-del') || e.target.closest?.('.ms-lrc-badge')) return;
+        _playSong(i);
+      };
+      if (isLocal) {
+        const delBtn = el.querySelector('.ms-song-del');
+        if (delBtn) delBtn.onclick = async e => {
+          e.stopPropagation();
+          if (confirm(`确认删除「${song.title || song.name}」？`)) await _deleteSong(song.id);
+        };
+        const lrcBadge = el.querySelector('.ms-lrc-badge');
+        if (lrcBadge) lrcBadge.onclick = async e => {
+          e.stopPropagation();
+          if (confirm(`确认删除「${song.title || song.name}」的歌词？`)) await _deleteSongLrc(song.id);
+        };
+      }
       container.appendChild(el);
     });
   }
@@ -1054,6 +1571,14 @@ const MusicModule = (() => {
           _lyrics = _parseLyrics(data.lrc.lyric);
         }
       } catch(e) {}
+    } else if (!song.isCloud && song.hasLrc) {
+      try {
+        const lrcId = song.lrcId || `lrc_${song.id}`;
+        const data = await MusicDB.get('lyrics', lrcId);
+        if (data && data.text) {
+          _lyrics = _parseLyrics(data.text);
+        }
+      } catch(e) { console.warn('[MusicModule] 读取本地歌词失败:', e); }
     }
     _renderLyricsDOM();
   }
@@ -1072,11 +1597,23 @@ const MusicModule = (() => {
     _$('ms-mp-artist').textContent = artist;
     _$('ms-fp-title').textContent = title;
     _$('ms-fp-artist').textContent = artist;
+    
+    // 同步给桌面悬浮窗
+    const fwTitle = document.getElementById('ms-fw-title');
+    if (fwTitle) fwTitle.textContent = title;
+    
+    // 更新马吉拉皮肤圈圈内的数字
+const fwLabelNum = document.getElementById('ms-fw-label-num');
+if (fwLabelNum) {
+  // 简单地用播放列表索引来变化数字
+  fwLabelNum.textContent = 17 + idx;
+}
+
     if (song.cover) {
       _$('ms-mp-cover').style.backgroundImage = `url('${song.cover}')`;
       _$('ms-fp-art').style.backgroundImage = `url('${song.cover}')`;
     }
-
+    
     // 获取播放链接与歌词
     let url = song.url || '';
     if (song.isCloud && song.id) {
@@ -1093,6 +1630,8 @@ const MusicModule = (() => {
           }
         }
       } catch(e) {}
+    } else if (!song.isCloud) {
+      url = await _getLocalPlaybackUrl(song);
     }
     
     _fetchLyrics(song);
@@ -1150,6 +1689,21 @@ const MusicModule = (() => {
     if (fpPlay) fpPlay.className = `ph ${play ? 'ph-pause-circle' : 'ph-play-circle'} ms-ctrl-icon ms-ctrl-play`;
     play ? cover?.classList.add('spinning') : cover?.classList.remove('spinning');
     play ? art?.classList.add('spinning') : art?.classList.remove('spinning');
+
+    // 同步给桌面悬浮窗图标
+    const fwPlay = document.getElementById('ms-fw-play');
+    if (fwPlay) {
+      const i = fwPlay.querySelector('i');
+      if (_activeSkin === 'label' || _activeSkin === 'receipt' || _activeSkin === 'hangtag') {
+        i.className = play ? (i.className.includes('ph-light') ? 'ph-light ph-pause' : 'ph ph-pause') : (i.className.includes('ph-light') ? 'ph-light ph-play' : 'ph ph-play');
+      } else {
+        i.className = play ? 'ph-fill ph-pause-circle' : 'ph-fill ph-play-circle';
+      }
+    }
+    const fwCassette = document.getElementById('ms-floating-skin');
+    if (fwCassette && fwCassette.classList.contains('ms-style-cassette')) {
+      play ? fwCassette.classList.add('spinning') : fwCassette.classList.remove('spinning');
+    }
   }
 
   function _fmtTime(s) {
@@ -1169,40 +1723,92 @@ const MusicModule = (() => {
     _pendingFiles.forEach(item => {
       const el = document.createElement('div');
       el.className = 'ms-pending-item ms-fade-in';
+      const matchInfo = item.type === 'LRC'
+        ? (item.matchedName
+            ? `<span class="ms-lrc-match">→ ${item.matchedName}</span>`
+            : `<span class="ms-lrc-match unmatched">→ 未匹配</span>`)
+        : '';
       el.innerHTML = `
-        <div style="display:flex;align-items:center;flex:1;overflow:hidden;margin-right:10px;">
+        <div style="display:flex;align-items:center;flex:1;overflow:hidden;margin-right:10px;gap:6px;flex-wrap:wrap;">
           <span class="ms-pending-type">${item.type}</span>
           <span class="ms-pending-name">${item.file.name}</span>
+          ${matchInfo}
         </div>
         <i class="ph ph-x-circle ms-pending-del" data-id="${item.id}"></i>`;
       el.querySelector('.ms-pending-del').onclick = () => {
         _pendingFiles = _pendingFiles.filter(f => f.id != item.id);
+        _updatePendingMatches();
         _renderPendingList();
       };
       container.appendChild(el);
     });
   }
 
-  function _confirmUpload() {
-    if (!_pendingFiles.length) return;
-    if (!_currentPlaylistObj) return;
-    let added = 0;
-    _pendingFiles.filter(f => f.type === 'AUDIO').forEach(item => {
-      const song = {
-        id: 'local_' + Date.now() + Math.random(),
-        title: item.file.name.replace(/\.[^/.]+$/, ''),
-        artist: 'Local',
-        cover: _currentPlaylistObj.cover,
-        url: URL.createObjectURL(item.file),
-        isCloud: false
-      };
-      _currentPlaylistObj.songs.push(song);
+  async function _confirmUpload() {
+    if (!_pendingFiles.length || !_currentPlaylistObj) return;
+    const btn = _$('ms-btn-confirm-upload');
+    if (btn) { btn.textContent = '处理中...'; btn.disabled = true; }
+    try {
+      const audioItems = _pendingFiles.filter(f => f.type === 'AUDIO');
+      const lrcItems   = _pendingFiles.filter(f => f.type === 'LRC');
+
+      // ① 处理音频文件 → 写入 IndexedDB
+      const newSongs = [];
+      for (const item of audioItems) {
+        const songId = item.songId;
+        try {
+          const ab = await item.file.arrayBuffer();
+          await MusicDB.put('audio', { id: songId, mimeType: item.file.type || 'audio/mpeg', data: ab });
+          newSongs.push({
+            id: songId,
+            title: item.file.name.replace(/\.[^.]+$/, ''),
+            artist: 'Local',
+            cover: _currentPlaylistObj.cover,
+            hasLrc: false,
+            lrcId: null,
+            isCloud: false
+          });
+        } catch(e) { console.error('[MusicModule] 音频存储失败:', e); }
+      }
+
+      // ② 处理 LRC — 按匹配结果写入 IndexedDB
+      const songLookup = new Map();
+      newSongs.forEach(s => songLookup.set(s.id, s));
+      (_currentPlaylistObj.songs || []).forEach(s => songLookup.set(s.id, s));
+
+      let lrcCount = 0;
+      for (const item of lrcItems) {
+        if (!item.matchedId) continue;
+        const song = songLookup.get(item.matchedId);
+        if (!song) continue;
+        try {
+          const text = await item.file.text();
+          const lrcId = `lrc_${song.id}`;
+          await MusicDB.put('lyrics', { id: lrcId, songId: song.id, text });
+          song.hasLrc = true;
+          song.lrcId  = lrcId;
+          lrcCount++;
+        } catch(e) { console.error('[MusicModule] 歌词存储失败:', e); }
+      }
+
+      // ③ 更新歌单并持久化
+      newSongs.forEach(s => _currentPlaylistObj.songs.push(s));
       _currentPlaylistObj.count = _currentPlaylistObj.songs.length;
-      added++;
-    });
-    if (added > 0) { _renderLocalPlaylists(); _openSongList(_currentPlaylistObj); }
-    _pendingFiles =[];
-    _closeModal('ms-modal-upload');
+      await _savePlaylistToDB(_currentPlaylistObj);
+
+      _renderLocalPlaylists();
+      _openSongList(_currentPlaylistObj);
+
+      let msg = `已添加 ${newSongs.length} 首`;
+      if (lrcCount > 0) msg += `，歌词匹配 ${lrcCount} 首`;
+      if (typeof Toast !== 'undefined') Toast.show(msg);
+    } catch(e) {
+      console.error('[MusicModule] 上传失败:', e);
+    } finally {
+      _pendingFiles = [];
+      _closeModal('ms-modal-upload');
+      if (btn) { btn.textContent = '确 认 上 传'; btn.disabled = false; }
+    }
   }
 
   // ── Three.js 星空 ──
@@ -1249,23 +1855,36 @@ const MusicModule = (() => {
   const _bindEvents = () => {
     const audio = _$('ms-audio');
 
-    // 退出模块
     _$('ms-btn-exit').onclick = () => close();
 
-    // 本地页
-    _$('ms-btn-create-pl').onclick = () => _openModal('ms-modal-create-pl');
+    const menuTrigger = _$('ms-menu-trigger');
+    const dropMenu = _$('ms-dropdown-menu');
+    if (menuTrigger && dropMenu) {
+      menuTrigger.onclick = (e) => {
+        e.stopPropagation();
+        dropMenu.classList.toggle('active');
+      };
+      document.addEventListener('click', (e) => {
+        if (!dropMenu.contains(e.target) && !menuTrigger.contains(e.target)) {
+          dropMenu.classList.remove('active');
+        }
+      });
+    }
+
+    _$('ms-btn-create-pl').onclick = () => {
+      if(dropMenu) dropMenu.classList.remove('active');
+      _openModal('ms-modal-create-pl');
+    };
+    
     _$('ms-btn-go-api').onclick = async () => {
-      // 优化：只要本地存储了数据，点图标【秒进主页】，不让用户等网络请求
+      if(dropMenu) dropMenu.classList.remove('active');
       if (_cookie && _apiBase && _userProfile) {
         _updateProfileUI();
         _isLoggedIn = true;
         _navTo('ms-home-view');
-        
-        // 后台静默验证（加时间戳防缓存）
         try {
           const data = await _api('/user/account?timestamp=' + Date.now());
           if (!data.profile) {
-            // 如果Cookie真过期了，默默清空，下次再点就会要求重登
             _cookie = ''; _userProfile = null; _isLoggedIn = false;
             _saveConfig();
           }
@@ -1275,15 +1894,48 @@ const MusicModule = (() => {
       _navTo('ms-api-login-view');
     };
 
-    // API 连接页
+    // 打开 UI 选择页
+    _$('ms-btn-go-ui').onclick = () => {
+      if(dropMenu) dropMenu.classList.remove('active');
+      document.querySelectorAll('.ms-ui-preview-card').forEach(c => c.classList.remove('active'));
+      if (_activeSkin) {
+        const activeCard = document.querySelector(`.ms-ui-preview-card[data-skin="${_activeSkin}"]`);
+        if (activeCard) activeCard.classList.add('active');
+      }
+      _navTo('ms-ui-view');
+    };
+
+    _$('ms-btn-ui-back').onclick = _navBack;
+
+    // 选择皮肤点击交互
+    document.querySelectorAll('.ms-ui-preview-card').forEach(card => {
+      card.onclick = () => {
+        document.querySelectorAll('.ms-ui-preview-card').forEach(c => c.classList.remove('active'));
+        card.classList.add('active');
+      };
+    });
+
+    // 应用 UI 按钮
+    _$('ms-btn-apply-ui').onclick = () => {
+      const activeCard = document.querySelector('.ms-ui-preview-card.active');
+      if (activeCard) {
+        _activeSkin = activeCard.dataset.skin;
+        localStorage.setItem('ms_active_skin', _activeSkin);
+        if (typeof Toast !== 'undefined') Toast.show('皮肤已应用，退出模块即可在桌面显示');
+      } else {
+        _activeSkin = null;
+        localStorage.removeItem('ms_active_skin');
+        if (typeof Toast !== 'undefined') Toast.show('已取消皮肤');
+      }
+      _navBack();
+    };
+
     _$('ms-btn-api-back').onclick = _navBack;
     _$('ms-btn-connect-api').onclick = async () => {
       const url = _$('ms-api-url-input')?.value.trim();
       if (url) {
         _apiBase = url.replace(/\/$/, '');
         _saveConfig();
-        
-        // 优化：如果换了API地址但本地有Cookie，先试一下能不能直接进
         if (_cookie) {
            try {
              const data = await _api('/user/account?timestamp=' + Date.now());
@@ -1297,7 +1949,6 @@ const MusicModule = (() => {
              }
            } catch(e) {}
         }
-
         _navTo('ms-login-view');
         _startQR();
       } else {
@@ -1307,7 +1958,6 @@ const MusicModule = (() => {
     _$('ms-btn-api-guide').onclick = () => _openModal('ms-modal-api-guide');
     _$('ms-btn-close-guide').onclick = () => _closeModal('ms-modal-api-guide');
 
-    // 登录页
     _$('ms-btn-login-back').onclick = () => { if (_qrTimer) clearInterval(_qrTimer); _navBack(); };
     _$('ms-btn-refresh-qr').onclick = () => _startQR();
     document.querySelectorAll('#music-root .ms-login-tab').forEach(tab => {
@@ -1320,29 +1970,21 @@ const MusicModule = (() => {
       };
     });
     
-    // === 新增：绑定账号密码及验证码登录事件 ===
     _$('ms-btn-pwd-login').onclick = _loginWithPassword;
     _$('ms-btn-send-code').onclick = _sendSmsCode;
     _$('ms-btn-code-login').onclick = _loginWithCode;
 
-    // 主页卡片
     _$('ms-card-playlist').onclick = () => _loadCloudPlaylists();
     _$('ms-card-daily').onclick = () => _loadDailyRec();
     _$('ms-card-search').onclick = () => _navTo('ms-search-view');
-   // 返回本地首页（保留网易云登录状态）
-    _$('ms-btn-logout').onclick = () => { 
-      console.log('[MusicModule] 🏠 返回本地星空，保留云端连接...');
-      _navTo('ms-local-view'); 
-    };
+    _$('ms-btn-logout').onclick = () => _navTo('ms-local-view'); 
 
-    // 各列表页 Back
     _$('ms-btn-pl-back').onclick = _navBack;
     _$('ms-btn-sl-back').onclick = _navBack;
     _$('ms-sl-upload-btn').onclick = () => { _pendingFiles =[]; _renderPendingList(); _openModal('ms-modal-upload'); };
     _$('ms-btn-search-back').onclick = _navBack;
     _$('ms-search-input').oninput = _handleSearch;
 
-    // 播放器
     _$('ms-mini-player').onclick = () => _toggleFullPlayer();
     _$('ms-mp-controls').onclick = e => e.stopPropagation();
     _$('ms-mp-prev').onclick = _prevSong;
@@ -1355,7 +1997,6 @@ const MusicModule = (() => {
     _$('ms-mode-btn').onclick = _toggleMode;
     _$('ms-fp-to-list').onclick = () => { _toggleFullPlayer(); _navTo('ms-songlist-view'); };
 
-    // 进度条
     const bar = _$('ms-progress-bar');
     const fill = _$('ms-progress-fill');
     bar.addEventListener('input', e => {
@@ -1367,24 +2008,18 @@ const MusicModule = (() => {
       if (audio.duration) audio.currentTime = (e.target.value / 100) * audio.duration;
     });
 
-    // audio 事件与歌词同步
     audio.addEventListener('timeupdate', () => {
       if (!_isDragging && audio.duration) {
         const pct = (audio.currentTime / audio.duration) * 100;
         bar.value = pct; fill.style.width = `${pct}%`;
         _$('ms-time-current').textContent = _fmtTime(audio.currentTime);
       }
-      
-      // 同步歌词
       if (_lyrics.length > 0) {
         const ct = audio.currentTime;
         let idx = -1;
         for (let i = 0; i < _lyrics.length; i++) {
-          if (ct >= _lyrics[i].time - 0.3) { // 增加0.3s平滑过渡缓冲
-            idx = i;
-          } else {
-            break;
-          }
+          if (ct >= _lyrics[i].time - 0.3) idx = i;
+          else break;
         }
         if (idx >= 0 && idx !== _currentLyricIdx) {
           if (_currentLyricIdx >= 0) {
@@ -1394,7 +2029,6 @@ const MusicModule = (() => {
           _currentLyricIdx = idx;
           const newEl = _$('lyric-line-' + idx);
           if (newEl) newEl.classList.add('active');
-          // line-height 是 30px
           _$('ms-lyric-scroll').style.transform = `translateY(-${idx * 30}px)`;
         }
       }
@@ -1402,47 +2036,61 @@ const MusicModule = (() => {
     audio.addEventListener('loadedmetadata', () => { _$('ms-time-total').textContent = _fmtTime(audio.duration); });
     audio.addEventListener('ended', () => { if (_playMode !== 2) _nextSong(); });
 
-    // 文件上传
     _$('ms-file-img').onchange = e => {
       const file = e.target.files[0]; if (!file) return;
       const reader = new FileReader();
-      reader.onload = ev => {
+      reader.onload = async ev => {
         const el = _$(_uploadImgTargetId);
-        if (el) { el.style.backgroundImage = `url('${ev.target.result}')`; }
+        if (el) el.style.backgroundImage = `url('${ev.target.result}')`;
         if (_uploadImgTargetId === 'ms-new-pl-cover') {
           _tempCover = ev.target.result;
           _$('ms-new-pl-cover').innerHTML = '';
+        } else if (_uploadImgTargetId && _uploadImgTargetId.startsWith('ms-lpl-cover-')) {
+          const idx = parseInt(_uploadImgTargetId.replace('ms-lpl-cover-', ''));
+          if (_localPlaylists[idx]) {
+            _localPlaylists[idx].cover = ev.target.result;
+            await _savePlaylistToDB(_localPlaylists[idx]);
+          }
         }
       };
       reader.readAsDataURL(file);
       e.target.value = '';
     };
     _$('ms-file-music').onchange = e => {
-      Array.from(e.target.files).forEach(f => _pendingFiles.push({ id: Date.now() + Math.random(), type: 'AUDIO', file: f }));
-      _renderPendingList(); e.target.value = '';
+      Array.from(e.target.files).forEach(f => {
+        const songId = 'local_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7);
+        _pendingFiles.push({ id: Date.now() + Math.random(), songId, type: 'AUDIO', file: f });
+      });
+      _updatePendingMatches();
+      _renderPendingList();
+      e.target.value = '';
     };
     _$('ms-file-lrc').onchange = e => {
-      Array.from(e.target.files).forEach(f => _pendingFiles.push({ id: Date.now() + Math.random(), type: 'LRC', file: f }));
-      _renderPendingList(); e.target.value = '';
+      Array.from(e.target.files).forEach(f => {
+        _pendingFiles.push({ id: Date.now() + Math.random(), type: 'LRC', file: f, matchedId: null, matchedName: null });
+      });
+      _updatePendingMatches();
+      _renderPendingList();
+      e.target.value = '';
     };
     _$('ms-btn-add-music').onclick = () => _$('ms-file-music').click();
     _$('ms-btn-add-lrc').onclick = () => _$('ms-file-lrc').click();
     _$('ms-btn-confirm-upload').onclick = _confirmUpload;
 
-    // 新建歌单
     _$('ms-btn-cancel-create').onclick = () => _closeModal('ms-modal-create-pl');
     _$('ms-new-pl-cover').onclick = () => { _uploadImgTargetId = 'ms-new-pl-cover'; _$('ms-file-img').click(); };
-    _$('ms-btn-confirm-create').onclick = () => {
+    _$('ms-btn-confirm-create').onclick = async () => {
       const name = _$('ms-new-pl-name')?.value.trim();
       if (!name) return;
-      _localPlaylists.push({ id: 'p_' + Date.now(), name, titleEn: 'NEW RECORD', count: 0, cover: _tempCover || 'https://images.unsplash.com/photo-1478760329108-5c3ed9d495a0?auto=format&fit=crop&w=600&q=80', songs:[], isLocal: true });
+      const newPl = { id: 'p_' + Date.now(), name, titleEn: 'NEW RECORD', count: 0, cover: _tempCover || _DEFAULT_COVER, songs:[], isLocal: true };
+      _localPlaylists.push(newPl);
+      await _savePlaylistToDB(newPl);
       _renderLocalPlaylists();
       _$('ms-new-pl-name').value = ''; _tempCover = '';
       _$('ms-new-pl-cover').innerHTML = '<span><i class="ph ph-camera"></i> 点击上传封面</span>';
       _closeModal('ms-modal-create-pl');
     };
 
-    // 关闭弹窗点背景
     ['ms-modal-create-pl', 'ms-modal-upload', 'ms-modal-api-guide'].forEach(id => {
       const el = _$(id);
       if (el) {
@@ -1452,7 +2100,7 @@ const MusicModule = (() => {
   }; 
 
   // ── 公开方法 ──
-  function open() {
+  async function open() {
     _loadConfig();
     if (!_initialized) {
       _injectCSS();
@@ -1460,8 +2108,16 @@ const MusicModule = (() => {
       _bindEvents();
       _initialized = true;
     }
+
+    if (_floatingWidget) {
+      _floatingWidget.remove();
+      _floatingWidget = null;
+    }
+
+    _ensureDB().then(() => _loadPlaylistsFromDB()).then(() => {
+      _renderLocalPlaylists();
+    }).catch(e => console.warn('[MusicModule] DB 恢复失败:', e));
     
-    // 初始化上次登录的状态
     const apiUrlInput = _$('ms-api-url-input');
     if (apiUrlInput) apiUrlInput.value = _apiBase || '';
     if (_userProfile) { 
@@ -1469,23 +2125,19 @@ const MusicModule = (() => {
       _isLoggedIn = true; 
     }
     
-    // 渲染及重置导航栈
     _renderLocalPlaylists();
     
-    // 重置路由视图，每次打开默认回到本地主控台
     _viewStack = ['ms-local-view'];
     document.querySelectorAll('#music-root .ms-view').forEach(v => v.classList.remove('active'));
     const localView = _$('ms-local-view');
     if (localView) localView.classList.add('active');
     _contextIsLocal = true;
 
-    // 延迟添加打开动画
     setTimeout(() => {
       const root = document.getElementById('music-root');
       if (root) root.classList.add('ms-open');
     }, 20);
 
-    // 需要 Three.js 时懒加载星空背景
     if (window.THREE) {
       _initThree();
     } else {
@@ -1501,13 +2153,12 @@ const MusicModule = (() => {
     if (root) {
       root.classList.remove('ms-open');
     }
-    // 停止全屏播放器的拉起状态
     const fullPlayer = _$('ms-full-player');
     if (fullPlayer) {
       fullPlayer.classList.remove('expanded');
     }
+    _renderFloatingWidget();
   }
 
-  // 暴露给外部调用的接口
   return { open, close, _navTo };
 })();
