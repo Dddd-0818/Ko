@@ -15,6 +15,11 @@
 <script src="https://unpkg.com/mammoth@1.6.0/mammoth.browser.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script src="music.js"></script>
+<script src="https://unpkg.com/vconsole@latest/dist/vconsole.min.js"></script>
+<script>
+  // 初始化 VConsole
+  var vConsole = new VConsole();
+</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Noto+Sans+SC:wght@300;400;500;700&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400;1,700&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Inter:wght@300;400;500;700;900&family=Cinzel:wght@500;700&family=Noto+Serif+SC:wght@500;700;900&family=Libre+Barcode+39+Text&display=swap" rel="stylesheet">
@@ -1210,6 +1215,35 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg-body);display:flex;jus
 #conv-screen .cv-transcript-divider { height:1px;background:currentColor;opacity:0.15;margin-bottom:6px; }
 #conv-screen .cv-transcript-label { font-family:'Space Mono',monospace;font-size:0.45rem;letter-spacing:2px;opacity:0.5;margin-bottom:4px;text-transform:uppercase; }
 #conv-screen .cv-transcript-text { font-size:13px;line-height:1.4; }
+
+/* ── 气泡翻译展开区 ── */
+#conv-screen .cv-bubble.translatable { cursor:pointer; position:relative; }
+#conv-screen .cv-translate-wrap {
+  display:grid; grid-template-rows:0fr;
+  transition:grid-template-rows 0.4s cubic-bezier(0.16,1,0.3,1), opacity 0.35s ease, margin-top 0.35s ease;
+  opacity:0; margin-top:0;
+}
+#conv-screen .cv-translate-inner { overflow:hidden; min-height:0; }
+#conv-screen .cv-bubble.translate-open .cv-translate-wrap { grid-template-rows:1fr; opacity:1; margin-top:8px; }
+#conv-screen .cv-translate-divider { height:0.5px; background:rgba(255,255,255,0.18); margin-bottom:7px; }
+#conv-screen .cv-translate-label {
+  font-family:'Space Mono',monospace; font-size:0.42rem; letter-spacing:2px;
+  opacity:0.5; margin-bottom:5px; text-transform:uppercase;
+  display:flex; align-items:center; gap:6px;
+}
+#conv-screen .cv-tl-spin { font-size:0.75rem; animation:cv-tick-spin 1.2s steps(6) infinite; display:none; }
+#conv-screen .cv-translate-label.loading .cv-tl-spin { display:inline-block; }
+#conv-screen .cv-translate-text { font-size:12px; line-height:1.5; opacity:0.85; font-style:italic; }
+/* 小角标提示 */
+#conv-screen .cv-bubble.translatable::after {
+  content:'译'; position:absolute; bottom:-5px; right:-5px;
+  font-family:'Space Mono',monospace; font-size:6px;
+  background:rgba(255,255,255,0.18); color:#fff; border-radius:3px;
+  padding:1px 4px; pointer-events:none; opacity:0.55;
+  transition:opacity 0.2s;
+}
+#conv-screen .cv-bubble.translate-open::after,
+#conv-screen .cv-bubble.translatable:active::after { opacity:0; }
 
 /* ── 转账卡片 ── */
 #conv-screen .cv-transfer { position:relative;width:220px;padding:14px 16px;border:1px solid #e0e0e0;background:#fbfaf8;display:flex;flex-direction:column;border-radius:6px;box-shadow:0 6px 14px rgba(0,0,0,0.06);cursor:pointer;transition:transform 0.5s cubic-bezier(0.19,1,0.22,1),box-shadow 0.5s cubic-bezier(0.19,1,0.22,1); }
@@ -3432,7 +3466,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg-body);display:flex;jus
               <span class="cv-si-label">双语输出</span>
               <span class="cv-si-sub">Bilingual Dialect</span>
             </div>
-            <div class="cv-mag-toggle" onclick="this.classList.toggle('on')"></div>
+            <div class="cv-mag-toggle" id="cv-translate-toggle" onclick="ConvModule._toggleTranslate(this)"></div>
           </div>
         </div>
 
@@ -3691,6 +3725,18 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg-body);display:flex;jus
         </div>
         <label class="wb-toggle">
           <input type="checkbox" id="wb-enabled" checked>
+          <div class="wb-track"></div>
+          <div class="wb-thumb"></div>
+        </label>
+      </div>
+      <!-- Always On (新增) -->
+      <div class="wb-set-cell full">
+        <div>
+          <div class="wb-set-title">常驻模式 ALWAYS ON</div>
+          <div class="wb-set-desc">无视关键词触发，对话时强制全局注入</div>
+        </div>
+        <label class="wb-toggle">
+          <input type="checkbox" id="wb-always-on">
           <div class="wb-track"></div>
           <div class="wb-thumb"></div>
         </label>
@@ -4989,10 +5035,11 @@ const WBModule = (() => {
               </label>
             </div>
             <p class="wb-item-preview">${_esc(e.content)}</p>
-            <div class="wb-item-meta">
+           <div class="wb-item-meta">
               <span class="wb-item-tag">${_esc(e.keyword)}</span>
               <span class="wb-item-tag">${_esc(charLabel)}</span>
-              ${e.isRegex ? '<span class="wb-item-tag" style="border-bottom-style:dashed">REGEX</span>' : ''}
+              ${e.isAlwaysOn ? '<span class="wb-item-tag" style="color:var(--wb-text);font-weight:600;border-bottom-color:var(--wb-text);">ALWAYS ON</span>' : ''}
+              ${e.isRegex && !e.isAlwaysOn ? '<span class="wb-item-tag" style="border-bottom-style:dashed">REGEX</span>' : ''}
               <span class="wb-item-tag" style="border:none;opacity:.5">W.${e.weight}</span>
             </div>
           </div>
@@ -5025,6 +5072,7 @@ const WBModule = (() => {
       document.getElementById('wb-keyword').value = '';
       document.getElementById('wb-content').value = '';
       document.getElementById('wb-is-regex').checked = false;
+      document.getElementById('wb-always-on').checked = false;
       document.getElementById('wb-enabled').checked  = true;
       document.getElementById('wb-weight').value  = '5';
       document.getElementById('wb-weight-val').textContent = 'W.5';
@@ -5040,6 +5088,7 @@ const WBModule = (() => {
       document.getElementById('wb-keyword').value = e.keyword;
       document.getElementById('wb-content').value = e.content;
       document.getElementById('wb-is-regex').checked = !!e.isRegex;
+      document.getElementById('wb-always-on').checked = !!e.isAlwaysOn;
       document.getElementById('wb-enabled').checked  = e.enabled !== false;
       document.getElementById('wb-weight').value  = String(e.weight || 5);
       document.getElementById('wb-weight-val').textContent = `W.${e.weight || 5}`;
@@ -5080,6 +5129,7 @@ const WBModule = (() => {
       keyword,
       content,
       isRegex:      document.getElementById('wb-is-regex').checked,
+      isAlwaysOn:   document.getElementById('wb-always-on').checked,
       enabled:      document.getElementById('wb-enabled').checked,
       weight:       parseInt(document.getElementById('wb-weight').value) || 5,
       categoryId:   _editorCatId,
@@ -5288,13 +5338,18 @@ const WBModule = (() => {
     return _entries.filter(e => {
       if (!e.enabled) return false;
       if (!e.scope || !e.scope.includes('chat')) return false;
-      // char filter
+     // 1. 先验证是不是和当前角色聊天（char filter）
       if (e.characterIds && e.characterIds.length > 0) {
         if (!charId || !e.characterIds.includes(String(charId))) return false;
       }
-      // keyword match
+      
+      // 2. ✨ 常驻模式拦截：直接放行，无视下面的关键词匹配！
+      if (e.isAlwaysOn) return true;
+
+      // 3. 往下是常规的关键词匹配逻辑
       const kw = (e.keyword || '').trim();
       if (!kw) return false;
+      
       if (e.isRegex) {
         try {
           const m = kw.match(/^\/(.+)\/([gimsuy]*)$/);
@@ -7418,6 +7473,11 @@ const ConvModule = (() => {
     // 初始化壁纸
     await _initWallpaper();
 
+    // 恢复翻译开关
+    try {
+      _translateEnabled = (await DB.settings.get(`translate-enabled-${_charId}`)) === true;
+    } catch(e) { _translateEnabled = false; }
+
     // 绑定事件（只绑一次）
     _bindEvents();
   }
@@ -7693,6 +7753,19 @@ const ConvModule = (() => {
     if (glassOverlay && !glassOverlay._menuBound) {
       glassOverlay._menuBound = true;
       glassOverlay.addEventListener('click', ConvModule.closeMenu);
+    }
+
+// ── 翻译气泡点击代理 ──
+    if (feed && !feed._translateBound) {
+      feed._translateBound = true;
+      feed.addEventListener('click', e => {
+        if (_isMultiSelectMode) return;
+        if (e.target.closest('.cv-translate-wrap')) return; // 点译文内部不触发
+        const bubble = e.target.closest('.cv-bubble.translatable');
+        if (!bubble) return;
+        e.stopPropagation();
+        _handleTranslateBubble(bubble);
+      });
     }
 
 // ── 多选模式事件劫持 (利用捕获阶段拦截点击) ──
@@ -8464,7 +8537,10 @@ const ConvModule = (() => {
       }
       // text（可能带 quoteRef）
       const quoteHtml = part.quoteRef ? _buildQuoteRefHtml(part.quoteRef) : '';
-      row.innerHTML = `${avatarHtml}<div class="cv-bubble">${quoteHtml}${_escHtml(part.content)}</div>`;
+      const needsTranslate = !isUser && _isNonChinese(part.content);
+      const transClass = needsTranslate ? ' translatable' : '';
+      const transHtml  = needsTranslate ? `<div class="cv-translate-wrap"><div class="cv-translate-inner"><div class="cv-translate-divider"></div><div class="cv-translate-label"><i class="ph-thin ph-asterisk cv-tl-spin"></i>TRANSLATE</div><div class="cv-translate-text"></div></div></div>` : '';
+      row.innerHTML = `${avatarHtml}<div class="cv-bubble${transClass}">${quoteHtml}${_escHtml(part.content)}${transHtml}</div>`;
       return row;
     }
 
@@ -8475,7 +8551,10 @@ const ConvModule = (() => {
       if (part.type === 'user_transfer') return _buildUserTransferHtml(part, msg.id);
       if (part.type === 'image')         return _buildImgHtml(part, msg.id);
       const quoteHtml = part.quoteRef ? _buildQuoteRefHtml(part.quoteRef) : '';
-      return `<div class="cv-bubble">${quoteHtml}${_escHtml(part.content)}</div>`;
+      const needsTranslate = !isUser && _isNonChinese(part.content);
+      const transClass = needsTranslate ? ' translatable' : '';
+      const transHtml  = needsTranslate ? `<div class="cv-translate-wrap"><div class="cv-translate-inner"><div class="cv-translate-divider"></div><div class="cv-translate-label"><i class="ph-thin ph-asterisk cv-tl-spin"></i>TRANSLATE</div><div class="cv-translate-text"></div></div></div>` : '';
+      return `<div class="cv-bubble${transClass}">${quoteHtml}${_escHtml(part.content)}${transHtml}</div>`;
     }).join('');
     row.innerHTML = `${avatarHtml}<div class="cv-bubbles-wrap">${bubblesHtml}</div>`;
     return row;
@@ -9599,6 +9678,7 @@ function back() {
     _loadNovelPrefix();
     _loadNovelNegative();
     _syncNovelCharPromptsVisibility();
+    _loadTranslateToggle();
     document.getElementById('cv-settings-panel')?.classList.add('active');
   }
 
@@ -9634,6 +9714,85 @@ function back() {
 
   // ── 语音条播放按钮 ──
   let _ttsEnabled = true; // MiniMax TTS 开关，默认开
+  let _translateEnabled = false; // 气泡翻译开关，默认关
+
+  // ── 判断是否需要翻译（外语内容，中文占比 < 60%）──
+  function _isNonChinese(text) {
+    if (!text || !text.trim()) return false;
+    const clean = text.replace(/\[.*?\]/g, '').trim();
+    if (clean.length < 3) return false;
+    const cjk = (clean.match(/[\u4e00-\u9fff\u3040-\u30ff]/g) || []).length;
+    return cjk / clean.length < 0.6;
+  }
+
+  function _translateKey() { return `translate-enabled-${_charId}`; }
+
+  async function _loadTranslateToggle() {
+    try {
+      const v = await DB.settings.get(_translateKey());
+      _translateEnabled = v === true;
+    } catch(e) { _translateEnabled = false; }
+    const t = document.getElementById('cv-translate-toggle');
+    if (t) t.classList.toggle('on', _translateEnabled);
+  }
+
+  async function _toggleTranslate(el) {
+    el.classList.toggle('on');
+    _translateEnabled = el.classList.contains('on');
+    try { await DB.settings.set(_translateKey(), _translateEnabled); } catch(e) {}
+    // 关闭时收起所有已展开的翻译区
+    if (!_translateEnabled) {
+      document.querySelectorAll('#cv-feed .cv-bubble.translate-open').forEach(b => b.classList.remove('translate-open'));
+    }
+    Toast.show(_translateEnabled ? '气泡翻译已开启，点击外语气泡可译' : '气泡翻译已关闭');
+  }
+
+  // ── 点击翻译气泡 ──
+  async function _handleTranslateBubble(bubble) {
+    if (!_translateEnabled) return;
+    const labelEl = bubble.querySelector('.cv-translate-label');
+    const textEl  = bubble.querySelector('.cv-translate-text');
+    if (!labelEl || !textEl) return;
+
+    // 已有缓存，直接展开/收起
+    if (bubble.dataset.translated === '1') {
+      bubble.classList.toggle('translate-open');
+      return;
+    }
+
+    // 展开 + 加载中
+    bubble.classList.add('translate-open');
+    labelEl.classList.add('loading');
+    textEl.textContent = '';
+
+    // 提取原文（去掉 translate-wrap 和 quote-ref）
+    const clone = bubble.cloneNode(true);
+    clone.querySelector('.cv-translate-wrap')?.remove();
+    clone.querySelector('.cv-quote-ref')?.remove();
+    const rawText = (clone.textContent || '').trim();
+
+    try {
+      const activeApi = await DB.api.getActive();
+      if (!activeApi) throw new Error('no api');
+
+      const result = await ApiHelper.chatCompletion(activeApi, [{
+        role: 'user',
+        content: `把下面这段话翻译成中文，要口语化有活人感，不要加任何解释，直接给译文：\n\n${rawText}`
+      }]);
+
+      const translated = (result || '').trim();
+      if (!translated) throw new Error('empty');
+
+      textEl.textContent = translated;
+      labelEl.classList.remove('loading');
+      bubble.dataset.translated = '1';
+    } catch(err) {
+      labelEl.classList.remove('loading');
+      textEl.textContent = '翻译失败，点击重试';
+      bubble.dataset.translated = '';
+      console.warn('[Translate]', err);
+    }
+  }
 
   function _syncVoiceOptionsVisibility() {
     const wrap = document.getElementById('cv-voice-options-wrap');
@@ -10259,7 +10418,7 @@ function back() {
     closeMenu();
   }
   
-  return { enter, back, openQuickReply, closeQuickReply,openSettings, closeSettings, openFuncPanel, loadMore, sendUserMsg, sendAndTriggerAI, fetchModels, closeApiModal, confirmApi, openRecallModal, closeRecallModal, collectTransfer, sendUserTransfer, sendImgMsg, closeMenu,handleMenuAction,cancelQuote, updateMultiSelectUI, cancelMultiSelect, favoriteSelected, deleteSelected,addEmoteToPreview,_openImgViewer, _openImgViewerFromEl, _viewerDownloadImage, _regenerateNovelFromViewer, toggleAudio, clearWallpaper, clearHistory, _toggleAccordion, _selectRadio, _selectPersona,_removePendingImg,playAudio, previewVoice, _toggleTTS, _toggleNovel, _appendNovelImageMessage, _replaceMessageBubble, _showNovelPending, _hideNovelPending };
+  return { enter, back, openQuickReply, closeQuickReply,openSettings, closeSettings, openFuncPanel, loadMore, sendUserMsg, sendAndTriggerAI, fetchModels, closeApiModal, confirmApi, openRecallModal, closeRecallModal, collectTransfer, sendUserTransfer, sendImgMsg, closeMenu,handleMenuAction,cancelQuote, updateMultiSelectUI, cancelMultiSelect, favoriteSelected, deleteSelected,addEmoteToPreview,_openImgViewer, _openImgViewerFromEl, _viewerDownloadImage, _regenerateNovelFromViewer, toggleAudio, clearWallpaper, clearHistory, _toggleAccordion, _selectRadio, _selectPersona,_removePendingImg,playAudio, previewVoice, _toggleTTS, _toggleNovel, _toggleTranslate, _appendNovelImageMessage, _replaceMessageBubble, _showNovelPending, _hideNovelPending };
 })();
 /** 供 NovelModule 等脚本用 window 访问；const 不会自动挂到 window */
 window.ConvModule = ConvModule;
