@@ -8814,7 +8814,7 @@ const ConvModule = (() => {
       let novelImgOnForPrompt = false;
       try { novelImgOnForPrompt = (await DB.settings.get(`novel-toggle-${_charId}`)) === true; } catch (e) {}
 
-     // ── 世界书关键词匹配注入 ──
+    // ── 世界书关键词匹配注入 ──
       let worldBookBlock = '';
       try {
         if (typeof WBModule !== 'undefined') {
@@ -8840,6 +8840,14 @@ const ConvModule = (() => {
             .join(' ');
             
           const matched = WBModule.getMatchingEntries(matchText, String(_charId));
+          
+          // 👇 下面这几行是刚刚不小心漏掉的闭合代码
+          if (matched.length) {
+            worldBookBlock = matched.map(e => e.content.trim()).join('\n\n');
+            console.log(`[ConvModule] 世界书注入 ${matched.length} 条词条:`, matched.map(e => e.name));
+          }
+        }
+      } catch(wbErr) { console.warn('[ConvModule] WorldBook match error', wbErr); }
 
       const systemPrompt = _buildSystemPrompt(histMsgs, novelImgOnForPrompt, worldBookBlock);
       const apiMessages  = await _buildApiMessages(histMsgs, activeApi, currentRound);
