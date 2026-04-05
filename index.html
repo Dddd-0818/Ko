@@ -15,11 +15,6 @@
 <script src="https://unpkg.com/mammoth@1.6.0/mammoth.browser.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script src="music.js"></script>
-<script src="https://unpkg.com/vconsole@latest/dist/vconsole.min.js"></script>
-<script>
-  // 初始化 VConsole
-  var vConsole = new VConsole();
-</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Noto+Sans+SC:wght@300;400;500;700&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400;1,700&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Inter:wght@300;400;500;700;900&family=Cinzel:wght@500;700&family=Noto+Serif+SC:wght@500;700;900&family=Libre+Barcode+39+Text&display=swap" rel="stylesheet">
@@ -8819,21 +8814,32 @@ const ConvModule = (() => {
       let novelImgOnForPrompt = false;
       try { novelImgOnForPrompt = (await DB.settings.get(`novel-toggle-${_charId}`)) === true; } catch (e) {}
 
-      // ── 世界书关键词匹配注入 ──
+     // ── 世界书关键词匹配注入 ──
       let worldBookBlock = '';
       try {
         if (typeof WBModule !== 'undefined') {
-          // 用最近 10 条消息的文本做匹配源
-          const matchText = histMsgs.slice(-10)
+          // 1. 将历史记录按“对话轮次”分组
+          // (只要 user 的消息紧跟在 assistant 后面，就算作新的一轮开始)
+          let rounds = [];
+          let currentRound = [];
+          for (let i = 0; i < histMsgs.length; i++) {
+            if (histMsgs[i].role === 'user' && i > 0 && histMsgs[i-1].role === 'assistant') {
+              if (currentRound.length) rounds.push(currentRound);
+              currentRound = [];
+            }
+            currentRound.push(histMsgs[i]);
+          }
+          if (currentRound.length) rounds.push(currentRound);
+          
+          // 2. 精准截取最近的 5 轮对话，并重新展平为一维数组
+          const recentMsgs = rounds.slice(-5).flat();
+
+          // 3. 将这 5 轮消息转为纯文本作为世界书的扫描源
+          const matchText = recentMsgs
             .map(m => _formatMsgForAI(m))
             .join(' ');
+            
           const matched = WBModule.getMatchingEntries(matchText, String(_charId));
-          if (matched.length) {
-            worldBookBlock = matched.map(e => e.content.trim()).join('\n\n');
-            console.log(`[ConvModule] 世界书注入 ${matched.length} 条词条:`, matched.map(e => e.name));
-          }
-        }
-      } catch(wbErr) { console.warn('[ConvModule] WorldBook match error', wbErr); }
 
       const systemPrompt = _buildSystemPrompt(histMsgs, novelImgOnForPrompt, worldBookBlock);
       const apiMessages  = await _buildApiMessages(histMsgs, activeApi, currentRound);
