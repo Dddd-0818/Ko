@@ -1707,6 +1707,25 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg-body);display:flex;jus
 }
 [data-theme="dark"] #worldbook-screen { --wb-danger:#FF5252; }
 
+/* 巨型字母水印 */
+#worldbook-screen .wb-bg-letter {
+  position: absolute;
+  bottom: -40px;
+  right: -20px;
+  font-family: 'Playfair Display', serif;
+  font-size: 280px;
+  font-style: italic;
+  font-weight: 300;
+  color: rgba(0,0,0,0.025);
+  line-height: 1;
+  pointer-events: none;
+  z-index: 0;
+  user-select: none;
+}
+[data-theme="dark"] #worldbook-screen .wb-bg-letter {
+  color: rgba(255,255,255,0.025);
+}
+
 /* scroll wrapper */
 #worldbook-screen .wb-scroll {
   height: 100%; overflow-y: auto; overflow-x: hidden;
@@ -1734,12 +1753,17 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg-body);display:flex;jus
   font-family: var(--wb-serif); font-size: 1.4rem; font-style: italic;
   margin-bottom: 16px; display: inline-block;
 }
-
 /* header */
-#worldbook-screen .wb-header { padding: 0 28px; margin-bottom: 40px; }
+#worldbook-screen .wb-header { 
+  padding: 0 28px; 
+  /* 将安全区和 20px 的留白加在最外层，保护返回按钮 */
+  padding-top: calc(env(safe-area-inset-top, 20px) + 20px); 
+  margin-bottom: 40px; 
+}
 #worldbook-screen .wb-header-top {
   display: flex; justify-content: space-between; align-items: flex-end;
-  padding-top: calc(env(safe-area-inset-top, 0px) + 40px);
+  /* 移除这里的安全区，只保留元素间的常规间距 */
+  padding-top: 40px; 
 }
 #worldbook-screen .wb-back {
   background: none; border: none; color: var(--wb-sub);
@@ -3554,6 +3578,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg-body);display:flex;jus
 <div class="screen" id="worldbook-screen">
   <div class="wb-noise"></div>
   <div class="wb-watermark"><span>"</span> THE UNTOLD STORY <span>"</span></div>
+  <div class="wb-bg-letter">W</div>
 
   <div class="wb-scroll" id="wb-scroll">
     <div class="wb-header">
@@ -3584,6 +3609,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg-body);display:flex;jus
 
   <!-- Editor overlay -->
   <div class="wb-editor" id="wb-editor">
+  <div class="wb-bg-letter">E</div>
     <div class="wb-ed-nav">
       <span class="wb-ed-nav-title" id="wb-ed-title">新建词条 / NEW ENTRY</span>
       <button class="wb-ed-close" onclick="WBModule.closeEditor()"><i class="ph-thin ph-x"></i></button>
