@@ -12,6 +12,7 @@
 <meta name="theme-color" content="#fafafa">
 <script src="https://unpkg.com/@phosphor-icons/web"></script>
 <script src="https://unpkg.com/fflate@0.8.2/umd/index.js"></script>
+<script src="https://unpkg.com/mammoth@1.6.0/mammoth.browser.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script src="music.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -1686,8 +1687,388 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg-body);display:flex;jus
   box-shadow: 0 4px 10px rgba(0,0,0,0.1);
 }
 
+/* ============================================================
+   WorldBook Screen — 世界书
+   ============================================================ */
+#worldbook-screen {
+  --wb-bg:        var(--bg-device);
+  --wb-card:      var(--bg-card);
+  --wb-text:      var(--text-main);
+  --wb-sub:       var(--text-sub);
+  --wb-line:      var(--border-line);
+  --wb-danger:    #D32F2F;
+  --wb-serif:     'Cormorant Garamond','Noto Serif SC',serif;
+  --wb-sans:      'Noto Sans SC',sans-serif;
+  --wb-mono:      'Space Mono',monospace;
+  overflow: hidden;
+  font-family: var(--wb-sans);
+  background: var(--wb-bg);
+  z-index: 150;
+}
+[data-theme="dark"] #worldbook-screen { --wb-danger:#FF5252; }
+
+/* scroll wrapper */
+#worldbook-screen .wb-scroll {
+  height: 100%; overflow-y: auto; overflow-x: hidden;
+  padding: 0 0 100px; scrollbar-width: none;
+  position: relative; z-index: 1;
+}
+#worldbook-screen .wb-scroll::-webkit-scrollbar { display: none; }
+
+/* noise bg */
+#worldbook-screen .wb-noise {
+  position: absolute; inset: 0; pointer-events: none; z-index: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
+}
+
+/* vertical watermark */
+#worldbook-screen .wb-watermark {
+  position: fixed; left: 20px; top: 50%;
+  transform: translateY(-50%) rotate(180deg);
+  writing-mode: vertical-rl;
+  font-family: var(--wb-mono); font-size: 0.55rem; letter-spacing: 0.4em;
+  color: var(--wb-sub); opacity: 0.18; pointer-events: none;
+  text-transform: uppercase;
+}
+#worldbook-screen .wb-watermark span {
+  font-family: var(--wb-serif); font-size: 1.4rem; font-style: italic;
+  margin-bottom: 16px; display: inline-block;
+}
+
+/* header */
+#worldbook-screen .wb-header { padding: 0 28px; margin-bottom: 40px; }
+#worldbook-screen .wb-header-top {
+  display: flex; justify-content: space-between; align-items: flex-end;
+  padding-top: calc(env(safe-area-inset-top, 0px) + 40px);
+}
+#worldbook-screen .wb-back {
+  background: none; border: none; color: var(--wb-sub);
+  font-family: var(--wb-mono); font-size: 0.6rem; letter-spacing: 0.1em;
+  text-transform: uppercase; cursor: pointer;
+  display: flex; align-items: center; gap: 5px;
+  transition: color .3s; margin-bottom: 20px;
+}
+#worldbook-screen .wb-back:active { color: var(--wb-text); }
+#worldbook-screen .wb-date-line {
+  font-family: var(--wb-mono); font-size: 0.55rem; color: var(--wb-sub);
+  letter-spacing: 0.1em; display: flex; justify-content: space-between;
+  border-bottom: 1px solid var(--wb-line); padding-bottom: 8px; margin-bottom: 18px;
+}
+#worldbook-screen .wb-title {
+  font-family: var(--wb-serif); font-size: 3.2rem; font-weight: 300;
+  line-height: 0.95; letter-spacing: 0.02em; color: var(--wb-text);
+}
+#worldbook-screen .wb-subtitle {
+  font-family: var(--wb-mono); font-size: 0.6rem; color: var(--wb-sub);
+  margin-top: 12px; letter-spacing: 0.1em; text-transform: uppercase;
+}
+#worldbook-screen .wb-new-btn {
+  background: none; border: none; color: var(--wb-text);
+  font-family: var(--wb-mono); font-size: 0.65rem; letter-spacing: 0.1em;
+  text-transform: uppercase; cursor: pointer; position: relative;
+  padding-bottom: 3px; align-self: flex-end; margin-bottom: 4px;
+}
+#worldbook-screen .wb-new-btn::after {
+  content: ''; position: absolute; bottom: 0; left: 0; width: 100%;
+  height: 1px; background: var(--wb-text);
+  transform: scaleX(0); transform-origin: right;
+  transition: transform .4s ease;
+}
+#worldbook-screen .wb-new-btn:active::after { transform: scaleX(1); transform-origin: left; }
+
+/* filter chips */
+#worldbook-screen .wb-filter-bar {
+  display: flex; padding: 0 28px; gap: 24px;
+  overflow-x: auto; scrollbar-width: none; margin-bottom: 32px;
+}
+#worldbook-screen .wb-filter-bar::-webkit-scrollbar { display: none; }
+#worldbook-screen .wb-chip {
+  background: none; border: none; color: var(--wb-sub);
+  font-family: var(--wb-sans); font-size: 0.75rem; font-weight: 300;
+  letter-spacing: 0.05em; cursor: pointer; position: relative;
+  padding-bottom: 5px; transition: color .3s; white-space: nowrap;
+}
+#worldbook-screen .wb-chip:active,
+#worldbook-screen .wb-chip.active { color: var(--wb-text); }
+#worldbook-screen .wb-chip.active::after {
+  content: ''; position: absolute; bottom: 0; left: 0;
+  width: 100%; height: 1px; background: var(--wb-text);
+}
+
+/* entry list */
+#worldbook-screen .wb-list { padding: 0 28px; position: relative; }
+#worldbook-screen .wb-timeline-line {
+  position: absolute; left: 53px; top: 0; bottom: 0;
+  width: 1px; background: var(--wb-line); z-index: 0;
+}
+#worldbook-screen .wb-cat-block { margin-bottom: 50px; position: relative; z-index: 1; }
+#worldbook-screen .wb-cat-title {
+  font-family: var(--wb-mono); font-size: 0.55rem; letter-spacing: 0.3em;
+  text-transform: uppercase; color: var(--wb-sub);
+  background: var(--wb-bg); padding: 8px 0; margin-left: 25px; margin-bottom: 24px;
+}
+
+/* entry item */
+#worldbook-screen .wb-item {
+  display: flex; margin-bottom: 40px; position: relative;
+  cursor: pointer; transition: opacity .3s;
+}
+#worldbook-screen .wb-item:active { opacity: .7; }
+#worldbook-screen .wb-item.disabled { opacity: .25; filter: grayscale(100%); }
+#worldbook-screen .wb-index-wrap {
+  width: 40px; flex-shrink: 0; display: flex; justify-content: center; margin-top: 4px;
+}
+#worldbook-screen .wb-index {
+  background: var(--wb-bg); border: 1px solid var(--wb-text);
+  color: var(--wb-text); font-family: var(--wb-mono); font-size: 0.5rem;
+  padding: 3px 5px; border-radius: 100px !important; display: inline-block;
+  z-index: 2; height: fit-content;
+}
+#worldbook-screen .wb-content { padding-left: 16px; flex: 1; }
+#worldbook-screen .wb-item-header {
+  display: flex; justify-content: space-between; align-items: flex-start;
+}
+#worldbook-screen .wb-item-title-wrap { display: flex; gap: 8px; margin-bottom: 10px; }
+#worldbook-screen .wb-item-quote {
+  font-family: var(--wb-serif); font-size: 2.2rem; line-height: 0.8;
+  color: var(--wb-text); margin-top: 4px;
+}
+#worldbook-screen .wb-item-name {
+  font-family: var(--wb-sans); font-size: 1.4rem; font-weight: 500;
+  line-height: 1.1; color: var(--wb-text); letter-spacing: -0.02em;
+}
+#worldbook-screen .wb-item-preview {
+  font-family: var(--wb-sans); font-size: 0.75rem; font-weight: 300;
+  line-height: 1.7; color: var(--wb-sub); margin-bottom: 14px;
+  display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;
+}
+#worldbook-screen .wb-item-meta { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+#worldbook-screen .wb-item-tag {
+  font-family: var(--wb-mono); font-size: 0.5rem; color: var(--wb-sub);
+  border-bottom: 1px solid var(--wb-line); padding-bottom: 2px;
+  text-transform: uppercase; letter-spacing: 0.05em;
+}
+
+/* min toggle (shared) */
+#worldbook-screen .wb-toggle {
+  position: relative; width: 28px; height: 10px; cursor: pointer; flex-shrink: 0;
+}
+#worldbook-screen .wb-toggle input { display: none; }
+#worldbook-screen .wb-track {
+  position: absolute; top: 4px; left: 0; right: 0; height: 1px;
+  background: var(--wb-line); transition: .3s;
+}
+#worldbook-screen .wb-thumb {
+  position: absolute; top: 1px; left: 0; width: 7px; height: 7px;
+  background: var(--wb-sub); border-radius: 50% !important;
+  transition: transform .4s cubic-bezier(.16,1,.3,1), background .3s;
+}
+#worldbook-screen .wb-toggle input:checked + .wb-track { background: var(--wb-text); }
+#worldbook-screen .wb-toggle input:checked ~ .wb-thumb { transform: translateX(21px); background: var(--wb-text); }
+
+/* empty state */
+#worldbook-screen .wb-empty { padding: 40px 0 0 20px; }
+#worldbook-screen .wb-empty p {
+  font-family: var(--wb-serif); font-size: 1.4rem; font-style: italic;
+  color: var(--wb-sub); margin-bottom: 8px;
+}
+#worldbook-screen .wb-empty span {
+  font-family: var(--wb-mono); font-size: 0.55rem; color: var(--wb-line);
+  text-transform: uppercase; letter-spacing: 0.1em;
+}
+
+/* ── Editor overlay ── */
+#worldbook-screen .wb-editor {
+  position: absolute; inset: 0;
+  background: var(--wb-card); color: var(--wb-text);
+  z-index: 50; display: flex; flex-direction: column;
+  transform: translateY(100%);
+  transition: transform .55s cubic-bezier(.22,1,.36,1);
+  overflow-y: auto; padding: 40px 28px;
+}
+#worldbook-screen .wb-editor.active { transform: translateY(0); }
+
+#worldbook-screen .wb-ed-nav {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-bottom: 40px; border-bottom: 1px solid var(--wb-line); padding-bottom: 16px;
+}
+#worldbook-screen .wb-ed-nav-title {
+  font-family: var(--wb-mono); font-size: 0.6rem; letter-spacing: 0.1em;
+  text-transform: uppercase; color: var(--wb-text);
+}
+#worldbook-screen .wb-ed-close {
+  background: none; border: none; color: var(--wb-text);
+  font-size: 1.1rem; cursor: pointer; opacity: .7; transition: opacity .2s;
+}
+#worldbook-screen .wb-ed-close:active { opacity: 1; }
+
+/* form fields */
+#worldbook-screen .wb-fg { margin-bottom: 36px; position: relative; }
+#worldbook-screen .wb-label {
+  display: flex; justify-content: space-between; align-items: flex-end;
+  font-family: var(--wb-sans); font-size: 0.65rem; font-weight: 400;
+  color: var(--wb-text); opacity: .8; margin-bottom: 10px; letter-spacing: 0.04em;
+}
+#worldbook-screen .wb-input {
+  width: 100%; background: transparent; border: none;
+  border-bottom: 1px solid var(--wb-line); color: var(--wb-text);
+  font-family: var(--wb-serif); font-size: 2rem; padding: 8px 0;
+  transition: border-color .4s;
+}
+#worldbook-screen .wb-input::placeholder { color: var(--wb-sub); opacity: .4; }
+#worldbook-screen .wb-input:focus { border-bottom-color: var(--wb-text); }
+#worldbook-screen .wb-input.sm {
+  font-family: var(--wb-sans); font-size: 1.3rem;
+}
+#worldbook-screen .wb-textarea {
+  width: 100%; background: transparent; border: none;
+  border-bottom: 1px solid var(--wb-line); color: var(--wb-text);
+  font-family: var(--wb-sans); font-size: 0.95rem; font-weight: 300;
+  line-height: 1.8; padding: 16px 0; resize: vertical; min-height: 130px;
+  transition: border-color .4s;
+}
+#worldbook-screen .wb-textarea:focus { border-bottom-color: var(--wb-text); }
+
+/* import button */
+#worldbook-screen .wb-import-btn {
+  background: none; border: none; color: var(--wb-sub);
+  font-family: var(--wb-mono); font-size: 0.55rem; letter-spacing: 0.1em;
+  text-transform: uppercase; cursor: pointer; display: flex; align-items: center; gap: 4px;
+  padding: 4px 0; transition: color .3s; border-bottom: 1px dashed var(--wb-line);
+}
+#worldbook-screen .wb-import-btn:active { color: var(--wb-text); }
+
+/* add-link */
+#worldbook-screen .wb-add-link {
+  font-family: var(--wb-mono); color: var(--wb-text); font-size: 0.6rem;
+  cursor: pointer; border-bottom: 1px solid var(--wb-text); padding-bottom: 2px;
+}
+
+/* custom select */
+#worldbook-screen .wb-cs { position: relative; width: 100%; }
+#worldbook-screen .wb-cs-trigger {
+  width: 100%; display: flex; justify-content: space-between; align-items: center;
+  padding: 12px 0; border-bottom: 1px solid var(--wb-line);
+  font-family: var(--wb-sans); font-size: 1rem; font-weight: 300;
+  color: var(--wb-text); cursor: pointer; transition: border-color .3s;
+}
+#worldbook-screen .wb-cs.open .wb-cs-trigger { border-bottom-color: var(--wb-text); }
+#worldbook-screen .wb-cs-opts {
+  position: absolute; top: 100%; left: 0; right: 0;
+  background: var(--wb-card); border: 1px solid var(--wb-line); border-top: none;
+  z-index: 200; max-height: 180px; overflow-y: auto;
+  opacity: 0; pointer-events: none; transform: translateY(-8px);
+  transition: all .3s cubic-bezier(.16,1,.3,1);
+  box-shadow: 0 8px 24px rgba(0,0,0,.06);
+}
+#worldbook-screen .wb-cs.open .wb-cs-opts { opacity: 1; pointer-events: auto; transform: translateY(0); }
+#worldbook-screen .wb-cs-opt {
+  padding: 12px 16px; font-family: var(--wb-sans); font-size: 0.9rem; font-weight: 300;
+  color: var(--wb-sub); cursor: pointer; transition: all .2s; display: flex; align-items: center; gap: 8px;
+}
+#worldbook-screen .wb-cs-opt:hover { background: var(--wb-bg); color: var(--wb-text); padding-left: 20px; }
+#worldbook-screen .wb-cs-opt.sel { color: var(--wb-text); font-weight: 500; }
+#worldbook-screen .wb-cs-opt.sel::before { content: '· '; font-weight: bold; }
+/* multi-select char checkmarks */
+#worldbook-screen .wb-cs-opt .wb-opt-check { margin-left: auto; opacity: 0; font-size: 0.8rem; }
+#worldbook-screen .wb-cs-opt.sel .wb-opt-check { opacity: 1; }
+
+/* regex hint */
+#worldbook-screen .wb-regex-hint {
+  display: none; font-family: var(--wb-mono); font-size: 0.6rem;
+  color: var(--wb-sub); border-left: 2px solid var(--wb-line);
+  padding-left: 10px; margin-top: 12px; line-height: 1.6; letter-spacing: 0.04em;
+}
+#worldbook-screen .wb-regex-hint.show { display: block; }
+
+/* settings grid */
+#worldbook-screen .wb-set-grid {
+  display: grid; grid-template-columns: 1fr 1fr;
+  border: 1px solid var(--wb-line); margin-bottom: 36px;
+}
+#worldbook-screen .wb-set-cell {
+  padding: 20px; border-bottom: 1px solid var(--wb-line); border-right: 1px solid var(--wb-line);
+  display: flex; flex-direction: column; justify-content: space-between; align-items: flex-start; gap: 16px;
+}
+#worldbook-screen .wb-set-cell:nth-child(even) { border-right: none; }
+#worldbook-screen .wb-set-cell.full {
+  grid-column: span 2; border-bottom: none; border-right: none;
+  flex-direction: row; align-items: center; justify-content: space-between;
+}
+#worldbook-screen .wb-set-title { font-family: var(--wb-sans); font-size: 0.7rem; font-weight: 500; color: var(--wb-text); margin-bottom: 4px; }
+#worldbook-screen .wb-set-desc { font-family: var(--wb-sans); font-size: 0.55rem; color: var(--wb-sub); line-height: 1.4; }
+
+/* slider */
+#worldbook-screen .wb-slider-wrap { display: flex; align-items: center; gap: 12px; width: 52%; justify-content: flex-end; }
+#worldbook-screen .wb-slider {
+  -webkit-appearance: none; appearance: none; width: 100%; height: 1px; background: var(--wb-line);
+}
+#worldbook-screen .wb-slider::-webkit-slider-thumb {
+  -webkit-appearance: none; width: 10px; height: 10px;
+  background: var(--wb-text); border-radius: 50% !important; cursor: pointer;
+}
+#worldbook-screen .wb-slider-val { font-family: var(--wb-mono); font-size: 0.75rem; color: var(--wb-text); min-width: 26px; text-align: right; }
+
+/* scope toggles */
+#worldbook-screen .wb-scope-row {
+  display: flex; flex-direction: column; gap: 12px; width: 100%;
+}
+#worldbook-screen .wb-scope-item {
+  display: flex; justify-content: space-between; align-items: center;
+}
+#worldbook-screen .wb-scope-label { font-family: var(--wb-sans); font-size: 0.7rem; color: var(--wb-sub); }
+#worldbook-screen .wb-scope-sub { font-family: var(--wb-mono); font-size: 0.5rem; color: var(--wb-sub); opacity: .6; margin-top: 1px; }
+
+/* editor actions */
+#worldbook-screen .wb-ed-actions {
+  display: flex; justify-content: space-between; align-items: center;
+  padding-bottom: 40px;
+}
+#worldbook-screen .wb-btn-del {
+  background: transparent; border: none; color: var(--wb-sub);
+  font-family: var(--wb-sans); font-size: 0.7rem; font-weight: 500; letter-spacing: 0.1em;
+  cursor: pointer; transition: color .3s;
+}
+#worldbook-screen .wb-btn-del:active { color: var(--wb-danger); }
+#worldbook-screen .wb-btn-save {
+  background: var(--wb-text); color: var(--wb-bg);
+  border: none; font-family: var(--wb-sans); font-size: 0.75rem; font-weight: 500;
+  letter-spacing: 0.1em; padding: 14px 30px; cursor: pointer; transition: opacity .3s;
+}
+#worldbook-screen .wb-btn-save:active { opacity: .7; }
+
+/* ── Modal ── */
+#worldbook-screen .wb-modal-overlay {
+  position: absolute; inset: 0; z-index: 9999;
+  background: rgba(0,0,0,.35); backdrop-filter: blur(4px);
+  display: flex; justify-content: center; align-items: center;
+  opacity: 0; pointer-events: none; transition: opacity .35s ease;
+}
+#worldbook-screen .wb-modal-overlay.active { opacity: 1; pointer-events: auto; }
+#worldbook-screen .wb-modal-box {
+  background: var(--wb-card); border: 1px solid var(--wb-line);
+  padding: 36px 28px; width: 88%; max-width: 360px;
+  transform: translateY(16px); transition: transform .4s cubic-bezier(.16,1,.3,1);
+}
+#worldbook-screen .wb-modal-overlay.active .wb-modal-box { transform: translateY(0); }
+#worldbook-screen .wb-modal-title { font-family: var(--wb-sans); font-size: 1.1rem; font-weight: 500; color: var(--wb-text); margin-bottom: 8px; }
+#worldbook-screen .wb-modal-desc { font-family: var(--wb-sans); font-size: 0.8rem; color: var(--wb-sub); line-height: 1.6; margin-bottom: 24px; }
+#worldbook-screen .wb-modal-input {
+  width: 100%; background: transparent; border: none;
+  border-bottom: 1px solid var(--wb-line); color: var(--wb-text);
+  font-family: var(--wb-sans); font-size: 1.1rem; padding: 8px 0; margin-bottom: 24px;
+}
+#worldbook-screen .wb-modal-input:focus { border-bottom-color: var(--wb-text); }
+#worldbook-screen .wb-modal-actions { display: flex; justify-content: flex-end; gap: 16px; }
+#worldbook-screen .wb-modal-btn {
+  background: none; border: none; font-family: var(--wb-sans); font-size: 0.75rem;
+  font-weight: 500; cursor: pointer; color: var(--wb-sub); transition: color .3s;
+}
+#worldbook-screen .wb-modal-btn:hover { color: var(--wb-text); }
+#worldbook-screen .wb-modal-btn.primary { color: var(--wb-text); border-bottom: 1px solid var(--wb-text); padding-bottom: 2px; }
+#worldbook-screen .wb-modal-btn.danger  { color: var(--wb-danger); }
+
 </style>
-</head>
 <body>
 <div class="device">
 
@@ -1806,9 +2187,9 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg-body);display:flex;jus
           <div class="icon-box" data-icon-id="4" id="icon-settings"><i class="ph ph-gear"></i></div>
           <span class="icon-label">设置</span>
         </div>
-        <div class="icon-cell">
-          <div class="icon-box" data-icon-id="5"><i class="ph ph-bell"></i></div>
-          <span class="icon-label">待定</span>
+        <div class="icon-cell" id="icon-worldbook-cell">
+          <div class="icon-box" data-icon-id="5"><i class="ph ph-books"></i></div>
+          <span class="icon-label">世界书</span>
         </div>
         <div class="icon-cell">
           <div class="icon-box" data-icon-id="6"><i class="ph ph-spotify-logo"></i></div>
@@ -3031,26 +3412,39 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg-body);display:flex;jus
           </div>
         </div>
 
-        <!-- Identity -->
+      <!-- Identity & UI -->
         <div class="cv-set-section">
-          <div class="cv-set-sec-title">Identity</div>
+          <div class="cv-set-sec-title">Identity & UI</div>
+          
+          <!-- UI 占位：自定义界面美化 -->
           <div class="cv-set-item col cv-accordion" onclick="ConvModule._toggleAccordion(this,event)">
             <div class="cv-acc-header">
               <div class="cv-si-info">
-                <span class="cv-si-label">世界书绑定</span>
-                <span class="cv-si-sub">Worldbook Link</span>
+                <span class="cv-si-label">界面美化 (CSS)</span>
+                <span class="cv-si-sub">Custom Style Override</span>
               </div>
               <i class="ph ph-caret-down cv-acc-icon"></i>
             </div>
             <div class="cv-acc-body-wrap">
-              <div class="cv-acc-body cv-radio-list" id="cv-worldbook-list">
-                <div class="cv-radio-item active" onclick="ConvModule._selectRadio(this,event)">
-                  <span class="cv-radio-label">未绑定 (Unlinked)</span>
-                  <i class="ph-fill ph-check-circle"></i>
+              <div class="cv-acc-body">
+                <div style="font-family:'Space Mono',monospace;font-size:0.62rem;color:#888;margin-bottom:8px;line-height:1.4;">
+                  编写专属 CSS，定制当前角色的气泡与界面。<br>
                 </div>
+                <textarea 
+                  style="width:100%;min-height:100px;padding:10px;background:rgba(0,0,0,0.03);border:0.5px solid rgba(18,18,18,0.1);border-radius:10px;font-size:0.75rem;font-family:'Space Mono',monospace;color:#121212;resize:none;outline:none;line-height:1.5;white-space:pre;"
+                  placeholder="/* 例如修改气泡颜色或圆角... */" 
+                  onclick="event.stopPropagation()"></textarea>
+                <button 
+                  style="margin-top:12px;width:100%;padding:12px;background:#121212;color:#fff;border:none;border-radius:100px;font-size:0.8rem;font-family:'Inter','Noto Sans SC',sans-serif;font-weight:600;letter-spacing:1px;text-transform:uppercase;cursor:pointer;transition:transform 0.2s;"
+                  onmousedown="this.style.transform='scale(0.97)'" 
+                  onmouseup="this.style.transform='scale(1)'"
+                  onclick="event.stopPropagation(); Toast.show('自定义 CSS 功能即将接入 ✦')">
+                  Apply Style
+                </button>
               </div>
             </div>
           </div>
+          
           <div class="cv-set-item col cv-accordion" onclick="ConvModule._toggleAccordion(this,event)">
             <div class="cv-acc-header">
               <div class="cv-si-info">
@@ -3152,6 +3546,196 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg-body);display:flex;jus
     </div>
 
   </div><!-- #conv-screen -->
+  
+  <!-- WorldBook file import input -->
+<input type="file" id="wb-file-import" accept=".txt,.docx" style="display:none">
+
+<!-- WorldBook Screen -->
+<div class="screen" id="worldbook-screen">
+  <div class="wb-noise"></div>
+  <div class="wb-watermark"><span>"</span> THE UNTOLD STORY <span>"</span></div>
+
+  <div class="wb-scroll" id="wb-scroll">
+    <div class="wb-header">
+      <button class="wb-back" onclick="Router.back()"><i class="ph ph-arrow-left"></i> 返回 BACK</button>
+      <div class="wb-date-line">
+        <span id="wb-date-label">2026 / LORE</span>
+        <span>ARCHIVE.SYS</span>
+      </div>
+      <div class="wb-header-top">
+        <div>
+          <h1 class="wb-title">World<br>Book</h1>
+          <div class="wb-subtitle">Lore &amp; Context Injection.</div>
+        </div>
+        <button class="wb-new-btn" onclick="WBModule.openEditor(null)">+ 新建</button>
+      </div>
+    </div>
+
+    <div class="wb-filter-bar" id="wb-filter-bar">
+      <button class="wb-chip active" onclick="WBModule.setFilter(this,'all')">所有 ALL</button>
+      <button class="wb-chip" onclick="WBModule.setFilter(this,'global')">全局 GBL</button>
+      <!-- 角色 chips 动态注入 -->
+    </div>
+
+    <div class="wb-list" id="wb-list">
+      <!-- rendered by WBModule -->
+    </div>
+  </div><!-- /wb-scroll -->
+
+  <!-- Editor overlay -->
+  <div class="wb-editor" id="wb-editor">
+    <div class="wb-ed-nav">
+      <span class="wb-ed-nav-title" id="wb-ed-title">新建词条 / NEW ENTRY</span>
+      <button class="wb-ed-close" onclick="WBModule.closeEditor()"><i class="ph-thin ph-x"></i></button>
+    </div>
+
+    <!-- Entry name -->
+    <div class="wb-fg">
+      <label class="wb-label">词条名称 ENTRY NAME</label>
+      <input type="text" class="wb-input" id="wb-name" placeholder="Title...">
+    </div>
+
+    <!-- Keyword -->
+    <div class="wb-fg">
+      <label class="wb-label">触发关键词 KEYWORD</label>
+      <input type="text" class="wb-input sm" id="wb-keyword" placeholder="Trigger...">
+      <div class="wb-regex-hint" id="wb-regex-hint">
+        ⚑ 正则模式已开启，支持 /pattern/flags 写法<br>
+        示例：/\b(逃跑|消失|离开)\b/i
+      </div>
+    </div>
+
+    <!-- Category -->
+    <div class="wb-fg">
+      <label class="wb-label">
+        <span>所属分类 CATEGORY</span>
+        <span class="wb-add-link" onclick="WBModule.newCategory()">新建 NEW+</span>
+      </label>
+      <div class="wb-cs" id="wcs-cat">
+        <div class="wb-cs-trigger" onclick="WBModule.toggleCS('wcs-cat')">
+          <span id="wcs-cat-val">默认</span>
+          <i class="ph ph-caret-down"></i>
+        </div>
+        <div class="wb-cs-opts" id="wcs-cat-opts"></div>
+      </div>
+    </div>
+
+    <!-- Character (multi-select) -->
+    <div class="wb-fg">
+      <label class="wb-label">绑定角色 CHARACTER <span style="opacity:.5;font-size:0.5rem;">可多选</span></label>
+      <div class="wb-cs" id="wcs-char">
+        <div class="wb-cs-trigger" onclick="WBModule.toggleCS('wcs-char')">
+          <span id="wcs-char-val">全局 GBL</span>
+          <i class="ph ph-caret-down"></i>
+        </div>
+        <div class="wb-cs-opts" id="wcs-char-opts"></div>
+      </div>
+    </div>
+
+    <!-- Content + import -->
+    <div class="wb-fg">
+      <label class="wb-label">
+        <span>注入内容 PAYLOAD</span>
+        <button class="wb-import-btn" onclick="document.getElementById('wb-file-import').click()">
+          <i class="ph ph-upload-simple"></i> 从文件导入
+        </button>
+      </label>
+      <textarea class="wb-textarea" id="wb-content" placeholder="Context begins here..."></textarea>
+    </div>
+
+    <!-- Settings grid -->
+    <div class="wb-set-grid">
+      <!-- Regex -->
+      <div class="wb-set-cell">
+        <div>
+          <div class="wb-set-title">正则模式 REGEX</div>
+          <div class="wb-set-desc">将关键词作为正则表达式匹配</div>
+        </div>
+        <label class="wb-toggle">
+          <input type="checkbox" id="wb-is-regex" onchange="WBModule.toggleRegexHint(this)">
+          <div class="wb-track"></div>
+          <div class="wb-thumb"></div>
+        </label>
+      </div>
+      <!-- Enabled -->
+      <div class="wb-set-cell">
+        <div>
+          <div class="wb-set-title">启用状态 ENABLED</div>
+          <div class="wb-set-desc">关闭后该词条将不再参与匹配</div>
+        </div>
+        <label class="wb-toggle">
+          <input type="checkbox" id="wb-enabled" checked>
+          <div class="wb-track"></div>
+          <div class="wb-thumb"></div>
+        </label>
+      </div>
+      <!-- Weight -->
+      <div class="wb-set-cell full">
+        <div>
+          <div class="wb-set-title">注入优先级 PRIORITY WEIGHT</div>
+          <div class="wb-set-desc">权重越高越优先注入上下文</div>
+        </div>
+        <div class="wb-slider-wrap">
+          <span class="wb-slider-val">W.1</span>
+          <input type="range" class="wb-slider" id="wb-weight" min="1" max="10" value="5"
+                 oninput="document.getElementById('wb-weight-val').textContent='W.'+this.value">
+          <span class="wb-slider-val" id="wb-weight-val">W.5</span>
+        </div>
+      </div>
+      <!-- Scope -->
+      <div class="wb-set-cell full" style="flex-direction:column;align-items:flex-start;border-top:1px solid var(--wb-line);">
+        <div style="margin-bottom:14px;">
+          <div class="wb-set-title">适用范围 SCOPE</div>
+          <div class="wb-set-desc">控制词条参与哪些功能的注入</div>
+        </div>
+        <div class="wb-scope-row">
+          <div class="wb-scope-item">
+            <div>
+              <div class="wb-scope-label">聊天注入 CHAT</div>
+              <div class="wb-scope-sub">关键词触发，注入对话上下文</div>
+            </div>
+            <label class="wb-toggle">
+              <input type="checkbox" id="wb-scope-chat" checked>
+              <div class="wb-track"></div>
+              <div class="wb-thumb"></div>
+            </label>
+          </div>
+          <div class="wb-scope-item">
+            <div>
+              <div class="wb-scope-label">世界生成 SOCIAL</div>
+              <div class="wb-scope-sub">参与陌生人社交背景（预留）</div>
+            </div>
+            <label class="wb-toggle">
+              <input type="checkbox" id="wb-scope-social">
+              <div class="wb-track"></div>
+              <div class="wb-thumb"></div>
+            </label>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Actions -->
+    <div class="wb-ed-actions">
+      <button class="wb-btn-del" id="wb-btn-del" style="display:none" onclick="WBModule.deleteEntry()">删除 DELETE</button>
+      <div style="flex:1"></div>
+      <button class="wb-btn-save" onclick="WBModule.saveEntry()">保存词条 SAVE</button>
+    </div>
+  </div><!-- /wb-editor -->
+
+  <!-- Modal -->
+  <div class="wb-modal-overlay" id="wb-modal">
+    <div class="wb-modal-box">
+      <div class="wb-modal-title" id="wb-modal-title">提示</div>
+      <div class="wb-modal-desc" id="wb-modal-desc" style="display:none"></div>
+      <input type="text" class="wb-modal-input" id="wb-modal-input" style="display:none" placeholder="输入内容...">
+      <div class="wb-modal-actions">
+        <button class="wb-modal-btn" onclick="WBModule._closeModal()">取消 CANCEL</button>
+        <button class="wb-modal-btn primary" id="wb-modal-ok">确认 OK</button>
+      </div>
+    </div>
+  </div>
+</div><!-- /worldbook-screen -->
 
 </div><!-- .device -->
 
@@ -3168,7 +3752,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg-body);display:flex;jus
 // ============================================================
 const DB = (() => {
   const DB_NAME    = 'chillOS';
-  const DB_VERSION = 6; // v6: messages 支持 parts + recalled 字段
+  const DB_VERSION = 7; // v7: 新增 world_info 世界书词条表
   let _db = null;
 
   function open() {
@@ -3200,6 +3784,9 @@ const DB = (() => {
         }
         // v6: 无需建新表，IndexedDB 字段天然可扩展
         // 新增字段：parts[], recalled, recallContent, recallThought
+        if (old < 7) {
+          db.createObjectStore('world_info', { keyPath: 'id', autoIncrement: true });
+        }
       };
 
       req.onsuccess = e => { _db = e.target.result; resolve(_db); };
@@ -3515,6 +4102,41 @@ async function msgDel(id) {
     });
   }
 
+  // ---- world_info ----
+  async function wiGetAll() {
+    await open();
+    return new Promise((resolve, reject) => {
+      const req = tx('world_info').getAll();
+      req.onsuccess = () => resolve(req.result || []);
+      req.onerror   = e => reject(e.target.error);
+    });
+  }
+  async function wiPut(entry) {
+    await open();
+    return new Promise((resolve, reject) => {
+      const req = tx('world_info', 'readwrite').put({ ...entry });
+      req.onsuccess = () => resolve(req.result);
+      req.onerror   = e => reject(e.target.error);
+    });
+  }
+  async function wiAdd(entry) {
+    await open();
+    const { id: _drop, ...rest } = entry;
+    return new Promise((resolve, reject) => {
+      const req = tx('world_info', 'readwrite').add({ ...rest });
+      req.onsuccess = () => resolve(req.result);
+      req.onerror   = e => reject(e.target.error);
+    });
+  }
+  async function wiDel(id) {
+    await open();
+    return new Promise((resolve, reject) => {
+      const req = tx('world_info', 'readwrite').delete(Number(id));
+      req.onsuccess = () => resolve();
+      req.onerror   = e => reject(e.target.error);
+    });
+  }
+
   return {
     settings:   { get: settingsGet, set: settingsSet, del: settingsDel },
     assets:     { get: assetGet, set: assetSet, del: assetDel, getAll: assetGetAll },
@@ -3524,6 +4146,7 @@ async function msgDel(id) {
     bindings:   { get: bindingGet, set: bindingSet },
     // 👇 在此处增加暴露 get: msgGet
    messages:   { get: msgGet, add: msgAdd, put: msgPut, getPage: msgGetPage, countByChar: msgCountByChar, delByChar: msgDelByChar, del: msgDel },
+    worldInfo:  { getAll: wiGetAll, put: wiPut, add: wiAdd, del: wiDel },
     clearAll,
     init: open,
   };
@@ -3654,14 +4277,14 @@ const Toast = (() => {
 // ============================================================
 const Router = (() => {
   // 顶层 screen id 列表
-  const TOP_SCREENS = ['settings-screen', 'character-screen', 'chat-screen', 'conv-screen'];
+  const TOP_SCREENS = ['settings-screen', 'character-screen', 'chat-screen', 'conv-screen', 'worldbook-screen'];
 
   // 改为数组栈，支持多级子页导航
   const _subStack = {};
 
   function go(target, watermark) {
-    if (target === 'settings' || target === 'character' || target === 'chat' || target === 'conv') {
-      const map = { settings:'settings-screen', character:'character-screen', chat:'chat-screen', conv:'conv-screen' };
+    if (target === 'settings' || target === 'character' || target === 'chat' || target === 'conv' || target === 'worldbook') {
+      const map = { settings:'settings-screen', character:'character-screen', chat:'chat-screen', conv:'conv-screen', worldbook:'worldbook-screen' };
       const screenId = map[target];
       TOP_SCREENS.forEach(id => { if (id !== screenId) document.getElementById(id)?.classList.remove('active'); });
       document.getElementById(screenId).classList.add('active');
@@ -3712,6 +4335,7 @@ const Router = (() => {
   function _onEnterScreen(target) {
     if (target === 'character') CharacterModule.renderRoster();
     if (target === 'chat')      ChatModule.onEnter();
+    if (target === 'worldbook') WBModule.onEnter();
   }
 
   function _onEnterPage(pageId) {
@@ -4226,7 +4850,458 @@ document.getElementById('file-icon').addEventListener('change', async e => {
   _pendingIconId = null;
 });
 
-// 【新增】打开音乐模块
+// 【世界书图标】
+document.getElementById('icon-worldbook-cell').addEventListener('click', () => Router.go('worldbook'));
+
+// ============================================================
+// WBModule — 世界书 UI + 数据层
+// ============================================================
+const WBModule = (() => {
+  const CAT_SETTINGS_KEY = 'world-categories';
+  let _entries    = [];
+  let _categories = [{ id:'default', name:'默认' }];
+  let _characters = [];   // [{id, name}]
+  let _filter     = 'all';
+  let _editId     = null; // null = new, number = existing
+  let _editorCharIds = []; // multi-select
+  let _editorCatId   = 'default';
+  let _modalCb    = null;
+
+  /* ── public: called by Router ── */
+  async function onEnter() {
+    _attachEditorListener();
+    _attachFileImportListener();
+    _attachModalListener();
+    // 更新日期
+    const now = new Date();
+    const el = document.getElementById('wb-date-label');
+    if (el) el.textContent = `${now.getFullYear()} / LORE`;
+    // 加载数据
+    try {
+      const savedCats = await DB.settings.get(CAT_SETTINGS_KEY);
+      if (Array.isArray(savedCats) && savedCats.length) _categories = savedCats;
+    } catch(e) {}
+    try {
+      _entries = await DB.worldInfo.getAll();
+    } catch(e) { _entries = []; }
+    try {
+      _characters = (await DB.characters.getAll()).map(c => ({ id: String(c.id), name: c.name }));
+    } catch(e) { _characters = []; }
+    _rebuildFilterBar();
+    _renderList();
+  }
+
+  /* ── filter ── */
+  function setFilter(el, val) {
+    _filter = val;
+    document.querySelectorAll('#wb-filter-bar .wb-chip').forEach(c => c.classList.remove('active'));
+    el.classList.add('active');
+    _renderList();
+  }
+
+  /* ── render ── */
+  function _rebuildFilterBar() {
+    const bar = document.getElementById('wb-filter-bar');
+    if (!bar) return;
+    // keep first two static chips, remove dynamic ones
+    const chips = bar.querySelectorAll('.wb-chip');
+    chips.forEach((c, i) => { if (i >= 2) c.remove(); });
+    _characters.forEach(ch => {
+      const btn = document.createElement('button');
+      btn.className = 'wb-chip';
+      btn.textContent = ch.name;
+      btn.onclick = function() { WBModule.setFilter(this, ch.id); };
+      bar.appendChild(btn);
+    });
+  }
+
+  function _renderList() {
+    const list = document.getElementById('wb-list');
+    if (!list) return;
+
+    let filtered = _entries.filter(e => e.enabled !== undefined ? true : true);
+    if (_filter === 'global') filtered = _entries.filter(e => !e.characterIds || e.characterIds.length === 0);
+    else if (_filter !== 'all') filtered = _entries.filter(e => e.characterIds && e.characterIds.includes(_filter));
+
+    if (filtered.length === 0) {
+      list.innerHTML = `<div class="wb-empty"><p>暂无词条</p><span>No entries found.</span></div>`;
+      return;
+    }
+
+    const grouped = {};
+    _categories.forEach(c => { grouped[c.id] = []; });
+
+    filtered.forEach(e => {
+      const cid = e.categoryId || 'default';
+      if (grouped[cid]) grouped[cid].push(e);
+      else if (grouped['default']) grouped['default'].push(e);
+    });
+
+    let html = '<div class="wb-timeline-line"></div>';
+
+    _categories.forEach(c => {
+      const grp = grouped[c.id] || [];
+      if (!grp.length) return;
+      html += `<div class="wb-cat-block"><div class="wb-cat-title">/ ${_esc(c.name)}</div>`;
+      grp.forEach((e, idx) => {
+        const charLabel = (e.characterIds && e.characterIds.length)
+          ? e.characterIds.map(cid => { const ch = _characters.find(x => x.id === String(cid)); return ch ? ch.name.split(' ')[0] : '?'; }).join(', ')
+          : '全局 GBL';
+        html += `
+        <div class="wb-item${e.enabled ? '' : ' disabled'}" onclick="WBModule.openEditor(${e.id})">
+          <div class="wb-index-wrap"><span class="wb-index">0.${idx+1}</span></div>
+          <div class="wb-content">
+            <div class="wb-item-header">
+              <div class="wb-item-title-wrap">
+                <div class="wb-item-quote">"</div>
+                <h3 class="wb-item-name">${_esc(e.name)}</h3>
+              </div>
+              <label class="wb-toggle" onclick="event.stopPropagation()">
+                <input type="checkbox" ${e.enabled ? 'checked' : ''} onchange="WBModule.toggleEntry(${e.id}, this.checked)">
+                <div class="wb-track"></div>
+                <div class="wb-thumb"></div>
+              </label>
+            </div>
+            <p class="wb-item-preview">${_esc(e.content)}</p>
+            <div class="wb-item-meta">
+              <span class="wb-item-tag">${_esc(e.keyword)}</span>
+              <span class="wb-item-tag">${_esc(charLabel)}</span>
+              ${e.isRegex ? '<span class="wb-item-tag" style="border-bottom-style:dashed">REGEX</span>' : ''}
+              <span class="wb-item-tag" style="border:none;opacity:.5">W.${e.weight}</span>
+            </div>
+          </div>
+        </div>`;
+      });
+      html += '</div>';
+    });
+
+    list.innerHTML = html;
+  }
+
+  /* ── toggle entry enabled ── */
+  async function toggleEntry(id, val) {
+    const e = _entries.find(x => x.id === id);
+    if (!e) return;
+    e.enabled = val;
+    try { await DB.worldInfo.put(e); } catch(err) {}
+    _renderList();
+  }
+
+  /* ── open / close editor ── */
+  function openEditor(id) {
+    _editId = id;
+    const isNew = (id === null);
+    document.getElementById('wb-ed-title').textContent = isNew ? '新建词条 / NEW ENTRY' : '编辑词条 / EDIT ENTRY';
+    document.getElementById('wb-btn-del').style.display = isNew ? 'none' : 'block';
+
+    if (isNew) {
+      document.getElementById('wb-name').value    = '';
+      document.getElementById('wb-keyword').value = '';
+      document.getElementById('wb-content').value = '';
+      document.getElementById('wb-is-regex').checked = false;
+      document.getElementById('wb-enabled').checked  = true;
+      document.getElementById('wb-weight').value  = '5';
+      document.getElementById('wb-weight-val').textContent = 'W.5';
+      document.getElementById('wb-regex-hint').classList.remove('show');
+      document.getElementById('wb-scope-chat').checked   = true;
+      document.getElementById('wb-scope-social').checked = false;
+      _editorCatId   = 'default';
+      _editorCharIds = [];
+    } else {
+      const e = _entries.find(x => x.id === id);
+      if (!e) return;
+      document.getElementById('wb-name').value    = e.name;
+      document.getElementById('wb-keyword').value = e.keyword;
+      document.getElementById('wb-content').value = e.content;
+      document.getElementById('wb-is-regex').checked = !!e.isRegex;
+      document.getElementById('wb-enabled').checked  = e.enabled !== false;
+      document.getElementById('wb-weight').value  = String(e.weight || 5);
+      document.getElementById('wb-weight-val').textContent = `W.${e.weight || 5}`;
+      document.getElementById('wb-regex-hint').classList.toggle('show', !!e.isRegex);
+      const scope = e.scope || ['chat'];
+      document.getElementById('wb-scope-chat').checked   = scope.includes('chat');
+      document.getElementById('wb-scope-social').checked = scope.includes('social');
+      _editorCatId   = e.categoryId || 'default';
+      _editorCharIds = Array.isArray(e.characterIds) ? [...e.characterIds] : [];
+    }
+
+    _renderCatSelect();
+    _renderCharSelect();
+    document.getElementById('wb-editor').classList.add('active');
+    // scroll editor to top
+    document.getElementById('wb-editor').scrollTop = 0;
+  }
+
+  function closeEditor() {
+    document.getElementById('wb-editor').classList.remove('active');
+  }
+
+  /* ── save ── */
+  async function saveEntry() {
+    const name    = document.getElementById('wb-name').value.trim();
+    const keyword = document.getElementById('wb-keyword').value.trim();
+    const content = document.getElementById('wb-content').value.trim();
+    if (!name)    { _showAlert('词条名称不能为空'); return; }
+    if (!keyword) { _showAlert('触发关键词不能为空'); return; }
+    if (!content) { _showAlert('内容不能为空'); return; }
+
+    const scope = [];
+    if (document.getElementById('wb-scope-chat').checked)   scope.push('chat');
+    if (document.getElementById('wb-scope-social').checked) scope.push('social');
+
+    const data = {
+      name,
+      keyword,
+      content,
+      isRegex:      document.getElementById('wb-is-regex').checked,
+      enabled:      document.getElementById('wb-enabled').checked,
+      weight:       parseInt(document.getElementById('wb-weight').value) || 5,
+      categoryId:   _editorCatId,
+      characterIds: [..._editorCharIds],
+      scope:        scope.length ? scope : ['chat'],
+    };
+
+    try {
+      if (_editId === null) {
+        const newId = await DB.worldInfo.add(data);
+        _entries.push({ ...data, id: newId });
+      } else {
+        const entry = { ...data, id: _editId };
+        await DB.worldInfo.put(entry);
+        const idx = _entries.findIndex(x => x.id === _editId);
+        if (idx >= 0) _entries[idx] = entry; else _entries.push(entry);
+      }
+      _renderList();
+      closeEditor();
+    } catch(err) {
+      _showAlert('保存失败，请重试');
+      console.error('[WBModule] saveEntry error', err);
+    }
+  }
+
+  /* ── delete ── */
+  function deleteEntry() {
+    _showModal({ title:'确认删除？', desc:'删除后此词条无法恢复，确定要移除该世界设定吗？', danger:true, confirmText:'删除 DELETE' }, async () => {
+      try {
+        await DB.worldInfo.del(_editId);
+        _entries = _entries.filter(x => x.id !== _editId);
+        _renderList();
+        closeEditor();
+      } catch(e) { console.error(e); }
+      _closeModal();
+    });
+  }
+
+  /* ── regex hint ── */
+  function toggleRegexHint(el) {
+    document.getElementById('wb-regex-hint').classList.toggle('show', el.checked);
+  }
+
+  /* ── category select ── */
+  function _renderCatSelect() {
+    const opts = document.getElementById('wcs-cat-opts');
+    if (!opts) return;
+    opts.innerHTML = _categories.map(c =>
+      `<div class="wb-cs-opt${_editorCatId===c.id?' sel':''}" onclick="WBModule._selectCat('${c.id}','${_esc(c.name)}')">${_esc(c.name)}</div>`
+    ).join('');
+    document.getElementById('wcs-cat-val').textContent =
+      (_categories.find(c => c.id === _editorCatId) || _categories[0]).name;
+  }
+
+  function _selectCat(id, name) {
+    _editorCatId = id;
+    document.getElementById('wcs-cat-val').textContent = name;
+    _closeCS('wcs-cat');
+    _renderCatSelect();
+  }
+
+  async function newCategory() {
+    _showModal({ title:'新建分类', desc:'请输入新的分类名称。', showInput:true, confirmText:'创建 CREATE' }, async (val) => {
+      const name = (val || '').trim();
+      if (!name) return;
+      const newId = 'cat_' + Date.now();
+      _categories.push({ id: newId, name });
+      try { await DB.settings.set(CAT_SETTINGS_KEY, _categories); } catch(e) {}
+      _selectCat(newId, name);
+      _closeModal();
+    });
+  }
+
+  /* ── character multi-select ── */
+  function _renderCharSelect() {
+    const opts = document.getElementById('wcs-char-opts');
+    if (!opts) return;
+    const globalSel = _editorCharIds.length === 0;
+    let html = `<div class="wb-cs-opt${globalSel?' sel':''}" onclick="WBModule._toggleChar('__global__')">全局 GBL <i class="ph ph-check wb-opt-check"></i></div>`;
+    html += _characters.map(ch =>
+      `<div class="wb-cs-opt${_editorCharIds.includes(ch.id)?' sel':''}" onclick="WBModule._toggleChar('${ch.id}')">${_esc(ch.name)} <i class="ph ph-check wb-opt-check"></i></div>`
+    ).join('');
+    opts.innerHTML = html;
+    _updateCharLabel();
+  }
+
+  function _toggleChar(id) {
+    if (id === '__global__') {
+      _editorCharIds = [];
+    } else {
+      const idx = _editorCharIds.indexOf(id);
+      if (idx >= 0) _editorCharIds.splice(idx, 1);
+      else _editorCharIds.push(id);
+    }
+    _renderCharSelect();
+    // keep dropdown open for multi-select
+  }
+
+  function _updateCharLabel() {
+    const val = document.getElementById('wcs-char-val');
+    if (!val) return;
+    if (_editorCharIds.length === 0) { val.textContent = '全局 GBL'; return; }
+    const names = _editorCharIds.map(id => { const c = _characters.find(x => x.id === id); return c ? c.name : id; });
+    val.textContent = names.length <= 2 ? names.join(', ') : `${names[0]} +${names.length-1}`;
+  }
+
+  /* ── custom select open/close ── */
+  function toggleCS(csId) {
+    const el = document.getElementById(csId);
+    if (!el) return;
+    const isOpen = el.classList.contains('open');
+    document.querySelectorAll('#wb-editor .wb-cs').forEach(cs => cs.classList.remove('open'));
+    if (!isOpen) el.classList.add('open');
+  }
+
+  function _closeCS(csId) {
+    document.getElementById(csId)?.classList.remove('open');
+  }
+
+  // close dropdowns when clicking outside (within editor) — attached on first onEnter
+  let _editorListenerAttached = false;
+  function _attachEditorListener() {
+    if (_editorListenerAttached) return;
+    const ed = document.getElementById('wb-editor');
+    if (!ed) return;
+    ed.addEventListener('click', e => {
+      if (!e.target.closest('.wb-cs')) {
+        document.querySelectorAll('#wb-editor .wb-cs').forEach(cs => cs.classList.remove('open'));
+      }
+    });
+    _editorListenerAttached = true;
+  }
+
+  /* ── file import (txt / docx) ── */
+  let _fileImportListenerAttached = false;
+  function _attachFileImportListener() {
+    if (_fileImportListenerAttached) return;
+    const inp = document.getElementById('wb-file-import');
+    if (!inp) return;
+    inp.addEventListener('change', async e => {
+      const file = e.target.files[0];
+      if (!file) return;
+      const ext = file.name.split('.').pop().toLowerCase();
+      try {
+        let text = '';
+        if (ext === 'txt') {
+          text = await file.text();
+        } else if (ext === 'docx') {
+          if (typeof mammoth === 'undefined') { _showAlert('docx 解析库未加载，请检查网络'); return; }
+          const buf  = await file.arrayBuffer();
+          const res  = await mammoth.extractRawText({ arrayBuffer: buf });
+          text = res.value;
+        }
+        if (text) {
+          const ta = document.getElementById('wb-content');
+          if (ta) { ta.value = text.trim(); ta.focus(); }
+        }
+      } catch(err) {
+        console.error('[WBModule] import error', err);
+        _showAlert('文件读取失败，请重试');
+      }
+      e.target.value = '';
+    });
+    _fileImportListenerAttached = true;
+  }
+
+  /* ── modal ── */
+  function _showModal({ title, desc, showInput, confirmText, danger }, cb) {
+    _modalCb = cb;
+    document.getElementById('wb-modal-title').textContent = title;
+    const descEl = document.getElementById('wb-modal-desc');
+    if (desc) { descEl.textContent = desc; descEl.style.display = 'block'; }
+    else descEl.style.display = 'none';
+    const inp = document.getElementById('wb-modal-input');
+    if (showInput) { inp.style.display = 'block'; inp.value = ''; setTimeout(() => inp.focus(), 100); }
+    else inp.style.display = 'none';
+    const ok = document.getElementById('wb-modal-ok');
+    ok.textContent = confirmText || '确认 OK';
+    ok.className = 'wb-modal-btn ' + (danger ? 'danger' : 'primary');
+    document.getElementById('wb-modal').classList.add('active');
+  }
+  function _closeModal() {
+    document.getElementById('wb-modal').classList.remove('active');
+    _modalCb = null;
+  }
+  function _showAlert(msg) {
+    _showModal({ title:'提示', desc:msg, confirmText:'明白 OK' }, () => _closeModal());
+  }
+  /* ── modal ok button ── */
+  let _modalListenerAttached = false;
+  function _attachModalListener() {
+    if (_modalListenerAttached) return;
+    const ok = document.getElementById('wb-modal-ok');
+    if (!ok) return;
+    ok.addEventListener('click', () => {
+      if (_modalCb) {
+        const inp = document.getElementById('wb-modal-input');
+        _modalCb(inp?.style.display !== 'none' ? inp.value : undefined);
+      }
+    });
+    _modalListenerAttached = true;
+  }
+
+  /* ── matching (used by ConvModule later) ── */
+  function getMatchingEntries(text, charId) {
+    return _entries.filter(e => {
+      if (!e.enabled) return false;
+      if (!e.scope || !e.scope.includes('chat')) return false;
+      // char filter
+      if (e.characterIds && e.characterIds.length > 0) {
+        if (!charId || !e.characterIds.includes(String(charId))) return false;
+      }
+      // keyword match
+      const kw = (e.keyword || '').trim();
+      if (!kw) return false;
+      if (e.isRegex) {
+        try {
+          const m = kw.match(/^\/(.+)\/([gimsuy]*)$/);
+          if (m) return new RegExp(m[1], m[2]).test(text);
+          return new RegExp(kw).test(text);
+        } catch(err) { return false; }
+      } else {
+        // comma-separated keywords
+        const kwList = kw.split(',').map(k => k.trim()).filter(Boolean);
+        return kwList.some(k => text.includes(k));
+      }
+    }).sort((a, b) => (b.weight || 5) - (a.weight || 5));
+  }
+
+  /* ── util ── */
+  function _esc(s) {
+    if (!s) return '';
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+ return {
+    // 🔥 新增 init：保证网页刚打开时就在后台把世界书词条加载进内存
+    init: async function() { 
+      try { _entries = await DB.worldInfo.getAll(); } 
+      catch(e) { _entries = []; }
+    },
+    onEnter, setFilter, openEditor, closeEditor, saveEntry, deleteEntry,
+    toggleEntry, toggleRegexHint, toggleCS, newCategory,
+    _selectCat, _toggleChar, _closeModal,
+    getMatchingEntries,
+  };
+})();
+ // 【还原】打开音乐模块的点击事件
 document.querySelector('[data-icon-id="2"]').addEventListener('click', () => {
   if (typeof MusicModule !== 'undefined') {
     MusicModule.open();
@@ -7638,7 +8713,24 @@ const ConvModule = (() => {
       const currentRound = await _countAiReplies(); // <---【修复】改成调用全局统计函数
       let novelImgOnForPrompt = false;
       try { novelImgOnForPrompt = (await DB.settings.get(`novel-toggle-${_charId}`)) === true; } catch (e) {}
-      const systemPrompt = _buildSystemPrompt(histMsgs, novelImgOnForPrompt);
+
+      // ── 世界书关键词匹配注入 ──
+      let worldBookBlock = '';
+      try {
+        if (typeof WBModule !== 'undefined') {
+          // 用最近 10 条消息的文本做匹配源
+          const matchText = histMsgs.slice(-10)
+            .map(m => _formatMsgForAI(m))
+            .join(' ');
+          const matched = WBModule.getMatchingEntries(matchText, String(_charId));
+          if (matched.length) {
+            worldBookBlock = matched.map(e => e.content.trim()).join('\n\n');
+            console.log(`[ConvModule] 世界书注入 ${matched.length} 条词条:`, matched.map(e => e.name));
+          }
+        }
+      } catch(wbErr) { console.warn('[ConvModule] WorldBook match error', wbErr); }
+
+      const systemPrompt = _buildSystemPrompt(histMsgs, novelImgOnForPrompt, worldBookBlock);
       const apiMessages  = await _buildApiMessages(histMsgs, activeApi, currentRound);
       console.log(`[ConvModule] 历史消息数: ${histMsgs.length}, AI轮数: ${currentRound}`);
       // 打印每条 message 的 role 和 content 类型，方便 debug
@@ -7976,7 +9068,7 @@ const ConvModule = (() => {
   }
 
   // ── 组装 System Prompt ──
-  function _buildSystemPrompt(histMsgs, novelImgOn = false) {
+  function _buildSystemPrompt(histMsgs, novelImgOn = false, worldBookBlock = '') {
     const now = new Date();
     const timeCtx = `现在是 ${now.getFullYear()}年${now.getMonth()+1}月${now.getDate()}日 ${_weekDay(now)} ${_fmtTime(now)}`;
 
@@ -7992,6 +9084,10 @@ const ConvModule = (() => {
           return `[${t.getFullYear()}-${String(t.getMonth()+1).padStart(2,'0')}-${String(t.getDate()).padStart(2,'0')} ${_fmtTime(t)}] ${label}: ${_formatMsgForAI(m)}`;
         }).join('\n')
       : '（暂无历史记录）';
+
+    const worldLoreSection = worldBookBlock
+      ? `\n# 世界背景知识 (World Lore · Active Injection)\n以下是与当前对话相关的世界设定，请将其作为你已知的背景事实自然融入表演，无需刻意引用：\n\n${worldBookBlock}\n`
+      : '';
 
     const novelBehaviorBlock = novelImgOn
       ? `# 高级行为：NovelAI 配图（本对话已开启）
@@ -8048,7 +9144,7 @@ ${timeCtx}
 # 角色核心档案
 ${charPersona}
 ${charMbti}
-
+${worldLoreSection}
 # 关于我
 ${userBg}
 
@@ -9392,6 +10488,8 @@ async function init() {
 
   // 面具
   try { await PersonaModule.init(); } catch(e) { console.warn('persona restore failed', e); }
+  //世界书
+  try { await WBModule.init(); } catch(e) { console.warn('wb init failed', e); }
 
 // 主题
   try {
