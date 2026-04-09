@@ -2121,6 +2121,123 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg-body);display:flex;jus
 #worldbook-screen .wb-modal-btn.primary { color: var(--wb-text); border-bottom: 1px solid var(--wb-text); padding-bottom: 2px; }
 #worldbook-screen .wb-modal-btn.danger  { color: var(--wb-danger); }
 
+/* ================================================================
+   Wallet & Vault 入口及视图 CSS
+   ================================================================ */
+/* 1. 生物识别入口卡片 */
+#chat-screen .ch-bio-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.2rem; margin-top: 1rem; padding-bottom: 0.8rem; border-bottom: 1px solid rgba(0,0,0,0.1); }
+#chat-screen .ch-bio-title { font-family: 'Space Mono', monospace; font-size: 0.55rem; letter-spacing: 2px; color: #121212; font-weight: 700; }
+#chat-screen .ch-bio-status { font-family: 'Space Mono', monospace; font-size: 0.5rem; padding: 3px 8px; background: #121212; color: #EFECE7; border-radius: 20px; letter-spacing: 1px; }
+#chat-screen .ch-bio-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+#chat-screen .ch-bio-card { border: 1px solid rgba(0,0,0,0.15); border-radius: 8px; padding: 1rem 0.8rem; position: relative; overflow: hidden; display: flex; flex-direction: column; aspect-ratio: 3/4.2; cursor: pointer; background: transparent; transition: border-color 0.3s, transform 0.15s; }
+#chat-screen .ch-bio-card:active { transform: scale(0.96); border-color: #121212; }
+#chat-screen .ch-bio-print-bg { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -45%); font-size: 7rem; color: #121212; opacity: 0.04; transition: opacity 0.3s, transform 0.3s; pointer-events: none; z-index: 1; }
+#chat-screen .ch-bio-card:active .ch-bio-print-bg { opacity: 0.85; transform: translate(-50%, -45%) scale(1.05); }
+#chat-screen .ch-bio-scanner { position: absolute; top: -20%; left: 0; right: 0; height: 2px; background: #121212; box-shadow: 0 0 8px rgba(0,0,0,0.5); opacity: 0; z-index: 2; pointer-events: none; }
+#chat-screen .ch-bio-card:active .ch-bio-scanner { opacity: 1; animation: bioScan 1.2s infinite ease-in-out; }
+@keyframes bioScan { 0% { top: 0%; } 50% { top: 100%; } 100% { top: 0%; } }
+#chat-screen .ch-bio-top { display: flex; justify-content: space-between; font-family: 'Space Mono', monospace; font-size: 0.5rem; color: #888; z-index: 3; }
+#chat-screen .ch-bio-top i { font-size: 0.8rem; color: #121212; }
+#chat-screen .ch-bio-bottom { margin-top: auto; display: flex; flex-direction: column; z-index: 3; }
+#chat-screen .ch-bio-label-eng { font-family: 'Cormorant Garamond', serif; font-size: 1.4rem; font-weight: 600; color: #121212; line-height: 1.1; margin-bottom: 4px; }
+#chat-screen .ch-bio-label-chs { font-size: 0.55rem; letter-spacing: 2px; color: #888; margin-bottom: 12px; }
+#chat-screen .ch-bio-auth-text { font-family: 'Space Mono', monospace; font-size: 0.45rem; letter-spacing: 1px; color: #121212; border-top: 1px solid rgba(0,0,0,0.1); padding-top: 6px; text-align: center; }
+#chat-screen .ch-bio-auth-text::before { content: 'TOUCH TO AUTH'; }
+#chat-screen .ch-bio-card:active .ch-bio-auth-text::before { content: 'AUTHENTICATING...'; animation: blinkText 0.8s infinite; }
+#chat-screen .ch-bio-barcode { position: absolute; right: -20px; top: 30%; font-family: 'Libre Barcode 39 Text', cursive; font-size: 3rem; color: rgba(0,0,0,0.06); transform: rotate(90deg); pointer-events: none; z-index: 0; }
+
+/* 2. 共用推拉框架 (Wallet & Vault) */
+#chat-screen .wl-view { z-index: 60; background: #F4F2EE; display: flex; flex-direction: column; transform: translateX(100%); opacity: 1; pointer-events: auto; transition: transform 0.4s cubic-bezier(0.16,1,0.3,1); }
+#chat-screen .wl-view.active { transform: translateX(0); }
+
+/* 3. Wallet 样式 */
+.wl-header { padding: 3rem 2rem 1rem; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(0,0,0,0.08); }
+.wl-back-btn { font-family: 'Space Mono', monospace; font-size: 0.6rem; letter-spacing: 2px; color: #121212; cursor: pointer; display: flex; align-items: center; gap: 6px; background: transparent; border: none; text-transform: uppercase; }
+.wl-back-btn:active { opacity: 0.5; transform: translateX(-4px); }
+.wl-title-group { text-align: right; }
+.wl-title-eng { font-family: 'Cormorant Garamond', serif; font-size: 1.1rem; font-weight: 600; font-style: italic; color: #121212; line-height: 1; }
+.wl-title-chs { font-family: 'DM Sans', sans-serif; font-size: 0.5rem; letter-spacing: 4px; color: #888; margin-top: 4px; }
+.wl-scroll { flex: 1; overflow-y: auto; padding: 0 0 3rem 0; scrollbar-width: none; }
+.wl-scroll::-webkit-scrollbar { display: none; }
+.wl-domain-tabs { display: flex; border-bottom: 1px solid rgba(0,0,0,0.08); }
+.wl-d-tab { flex: 1; padding: 1.2rem 0; text-align: center; cursor: pointer; background: transparent; border: none; border-bottom: 2px solid transparent; transition: all 0.3s; display: flex; flex-direction: column; align-items: center; gap: 4px; opacity: 0.4; }
+.wl-d-tab.active { opacity: 1; border-bottom-color: #121212; background: rgba(0,0,0,0.02); }
+.wl-d-tab-eng { font-family: 'Space Mono', monospace; font-size: 0.7rem; font-weight: 700; letter-spacing: 2px; color: #121212; }
+.wl-d-tab-chs { font-size: 0.5rem; letter-spacing: 2px; color: #121212; }
+.wl-selector-section { padding: 1.5rem 2rem; display: flex; justify-content: flex-end; position: relative; z-index: 20; }
+.wl-selector-trigger { display: inline-flex; align-items: center; gap: 12px; font-family: 'Space Mono', monospace; font-size: 0.65rem; letter-spacing: 1px; color: #121212; padding: 8px 16px; background: #fff; border: 1px solid rgba(0,0,0,0.15); border-radius: 40px; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.03); transition: all 0.2s; }
+.wl-selector-trigger:active { transform: scale(0.96); }
+.wl-selector-trigger span { font-family: 'DM Sans', sans-serif; font-weight: 600; color: #9c2b2b; }
+.wl-dropdown { position: absolute; top: calc(100% - 10px); right: 2rem; width: 240px; background: #fff; border: 1px solid rgba(0,0,0,0.1); border-radius: 8px; padding: 6px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); opacity: 0; transform: translateY(-10px); pointer-events: none; transition: all 0.3s cubic-bezier(0.16,1,0.3,1); }
+.wl-dropdown.is-open { opacity: 1; transform: translateY(0); pointer-events: auto; }
+.wl-option { padding: 12px 14px; font-family: 'DM Sans', sans-serif; font-size: 0.75rem; color: #888; cursor: pointer; border-radius: 6px; transition: all 0.2s; display: flex; justify-content: space-between; align-items: center; }
+.wl-option:hover, .wl-option.active { background: #f8f8f8; color: #121212; font-weight: 600; }
+.wl-card-container { padding: 0 2rem 2rem; }
+.wl-monolith-tag { background: #111; border-radius: 16px 4px 16px 4px; padding: 2.5rem 2rem; position: relative; overflow: hidden; color: #EFECE7; box-shadow: 0 20px 40px rgba(0,0,0,0.25); background-image: radial-gradient(circle at 100% 0%, rgba(255,255,255,0.08) 0%, transparent 60%); }
+.wl-punch-hole { position: absolute; top: 2rem; right: 2rem; width: 14px; height: 14px; border-radius: 50%; background: #F4F2EE; box-shadow: inset 0 3px 6px rgba(0,0,0,0.8), 0 1px 0 rgba(255,255,255,0.2); z-index: 5; }
+.wl-monolith-tag::before { content: ''; position: absolute; top: 0; left: -100%; width: 50%; height: 100%; background: linear-gradient(to right, transparent, rgba(255,255,255,0.05), transparent); transform: skewX(-20deg); animation: shimmer 6s infinite; pointer-events: none; }
+@keyframes shimmer { 0% { left: -100%; } 20%, 100% { left: 200%; } }
+.wl-tag-meta { font-family: 'Space Mono', monospace; font-size: 0.5rem; letter-spacing: 4px; color: rgba(255,255,255,0.4); text-transform: uppercase; margin-bottom: 2rem; display: flex; justify-content: space-between; }
+.wl-tag-label-eng { font-family: 'DM Sans', sans-serif; font-size: 0.65rem; letter-spacing: 3px; color: #888; text-transform: uppercase; }
+.wl-tag-label-chs { font-size: 0.5rem; letter-spacing: 1px; color: rgba(255,255,255,0.3); margin-top: 2px; margin-bottom: 12px;}
+.wl-tag-balance { font-family: 'Cormorant Garamond', serif; font-size: 4rem; font-weight: 300; font-style: italic; line-height: 0.9; letter-spacing: -2px; color: #fff; position: relative; z-index: 2; word-break: break-all; }
+.wl-tag-currency { font-family: 'Space Mono', monospace; font-size: 1rem; font-style: normal; letter-spacing: 0; vertical-align: top; margin-right: 4px; opacity: 0.6; }
+.wl-tag-barcode { position: absolute; bottom: -15px; left: -10px; font-family: 'Libre Barcode 39 Text', cursive; font-size: 4.5rem; color: rgba(255,255,255,0.03); pointer-events: none; }
+@keyframes fadeSlideUp { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
+.wl-ledger-section { padding: 0 2rem; }
+.wl-ledger-header { display: flex; justify-content: space-between; align-items: flex-end; border-bottom: 1px solid rgba(0,0,0,0.8); padding-bottom: 0.5rem; margin-bottom: 1rem; }
+.wl-lh-group { display: flex; flex-direction: column; gap: 2px; }
+.wl-lh-eng { font-family: 'Space Mono', monospace; font-size: 0.6rem; letter-spacing: 2px; color: #121212; font-weight: 700; }
+.wl-lh-chs { font-size: 0.5rem; letter-spacing: 2px; color: #888; }
+.wl-lh-sub { font-family: 'Cormorant Garamond', serif; font-size: 0.9rem; font-style: italic; color: #121212; }
+.wl-ledger-list { display: flex; flex-direction: column; }
+.wl-tx-item { display: flex; flex-direction: column; padding: 1.2rem 0; border-bottom: 1px dashed rgba(0,0,0,0.15); gap: 0.8rem; }
+.wl-tx-top { display: flex; justify-content: space-between; align-items: center; }
+.wl-tx-id { font-family: 'Space Mono', monospace; font-size: 0.55rem; color: #888; }
+.wl-tx-status { font-family: 'Space Mono', monospace; font-size: 0.5rem; padding: 2px 6px; border-radius: 2px; letter-spacing: 1px; }
+.wl-tx-status.settled { background: rgba(46,125,50,0.1); color: #2E7D32; }
+.wl-tx-status.pending { background: rgba(156,43,43,0.1); color: #9c2b2b; }
+.wl-tx-middle { display: flex; justify-content: space-between; align-items: flex-start; }
+.wl-tx-desc-group { display: flex; flex-direction: column; gap: 4px; }
+.wl-tx-desc-eng { font-family: 'DM Sans', sans-serif; font-size: 0.85rem; font-weight: 600; color: #121212; line-height: 1.2;}
+.wl-tx-desc-chs { font-size: 0.55rem; color: #888; letter-spacing: 1px; }
+.wl-tx-amt-group { text-align: right; }
+.wl-tx-amount { font-family: 'Space Mono', monospace; font-size: 1rem; font-weight: 700; }
+.wl-tx-amount.in { color: #2E7D32; }
+.wl-tx-amount.in::before { content: '+ '; }
+.wl-tx-amount.out { color: #121212; }
+.wl-tx-amount.out::before { content: '- '; }
+.wl-tx-bottom { display: flex; justify-content: space-between; align-items: center; }
+.wl-tx-time { font-family: 'Space Mono', monospace; font-size: 0.5rem; color: #A0A0A0; }
+.wl-tx-channel { font-family: 'Space Mono', monospace; font-size: 0.5rem; color: #A0A0A0; text-transform: uppercase; }
+
+/* 4. Vault (消息收藏) 样式 */
+/* Vault — 画廊展签样式 */
+.vt-filter-scroll { width:100%; overflow-x:auto; scrollbar-width:none; border-bottom:1px solid rgba(0,0,0,0.05); }
+.vt-filter-scroll::-webkit-scrollbar { display:none; }
+.vt-filter-track { display:flex; padding:0 2rem; gap:1.5rem; }
+.vt-filter-item { font-family:'DM Sans',sans-serif; font-size:0.6rem; letter-spacing:2px; color:#A0A0A0; text-transform:uppercase; white-space:nowrap; cursor:pointer; padding:1rem 0; position:relative; transition:color 0.3s; }
+.vt-filter-item::after { content:''; position:absolute; bottom:-1px; left:0; right:0; height:2px; background:#121212; transform:scaleX(0); transition:transform 0.3s cubic-bezier(0.16,1,0.3,1); transform-origin:center; }
+.vt-filter-item.active { color:#121212; font-weight:700; }
+.vt-filter-item.active::after { transform:scaleX(1); }
+.vt-scroll { flex:1; overflow-y:auto; padding:2.5rem 1.5rem 4rem; scrollbar-width:none; }
+.vt-scroll::-webkit-scrollbar { display:none; }
+.vt-list { display:flex; flex-direction:column; }
+.vt-frag-item { display:flex; gap:1.2rem; align-items:stretch; margin-bottom:4rem; opacity:0; animation:vt-fadeUp 0.6s cubic-bezier(0.16,1,0.3,1) forwards; }
+.vt-frag-item.reverse { flex-direction:row-reverse; text-align:right; }
+@keyframes vt-fadeUp { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
+.vt-tag { width:36px; background:#fff; box-shadow:0 16px 32px rgba(0,0,0,0.06),0 2px 6px rgba(0,0,0,0.02); border-radius:2px; padding:14px 0; display:flex; flex-direction:column; align-items:center; gap:1.5rem; flex-shrink:0; position:relative; }
+.vt-tag-foil { width:12px; height:12px; border-radius:50%; background:linear-gradient(135deg,#f0f0f0,#fff,#ccc,#f0f0f0); box-shadow:inset 0 1px 2px #fff, 0 2px 4px rgba(0,0,0,0.1); }
+.vt-tag-name { writing-mode:vertical-rl; text-orientation:upright; font-family:'DM Sans',sans-serif; font-size:0.65rem; letter-spacing:4px; color:#121212; font-weight:700; }
+.vt-content { flex:1; display:flex; flex-direction:column; justify-content:center; padding:0.5rem 0; }
+.vt-c-quote { font-family:'Cormorant Garamond',serif; font-size:1.25rem; font-style:italic; font-weight:600; color:#121212; line-height:1.35; margin-bottom:1.5rem; letter-spacing:0.3px; }
+.vt-c-meta { display:flex; justify-content:flex-start; gap:1rem; border-top:1px solid rgba(0,0,0,0.08); padding-top:0.8rem; }
+.vt-frag-item.reverse .vt-c-meta { justify-content:flex-end; }
+.vt-c-time { font-family:'Space Mono',monospace; font-size:0.5rem; color:#A0A0A0; letter-spacing:1px; }
+.vt-c-author { font-family:'DM Sans',sans-serif; font-size:0.55rem; color:#121212; font-weight:700; letter-spacing:2px; text-transform:uppercase; }
+.vt-c-del { background:none; border:none; font-size:0.9rem; color:#ccc; cursor:pointer; padding:0; line-height:1; transition:color 0.2s; }
+.vt-c-del:active { color:#9c2b2b; }
+.vt-empty { text-align:center; padding:6rem 2rem; color:#A0A0A0; font-family:'Space Mono',monospace; font-size:0.6rem; letter-spacing:3px; text-transform:uppercase; }
 </style>
 <body>
 <div class="device">
@@ -2221,8 +2338,8 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg-body);display:flex;jus
 
       <div class="grid-icons" id="grid-icons">
         <div class="icon-cell">
-          <div class="icon-box" data-icon-id="0"><i class="ph ph-image"></i></div>
-          <span class="icon-label">待定</span>
+          <div class="icon-box" data-icon-id="0"><i class="ph-fill ph-cards"></i></div>
+          <span class="icon-label">遇见</span>
         </div>
         <div class="icon-cell">
           <div class="icon-box" data-icon-id="1"><i class="ph ph-envelope-simple"></i></div>
@@ -2929,12 +3046,110 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg-body);display:flex;jus
               </div>
             </div>
           </div>
-          <div class="ch-dossier-lower">
-            <div class="ch-blueprint">
-              <i class="ph ph-bounding-box"></i>
-              <span>EXTENSION BAY // EMPTY</span>
+         <div class="ch-dossier-lower">
+            <div class="ch-bio-header">
+              <span class="ch-bio-title">BIOMETRIC CLEARANCE</span>
+              <span class="ch-bio-status">REQ.</span>
+            </div>
+            <div class="ch-bio-grid">
+              
+              <!-- 钱包入口 -->
+              <div class="ch-bio-card" onclick="WalletApp.openWallet()">
+                <div class="ch-bio-barcode">ASSETS</div>
+                <i class="ph-light ph-fingerprint ch-bio-print-bg"></i>
+                <div class="ch-bio-scanner"></div>
+                <div class="ch-bio-top"><span>ID: WLT</span><i class="ph ph-lock-key"></i></div>
+                <div class="ch-bio-bottom">
+                  <div class="ch-bio-label-eng">Wallet</div>
+                  <div class="ch-bio-label-chs">资金终端</div>
+                  <div class="ch-bio-auth-text"></div>
+                </div>
+              </div>
+
+              <!-- 消息收藏入口 (Vault) -->
+              <div class="ch-bio-card" onclick="VaultApp.openVault()">
+                <div class="ch-bio-barcode">VAULT</div>
+                <i class="ph-light ph-fingerprint ch-bio-print-bg"></i>
+                <div class="ch-bio-scanner"></div>
+                <div class="ch-bio-top"><span>ID: VLT</span><i class="ph ph-bookmark-simple"></i></div>
+                <div class="ch-bio-bottom">
+                  <div class="ch-bio-label-eng">Vault</div>
+                  <div class="ch-bio-label-chs">信息收藏</div>
+                  <div class="ch-bio-auth-text"></div>
+                </div>
+              </div>
             </div>
           </div>
+        </div>
+      </div>
+      
+      <!-- ═══ View 6: Wallet Terminal 钱包界面 ═══ -->
+      <div class="ch-view wl-view" id="view-wallet">
+        <!-- Header -->
+        <div class="wl-header">
+          <button class="wl-back-btn" onclick="WalletApp.closeWallet()"><i class="ph ph-arrow-left"></i> EXIT</button>
+          <div class="wl-title-group">
+            <div class="wl-title-eng">Ledger Terminal</div>
+            <div class="wl-title-chs">资 / 金 / 终 / 端</div>
+          </div>
+        </div>
+        <!-- Scrollable Content -->
+        <div class="wl-scroll">
+          <div class="wl-domain-tabs">
+            <button class="wl-d-tab active" id="tab-user">
+              <span class="wl-d-tab-eng">USER</span>
+              <span class="wl-d-tab-chs">用户面具</span>
+            </button>
+          </div>
+          <div class="wl-selector-section" id="wl-dropdown-wrap">
+            <div class="wl-selector-trigger" onclick="WalletApp.toggleDropdown(event)">
+              TARGET // <span id="wl-current-target">...</span>
+              <i class="ph ph-caret-down"></i>
+            </div>
+            <div class="wl-dropdown" id="wl-dropdown-menu"></div>
+          </div>
+          <div class="wl-card-container">
+            <div class="wl-monolith-tag" id="card-user">
+              <div class="wl-punch-hole"></div>
+              <div class="wl-tag-barcode">TOKEN</div>
+              <div class="wl-tag-meta">
+                <span id="wl-u-tagid">AUTH-000</span>
+                <span>LIQUID ASSET</span>
+              </div>
+              <div class="wl-tag-label-eng">Total Balance</div>
+              <div class="wl-tag-label-chs">账户总计</div>
+              <div class="wl-tag-balance">
+                <span class="wl-tag-currency">¥</span><span id="wl-u-balance">0.00</span>
+              </div>
+            </div>
+          </div>
+          <div class="wl-ledger-section">
+            <div class="wl-ledger-header">
+              <div class="wl-lh-group">
+                <span class="wl-lh-eng">LEDGER ACTIVITY</span>
+                <span class="wl-lh-chs">详细流水动向</span>
+              </div>
+              <span class="wl-lh-sub">Records</span>
+            </div>
+            <div class="wl-ledger-list" id="wl-ledger-list"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ═══ View 7: Vault 消息收藏界面 ═══ -->
+      <div class="ch-view wl-view" id="view-vault" style="display:flex;flex-direction:column;">
+        <div class="wl-header">
+          <button class="wl-back-btn" onclick="VaultApp.closeVault()"><i class="ph ph-arrow-left"></i> RETURN</button>
+          <div class="wl-title-group">
+            <div class="wl-title-eng">Dialogue Archive</div>
+            <div class="wl-title-chs">画 / 廊 / 语 / 录</div>
+          </div>
+        </div>
+        <div class="vt-filter-scroll">
+          <div class="vt-filter-track" id="vt-filters"></div>
+        </div>
+        <div class="vt-scroll">
+          <div class="vt-list" id="vt-list"></div>
         </div>
       </div>
 
@@ -3291,6 +3506,21 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg-body);display:flex;jus
         </div>
       </div>
     </div>
+    <!-- 自定义保存CSS预设弹窗 -->
+    <div class="cv-modal-overlay" id="cv-css-prompt-overlay" style="z-index: 200;">
+      <div class="cv-mag-modal" style="text-align: left;">
+        <div class="cv-modal-bg-letter">S</div>
+        <h2 class="cv-mod-title" style="margin-bottom: 24px;">Save Preset</h2>
+        <input type="text" id="cv-css-preset-name" placeholder="给这套样式起个名字..." value="专属模式"
+               style="width:100%; background:transparent; border:none; border-bottom:1px solid rgba(0,0,0,0.1); font-family:'Cormorant Garamond',serif; font-size:1.5rem; padding:0.5rem 0; color:#121212; outline:none; transition:border-color 0.3s; margin-bottom:32px;"
+               onfocus="this.style.borderBottomColor='#121212'" 
+               onblur="this.style.borderBottomColor='rgba(0,0,0,0.1)'">
+        <div class="cv-mod-actions">
+          <button class="cv-btn-mod-cancel" onclick="document.getElementById('cv-css-prompt-overlay').classList.remove('active')">Cancel</button>
+          <button class="cv-btn-mod-confirm" onclick="ConvModule.confirmSaveCssPreset()">Save</button>
+        </div>
+      </div>
+    </div>
     <!-- Settings Panel -->
     <div class="cv-settings-panel" id="cv-settings-panel">
       <div class="cv-sp-header">
@@ -3415,9 +3645,9 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg-body);display:flex;jus
               <span class="cv-si-label">时间感知</span>
               <span class="cv-si-sub">Time Perception</span>
             </div>
-            <div class="cv-mag-toggle on" onclick="this.classList.toggle('on')"></div>
+           <div class="cv-mag-toggle on" id="cv-time-perception-toggle" onclick="this.classList.toggle('on')"></div>
           </div>
-          <div class="cv-set-item col cv-accordion" onclick="ConvModule._toggleAccordion(this,event)">
+         <div class="cv-set-item col cv-accordion" onclick="ConvModule._toggleAccordion(this,event)">
             <div class="cv-acc-header">
               <div class="cv-si-info">
                 <span class="cv-si-label">记忆中枢</span>
@@ -3427,24 +3657,59 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg-body);display:flex;jus
             </div>
             <div class="cv-acc-body-wrap">
               <div class="cv-acc-body">
-                <div class="cv-set-item" style="padding:0 0 16px;border:none;">
-                  <div class="cv-si-info">
-                    <span class="cv-si-label" style="font-size:0.85rem;">长期记忆</span>
-                    <span class="cv-si-sub" style="font-size:0.65rem;">Long-term Engram</span>
-                  </div>
-                  <div class="cv-mag-toggle on" onclick="this.classList.toggle('on');event.stopPropagation()"></div>
-                </div>
-                <div style="width:100%">
-                  <div style="font-size:0.85rem;font-weight:500;color:#121212;margin-bottom:8px;">携带对话轮数</div>
+                
+                <div style="width:100%;margin-bottom:20px;">
+                  <div style="font-size:0.85rem;font-weight:500;color:#121212;margin-bottom:8px;">携带对话轮数 (短期记忆)</div>
                   <div class="cv-slider-row" onclick="event.stopPropagation()">
-                    <input type="range" class="cv-mag-slider" id="cv-memory-slider" min="10" max="500" value="50">
+                    <input type="range" class="cv-mag-slider" id="cv-memory-slider" min="1" max="500" value="50" oninput="document.getElementById('cv-memory-val').textContent=this.value">
                     <span class="cv-slider-val" id="cv-memory-val">50</span>
                   </div>
+                </div>
+
+                <div style="width:100%;height:0.5px;background:rgba(0,0,0,0.08);margin-bottom:20px;"></div>
+
+                <div style="width:100%;margin-bottom:16px;">
+                  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+                    <span style="font-size:0.85rem;font-weight:500;color:#121212;">自动档案提炼（轮）</span>
+                    <span style="font-family:'Space Mono',monospace;font-size:0.6rem;color:#999;">0 = 关闭</span>
+                  </div>
+                  <div style="font-size:0.7rem;color:#999;margin-bottom:10px;line-height:1.5;">每隔 N 轮对话后，后台静默提炼潜意识。</div>
+                  <div class="cv-slider-row" onclick="event.stopPropagation()">
+                    <input type="range" class="cv-mag-slider" id="cv-mem-auto-slider" min="0" max="100" value="30" oninput="document.getElementById('cv-mem-auto-val').textContent=this.value===0?'关闭':this.value">
+                    <span class="cv-slider-val" id="cv-mem-auto-val">30</span>
+                  </div>
+                </div>
+
+                <div style="width:100%;margin-bottom:16px;background:rgba(0,0,0,0.03);padding:12px;border-radius:12px;" onclick="event.stopPropagation()">
+                 <div style="display:flex;justify-content:space-between;align-items:center;">
+                    <span style="font-size:0.75rem;font-weight:600;color:#121212;">Subconscious Archive</span>
+                    <div style="display:flex; gap:8px; align-items:center;">
+                      <!-- 新增：指定轮数输入框 -->
+                      <input type="number" id="cv-mem-manual-rounds" placeholder="指定轮数(选填)" min="1" max="500" 
+                             style="width:85px; background:transparent; border:none; border-bottom:1px solid rgba(18,18,18,0.2); padding:4px; font-size:0.65rem; color:#121212; outline:none; text-align:center;">
+                             
+                      <button id="cv-mem-manual-btn" style="padding:6px 12px;background:transparent;color:#121212;border:1px solid #121212;border-radius:16px;font-size:0.7rem;cursor:pointer;transition:0.2s;" onclick="ConvModule.manualSummarize()" onmousedown="this.style.background='#121212';this.style.color='#fff'" onmouseup="this.style.background='transparent';this.style.color='#121212'">
+                        提炼更新
+                      </button>
+                      <button id="cv-mem-archive-btn" style="padding:6px 12px;background:#121212;color:#fff;border:none;border-radius:16px;font-size:0.7rem;cursor:pointer;transition:0.2s;" onclick="ConvModule.archiveToWorldBook()" onmousedown="this.style.transform='scale(0.95)'" onmouseup="this.style.transform='scale(1)'">
+                        封存世界书
+                      </button>
+                    </div>
+                  </div>
+                  <div style="margin-top:12px; border-top:1px dashed rgba(0,0,0,0.1); padding-top:12px;">
+                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+                      <span style="font-size:0.7rem;color:#888;">当前潜意识档案预览</span>
+                      <button onclick="ConvModule.clearMemory()" style="background:transparent;border:none;font-size:0.65rem;color:#D93A3A;cursor:pointer;">抹除</button>
+                    </div>
+                    <div id="cv-mem-summary-preview" style="font-size:0.75rem;color:#555;line-height:1.6;max-height:150px;overflow-y:auto;scrollbar-width:none;">
+                      （暂无潜意识档案）
+                    </div>
+                  </div>
+                </div>
                 </div>
               </div>
             </div>
           </div>
-        </div>
 
         <!-- Persona -->
         <div class="cv-set-section">
@@ -3454,7 +3719,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg-body);display:flex;jus
               <span class="cv-si-label">开启昵称</span>
               <span class="cv-si-sub">Alias Mode</span>
             </div>
-            <div class="cv-mag-toggle" onclick="this.classList.toggle('on')"></div>
+           <div class="cv-mag-toggle" id="cv-alias-toggle" onclick="ConvModule._toggleAlias(this)"></div>
           </div>
           <div class="cv-set-item">
             <div class="cv-si-info">
@@ -3469,7 +3734,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg-body);display:flex;jus
         <div class="cv-set-section">
           <div class="cv-set-sec-title">Identity & UI</div>
           
-          <!-- UI 占位：自定义界面美化 -->
+         <!-- 自定义界面美化 -->
           <div class="cv-set-item col cv-accordion" onclick="ConvModule._toggleAccordion(this,event)">
             <div class="cv-acc-header">
               <div class="cv-si-info">
@@ -3480,20 +3745,57 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg-body);display:flex;jus
             </div>
             <div class="cv-acc-body-wrap">
               <div class="cv-acc-body">
-                <div style="font-family:'Space Mono',monospace;font-size:0.62rem;color:#888;margin-bottom:8px;line-height:1.4;">
-                  编写专属 CSS，定制当前角色的气泡与界面。<br>
+                
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                  <span style="font-family:'Space Mono',monospace;font-size:0.62rem;color:#888;">定制当前角色专属样式</span>
+                  <button onclick="event.stopPropagation(); ConvModule.copyDefaultCSS()" style="font-size:0.6rem;background:transparent;border:0.5px solid #121212;padding:2px 8px;border-radius:4px;cursor:pointer;">复制默认源码</button>
                 </div>
-                <textarea 
-                  style="width:100%;min-height:100px;padding:10px;background:rgba(0,0,0,0.03);border:0.5px solid rgba(18,18,18,0.1);border-radius:10px;font-size:0.75rem;font-family:'Space Mono',monospace;color:#121212;resize:none;outline:none;line-height:1.5;white-space:pre;"
-                  placeholder="/* 例如修改气泡颜色或圆角... */" 
+                
+                <textarea id="cv-custom-css-input"
+                  style="width:100%;height:160px;padding:10px;background:rgba(0,0,0,0.03);border:0.5px solid rgba(18,18,18,0.1);border-radius:10px;font-size:0.75rem;font-family:'Space Mono',monospace;color:#121212;resize:none;outline:none;line-height:1.5;white-space:pre;"
+                  placeholder="/* 粘贴源码后修改即可预览生效... */" 
                   onclick="event.stopPropagation()"></textarea>
-                <button 
-                  style="margin-top:12px;width:100%;padding:12px;background:#121212;color:#fff;border:none;border-radius:100px;font-size:0.8rem;font-family:'Inter','Noto Sans SC',sans-serif;font-weight:600;letter-spacing:1px;text-transform:uppercase;cursor:pointer;transition:transform 0.2s;"
-                  onmousedown="this.style.transform='scale(0.97)'" 
-                  onmouseup="this.style.transform='scale(1)'"
-                  onclick="event.stopPropagation(); Toast.show('自定义 CSS 功能即将接入 ✦')">
-                  Apply Style
-                </button>
+                
+                <div style="display:flex; gap:8px; margin-top:12px;">
+                  <button style="flex:1;padding:10px;background:transparent;border:0.5px solid rgba(18,18,18,0.2);border-radius:100px;font-size:0.75rem;color:#121212;cursor:pointer;" onclick="event.stopPropagation(); ConvModule.clearCustomCSS()">恢复默认</button>
+                  <button style="flex:2;padding:10px;background:#121212;color:#fff;border:none;border-radius:100px;font-size:0.75rem;font-weight:600;cursor:pointer;" onclick="event.stopPropagation(); ConvModule.applyAndSaveCSS()">预览并应用</button>
+                </div>
+                
+                <!-- 💥 新增的实时预览气泡区块 -->
+<div style="margin-top:24px; border-top: 0.5px dashed rgba(0,0,0,0.1); padding-top: 16px;">
+  <div style="font-size:0.75rem; font-weight:600; color:#121212; margin-bottom:12px;">Live Preview / 样式实时预览</div>
+  
+  <div class="cv-css-preview-box" style="padding:16px; background:rgba(0,0,0,0.02); border:0.5px solid rgba(0,0,0,0.06); border-radius:16px; display:flex; flex-direction:column; gap:12px; pointer-events:none;">
+    
+    <!-- 模拟 AI 气泡 -->
+    <div class="cv-msg-row ai" style="animation:none; width:100%;">
+      <div class="cv-avatar-wrap" style="width:30px; height:30px; flex-shrink:0;">
+        <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&q=80" class="cv-msg-avatar" alt="" style="width:100%; height:100%; border-radius:50%; object-fit:cover;">
+      </div>
+      <div class="cv-bubble">这是一条收到的测试气泡 ✦</div>
+    </div>
+    
+    <!-- 模拟 用户 气泡 -->
+    <div class="cv-msg-row user" style="animation:none; width:100%;">
+      <div class="cv-avatar-wrap" style="width:30px; height:30px; flex-shrink:0;">
+        <img src="https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=100&q=80" class="cv-msg-avatar" alt="" style="width:100%; height:100%; border-radius:50%; object-fit:cover;">
+      </div>
+      <div class="cv-bubble">视觉效果看起来怎么样？</div>
+    </div>
+    
+  </div>
+</div>
+
+                <div style="margin-top:20px; border-top: 0.5px solid rgba(0,0,0,0.1); padding-top: 12px;">
+                  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+                    <span style="font-size:0.75rem; font-weight:600; color:#121212;">Saved Presets / 保存的预设</span>
+                    <button onclick="event.stopPropagation(); ConvModule.saveCssPreset()" style="font-size:0.6rem;background:transparent;border:none;color:#121212;font-weight:700;cursor:pointer;">+ 存为新预设</button>
+                  </div>
+                  <div id="cv-css-presets-list" style="display:flex;flex-direction:column;gap:4px;">
+                    <!-- JS 动态渲染 -->
+                  </div>
+                </div>
+
               </div>
             </div>
           </div>
@@ -3530,16 +3832,44 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg-body);display:flex;jus
       </div>
     </div>
 
-    <!-- Modal: 清空记录 -->
+   <!-- Modal 1: 清空记录 (带有新篇章开关) -->
     <div class="cv-modal-overlay" id="cv-modal-clear">
       <div class="cv-mag-modal">
         <div class="cv-modal-bg-letter">C</div>
         <i class="ph-thin ph-eraser cv-mod-icon"></i>
         <h2 class="cv-mod-title">Clear History</h2>
-        <p class="cv-mod-desc">记忆将被抹除，但连接尚未切断。<br>确定要清空当前的对话记录吗？</p>
+        <p class="cv-mod-desc">确定要清空当前的对话记录吗？<br>连接尚未切断，但往事将随风消散。</p>
+        
+        <div style="margin-bottom: 24px; display: flex; align-items: center; justify-content: center; gap: 8px;">
+          <label class="cv-mag-toggle on" id="cv-keep-memory-toggle" onclick="this.classList.toggle('on')" style="transform: scale(0.8); cursor: pointer;"></label>
+          <span style="font-size: 0.75rem; color: #121212; font-weight: 600;">保留潜意识记忆 (New Chapter)</span>
+        </div>
+
         <div class="cv-mod-actions">
           <button class="cv-btn-mod-cancel" onclick="document.getElementById('cv-modal-clear').classList.remove('active')">取消</button>
           <button class="cv-btn-mod-confirm" onclick="ConvModule.clearHistory()">确认清空</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal 2: 封存入世界书 -->
+    <div class="cv-modal-overlay" id="cv-archive-modal" style="z-index: 200;">
+      <div class="cv-mag-modal" style="text-align: left;">
+        <div class="cv-modal-bg-letter">A</div>
+        <h2 class="cv-mod-title" style="margin-bottom: 8px;">Archive Chapter</h2>
+        <p class="cv-mod-desc" style="margin-bottom: 24px;">高密度档案已提炼。请为这段经历命名，并设置唤醒它的关键词。</p>
+        
+        <label style="font-size:0.6rem; color:#888; text-transform:uppercase; letter-spacing:1px;">Chapter Name / 篇章名</label>
+        <input type="text" id="cv-archive-name" placeholder="例如：游乐园之夏" 
+               style="width:100%; background:transparent; border:none; border-bottom:1px solid rgba(0,0,0,0.1); font-family:'Noto Sans SC',sans-serif; font-size:1.2rem; padding:0.5rem 0; color:#121212; outline:none; margin-bottom:20px;">
+               
+        <label style="font-size:0.6rem; color:#888; text-transform:uppercase; letter-spacing:1px;">Regex Keywords / 触发关键词</label>
+        <input type="text" id="cv-archive-regex" value="/(关键词1|关键词2|关键词3)/i" 
+               style="width:100%; background:rgba(0,0,0,0.03); border:1px solid rgba(0,0,0,0.1); border-radius:6px; font-family:'Space Mono',monospace; font-size:0.85rem; padding:0.8rem; color:#121212; outline:none; margin-bottom:32px;">
+               
+        <div class="cv-mod-actions">
+          <button class="cv-btn-mod-cancel" onclick="document.getElementById('cv-archive-modal').classList.remove('active')">取消</button>
+          <button class="cv-btn-mod-confirm" onclick="ConvModule.confirmArchive()">永久封存</button>
         </div>
       </div>
     </div>
@@ -3553,7 +3883,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg-body);display:flex;jus
         <p class="cv-mod-desc">连结将被永久切断，该操作无法逆转。<br>确定要彻底删除此对话吗？</p>
         <div class="cv-mod-actions">
           <button class="cv-btn-mod-cancel" onclick="document.getElementById('cv-modal-delete').classList.remove('active')">取消</button>
-          <button class="cv-btn-mod-confirm red" onclick="document.getElementById('cv-modal-delete').classList.remove('active');Toast.show('即将上线 ✦')">确认删除</button>
+          <button class="cv-btn-mod-confirm red" onclick="ConvModule.deleteChat()">确认删除</button>
         </div>
       </div>
     </div>
@@ -3813,13 +4143,14 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg-body);display:flex;jus
 // DB — IndexedDB 封装
 // stores:
 //   settings    { key, value }
+//   meet        { key, value } 遇见子页专用（与 settings 同形、独立表）
 //   assets      { key, blob, mimeType, size, updatedAt }
 //   api_profiles { id(autoIncrement), name, url, key, model,
 //                  temp, savedModels[], isActive, createdAt }
 // ============================================================
 const DB = (() => {
   const DB_NAME    = 'chillOS';
-  const DB_VERSION = 7; // v7: 新增 world_info 世界书词条表
+  const DB_VERSION = 8; // v8: 新增 meet 表（遇见专用）
   let _db = null;
 
   function open() {
@@ -3854,6 +4185,28 @@ const DB = (() => {
         if (old < 7) {
           db.createObjectStore('world_info', { keyPath: 'id', autoIncrement: true });
         }
+        if (old < 8) {
+          if (!db.objectStoreNames.contains('meet')) {
+            db.createObjectStore('meet', { keyPath: 'key' });
+          }
+          // 兼容旧数据：把 settings 里 meet_ 前缀键迁移到 meet 表
+          const tx = e.target.transaction;
+          if (db.objectStoreNames.contains('settings') && db.objectStoreNames.contains('meet')) {
+            const st = tx.objectStore('settings');
+            const mt = tx.objectStore('meet');
+            const req = st.openCursor();
+            req.onsuccess = ev => {
+              const cursor = ev.target.result;
+              if (!cursor) return;
+              const rec = cursor.value || {};
+              const k = rec.key;
+              if (typeof k === 'string' && k.indexOf('meet_') === 0) {
+                mt.put({ key: k, value: rec.value });
+              }
+              cursor.continue();
+            };
+          }
+        }
       };
 
       req.onsuccess = e => { _db = e.target.result; resolve(_db); };
@@ -3886,6 +4239,32 @@ const DB = (() => {
     await open();
     return new Promise((resolve, reject) => {
       const req = tx('settings', 'readwrite').delete(key);
+      req.onsuccess = () => resolve();
+      req.onerror   = e => reject(e.target.error);
+    });
+  }
+
+  // ---- meet（遇见子页，{ key, value } 与 settings 同形，独立表）----
+  async function meetGet(key) {
+    await open();
+    return new Promise((resolve, reject) => {
+      const req = tx('meet').get(key);
+      req.onsuccess = () => resolve(req.result ? req.result.value : null);
+      req.onerror   = e => reject(e.target.error);
+    });
+  }
+  async function meetSet(key, value) {
+    await open();
+    return new Promise((resolve, reject) => {
+      const req = tx('meet', 'readwrite').put({ key, value });
+      req.onsuccess = () => resolve();
+      req.onerror   = e => reject(e.target.error);
+    });
+  }
+  async function meetDel(key) {
+    await open();
+    return new Promise((resolve, reject) => {
+      const req = tx('meet', 'readwrite').delete(key);
       req.onsuccess = () => resolve();
       req.onerror   = e => reject(e.target.error);
     });
@@ -3994,7 +4373,7 @@ const DB = (() => {
   // ---- 清库 ----
   async function clearAll() {
     await open();
-    const stores = ['settings', 'assets', 'api_profiles'];
+    const stores = ['settings', 'meet', 'assets', 'api_profiles'];
     return Promise.all(stores.map(s =>
       new Promise((resolve, reject) => {
         const req = tx(s, 'readwrite').clear();
@@ -4085,6 +4464,15 @@ const DB = (() => {
     await open();
     return new Promise((resolve, reject) => {
       const req = tx('chat_bindings', 'readwrite').put({ charId, personaId });
+      req.onsuccess = () => resolve();
+      req.onerror   = e => reject(e.target.error);
+    });
+  }
+  
+  async function bindingDel(charId) {
+    await open();
+    return new Promise((resolve, reject) => {
+      const req = tx('chat_bindings', 'readwrite').delete(charId);
       req.onsuccess = () => resolve();
       req.onerror   = e => reject(e.target.error);
     });
@@ -4206,11 +4594,12 @@ async function msgDel(id) {
 
   return {
     settings:   { get: settingsGet, set: settingsSet, del: settingsDel },
+    meet:       { get: meetGet, set: meetSet, del: meetDel },
     assets:     { get: assetGet, set: assetSet, del: assetDel, getAll: assetGetAll },
     api:        { getAll: apiGetAll, get: apiGet, add: apiAdd, put: apiPut, del: apiDel, setActive: apiSetActive, getActive: apiGetActive },
     characters: { getAll: charGetAll, get: charGet, add: charAdd, put: charPut, del: charDel },
     groups:     { getAll: groupGetAll, put: groupPut, del: groupDel },
-    bindings:   { get: bindingGet, set: bindingSet },
+    bindings:   { get: bindingGet, set: bindingSet, del: bindingDel },
     // 👇 在此处增加暴露 get: msgGet
    messages:   { get: msgGet, add: msgAdd, put: msgPut, getPage: msgGetPage, countByChar: msgCountByChar, delByChar: msgDelByChar, del: msgDel },
     worldInfo:  { getAll: wiGetAll, put: wiPut, add: wiAdd, del: wiDel },
@@ -4843,6 +5232,10 @@ function closePanel() { document.getElementById('overlay').classList.remove('act
 // 设置图标
 document.getElementById('icon-settings').addEventListener('click', () => Router.go('settings'));
 document.getElementById('dock-character').addEventListener('click', () => Router.go('character'));
+// 遇见 · 子页面 chill-match.html（与主壳同目录的 css/chill-match.css、js/chill-match.js）
+document.querySelector('[data-icon-id="0"]')?.addEventListener('click', () => {
+  window.location.href = 'chill-match.html';
+});
 
 // Profile 编辑
 document.getElementById('avatar-wrap').addEventListener('click', () => document.getElementById('file-avatar').click());
@@ -5960,6 +6353,374 @@ const PersonaModule = (() => {
 })();
 
 // ============================================================
+// 视图流转公共逻辑 (推拉动画)
+// ============================================================
+const SlideViewHelper = (() => {
+  function open(viewId) {
+    const userView = document.getElementById('ch-view-user');
+    const targetView = document.getElementById(viewId);
+    if(userView) {
+      userView.style.transform = 'translateX(-20%)';
+      userView.style.opacity = '0';
+    }
+    if(targetView) targetView.classList.add('active');
+  }
+  function close(viewId) {
+    const userView = document.getElementById('ch-view-user');
+    const targetView = document.getElementById(viewId);
+    if(targetView) targetView.classList.remove('active');
+    if(userView) {
+      userView.style.transform = '';
+      userView.style.opacity = '';
+    }
+  }
+  return { open, close };
+})();
+
+// ============================================================
+// VaultApp — 消息收藏模块
+// 存储：DB.settings key `vault-fragments` → [{id, charId, charName, content, timestamp}]
+// ============================================================
+const VaultApp = (() => {
+  const VAULT_KEY = 'vault-fragments';
+  let _fragments = [];
+  let _currentFilter = 'all';
+
+  // ── 读取 ──
+  async function _load() {
+    try {
+      const saved = await DB.settings.get(VAULT_KEY);
+      _fragments = Array.isArray(saved) ? saved : [];
+    } catch(e) { _fragments = []; }
+  }
+
+  // ── 写入 ──
+  async function _save() {
+    await DB.settings.set(VAULT_KEY, _fragments);
+  }
+
+  // ── 对外：保存收藏（由 favoriteSelected 调用）──
+  async function addFragments(msgs, charId, charName) {
+    await _load();
+    let added = 0;
+    for (const msg of msgs) {
+      // 只收藏 AI 消息
+      if (msg.role !== 'assistant') continue;
+      // 提取文本内容
+      let content = '';
+      if (msg.parts && msg.parts.length) {
+        content = msg.parts.filter(p => p.type === 'text').map(p => p.text || p.content || '').join('').trim();
+      }
+      if (!content && msg.content) content = msg.content.trim();
+      if (!content) continue;
+      // 去重（同 msgId 不重复收藏）
+      if (_fragments.some(f => f.msgId === String(msg.id))) continue;
+      _fragments.unshift({
+        id:        `VLT-${Date.now()}-${Math.random().toString(36).slice(2,5)}`,
+        msgId:     String(msg.id),
+        charId:    String(charId),
+        charName:  charName || '未知',
+        content,
+        timestamp: msg.timestamp || Date.now()
+      });
+      added++;
+    }
+    if (added > 0) await _save();
+    return added;
+  }
+
+  // ── 删除单条 ──
+  async function removeFragment(id) {
+    await _load();
+    _fragments = _fragments.filter(f => f.id !== id);
+    await _save();
+    renderList();
+  }
+
+  // ── 日期格式 ──
+  function _fmtDate(ts) {
+    const d = new Date(ts);
+    const pad = n => String(n).padStart(2,'0');
+    return `${pad(d.getMonth()+1)}.${pad(d.getDate())} / ${d.getFullYear()}`;
+  }
+
+  // ── 渲染 filter tabs ──
+  function renderFilters() {
+    const track = document.getElementById('vt-filters');
+    if (!track) return;
+    // 统计出现的角色
+    const charMap = {};
+    _fragments.forEach(f => { charMap[f.charId] = f.charName; });
+    const categories = [{ id: 'all', name: '全部记录' }, ...Object.entries(charMap).map(([id, name]) => ({ id, name }))];
+    track.innerHTML = '';
+    categories.forEach(cat => {
+      const el = document.createElement('div');
+      el.className = `vt-filter-item ${cat.id === _currentFilter ? 'active' : ''}`;
+      el.textContent = cat.name;
+      el.onclick = () => { _currentFilter = cat.id; renderFilters(); renderList(); };
+      track.appendChild(el);
+    });
+  }
+
+  // ── 渲染列表 ──
+  function renderList() {
+    const listEl = document.getElementById('vt-list');
+    if (!listEl) return;
+    const filtered = _currentFilter === 'all' ? _fragments : _fragments.filter(f => f.charId === _currentFilter);
+    listEl.innerHTML = '';
+    if (!filtered.length) {
+      listEl.innerHTML = `<div class="vt-empty">No Fragments Found</div>`;
+      return;
+    }
+    filtered.forEach((frag, index) => {
+      const isReverse = index % 2 !== 0;
+      const shortName = frag.charName.substring(0, 3);
+      const delay = (index * 0.08).toFixed(2);
+      listEl.innerHTML += `
+        <div class="vt-frag-item ${isReverse ? 'reverse' : ''}" style="animation-delay:${delay}s">
+          <div class="vt-tag">
+            <div class="vt-tag-foil"></div>
+            <div class="vt-tag-name">${shortName}</div>
+          </div>
+          <div class="vt-content">
+            <div class="vt-c-quote">${_escHtml(frag.content)}</div>
+            <div class="vt-c-meta">
+              <span class="vt-c-time">${_fmtDate(frag.timestamp)}</span>
+              <span class="vt-c-author">${_escHtml(frag.charName)}</span>
+              <button class="vt-c-del" onclick="VaultApp.removeFragment('${frag.id}')" title="移除"><i class="ph ph-x"></i></button>
+            </div>
+          </div>
+        </div>`;
+    });
+  }
+
+  function _escHtml(str) {
+    return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/\n/g,'<br>');
+  }
+
+  async function openVault() {
+    await _load();
+    _currentFilter = 'all';
+    SlideViewHelper.open('view-vault');
+    renderFilters();
+    renderList();
+  }
+
+  function closeVault() {
+    SlideViewHelper.close('view-vault');
+  }
+
+  return { openVault, closeVault, addFragments, removeFragment };
+})();
+
+// ============================================================
+// WalletApp — 资金终端模块（动态面具版）
+// 存储：DB.settings key `wallet-{personaId}` → { balance: number, transactions: [] }
+// 每个面具首次访问时初始化 5000 余额
+// ============================================================
+const WalletApp = (() => {
+  const INIT_BALANCE = 5000;
+  let _currentPersonaId = null;
+
+  // ── 工具函数 ──
+  function _walletKey(personaId) { return `wallet-${personaId}`; }
+
+  function _fmtBalance(num) {
+    if (isNaN(num)) return '0.00';
+    if (num >= 1e9) return (num / 1e9).toFixed(2).replace(/\.?0+$/, '') + 'B';
+    if (num >= 1e6) return (num / 1e6).toFixed(2).replace(/\.?0+$/, '') + 'M';
+    return num.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  }
+
+  function _nowStr() {
+    const d = new Date();
+    const pad = n => String(n).padStart(2, '0');
+    return `${d.getFullYear()}.${pad(d.getMonth()+1)}.${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+  }
+
+  function _txId(type) {
+    const prefix = type === 'in' ? 'RCV' : 'SND';
+    return `${prefix}-${Date.now().toString().slice(-7)}`;
+  }
+
+  // ── 读取/初始化钱包数据 ──
+  async function _loadWallet(personaId) {
+    try {
+      const saved = await DB.settings.get(_walletKey(personaId));
+      if (saved) return saved;
+    } catch(e) { /* 首次 */ }
+    // 首次创建：初始化 5000
+    const fresh = { balance: INIT_BALANCE, transactions: [] };
+    await DB.settings.set(_walletKey(personaId), fresh);
+    return fresh;
+  }
+
+  // ── 写入钱包数据 ──
+  async function _saveWallet(personaId, data) {
+    await DB.settings.set(_walletKey(personaId), data);
+  }
+
+  // ── 对外：收款（+）──
+  // 由 ConvModule.collectTransfer 调用，传入当次会话的 personaId
+  async function credit(amount, memo, charName, personaId) {
+    const pid = personaId || PersonaModule.getActiveId();
+    if (!pid) return;
+    const wallet = await _loadWallet(pid);
+    const num = parseFloat(String(amount).replace(/,/g, '')) || 0;
+    wallet.balance = parseFloat((wallet.balance + num).toFixed(2));
+    wallet.transactions.unshift({
+      txId:    _txId('in'),
+      type:    'in',
+      descEng: charName ? `Transfer from ${charName}` : 'Transfer Received',
+      descChs: memo || '角色转账收款',
+      time:    _nowStr(),
+      amount:  num.toFixed(2),
+      status:  'SETTLED',
+      channel: charName ? charName.toUpperCase().slice(0,10) : 'CHAR'
+    });
+    await _saveWallet(pid, wallet);
+    // 如果钱包界面正在展示当前面具则刷新
+    if (_currentPersonaId === pid) renderData();
+  }
+
+  // ── 对外：转账（-）──
+  // 由 ConvModule ACCEPT_TRANSFER 处理段调用，传入当次会话的 personaId
+  async function debit(amount, memo, charName, personaId) {
+    const pid = personaId || PersonaModule.getActiveId();
+    if (!pid) return;
+    const wallet = await _loadWallet(pid);
+    const num = parseFloat(String(amount).replace(/,/g, '')) || 0;
+    wallet.balance = parseFloat((wallet.balance - num).toFixed(2));
+    wallet.transactions.unshift({
+      txId:    _txId('out'),
+      type:    'out',
+      descEng: charName ? `Transfer to ${charName}` : 'Transfer Sent',
+      descChs: memo || '向角色转账',
+      time:    _nowStr(),
+      amount:  num.toFixed(2),
+      status:  'SETTLED',
+      channel: charName ? charName.toUpperCase().slice(0,10) : 'CHAR'
+    });
+    await _saveWallet(pid, wallet);
+    if (_currentPersonaId === pid) renderData();
+  }
+
+  // ── 下拉菜单 ──
+  function initDropdown() {
+    const dropdownMenu = document.getElementById('wl-dropdown-menu');
+    if (!dropdownMenu) return;
+    dropdownMenu.innerHTML = '';
+    const personas = PersonaModule.getAll();
+    personas.forEach(p => {
+      const el = document.createElement('div');
+      el.className = `wl-option ${p.id === _currentPersonaId ? 'active' : ''}`;
+      el.innerHTML = `<span>${p.name}</span> <i class="ph ph-check" style="opacity:${p.id === _currentPersonaId ? 1 : 0}"></i>`;
+      el.onclick = () => selectPersona(p.id);
+      dropdownMenu.appendChild(el);
+    });
+  }
+
+  function selectPersona(id) {
+    _currentPersonaId = id;
+    initDropdown();
+    renderData();
+    closeDropdown();
+  }
+
+  // ── 渲染数据 ──
+  async function renderData() {
+    if (!_currentPersonaId) return;
+    const personas = PersonaModule.getAll();
+    const persona  = personas.find(p => p.id === _currentPersonaId) || personas[0];
+    if (!persona) return;
+
+    const targetEl = document.getElementById('wl-current-target');
+    if (targetEl) targetEl.textContent = persona.name;
+
+    const tagEl = document.getElementById('wl-u-tagid');
+    if (tagEl) tagEl.textContent = `AUTH-${String(persona.id).slice(-4).toUpperCase().padStart(4,'0')}`;
+
+    const wallet = await _loadWallet(_currentPersonaId);
+
+    // 余额动画
+    const balEl = document.getElementById('wl-u-balance');
+    if (balEl) {
+      balEl.style.opacity = 0;
+      setTimeout(() => {
+        balEl.textContent = _fmtBalance(wallet.balance);
+        balEl.style.opacity = 1;
+      }, 150);
+    }
+
+    // 流水列表
+    const listEl = document.getElementById('wl-ledger-list');
+    if (!listEl) return;
+    listEl.innerHTML = '';
+
+    if (!wallet.transactions.length) {
+      listEl.innerHTML = `<div style="text-align:center;padding:3rem 0;color:#888;font-family:'Space Mono';font-size:0.6rem;letter-spacing:2px;">NO ACTIVITY FOUND</div>`;
+      return;
+    }
+
+    wallet.transactions.forEach(tx => {
+      const statusClass = tx.status === 'SETTLED' ? 'settled' : 'pending';
+      const amountClass = tx.type === 'in' ? 'in' : 'out';
+      listEl.innerHTML += `
+        <div class="wl-tx-item">
+          <div class="wl-tx-top">
+            <span class="wl-tx-id">${tx.txId}</span>
+            <span class="wl-tx-status ${statusClass}">[ ${tx.status} ]</span>
+          </div>
+          <div class="wl-tx-middle">
+            <div class="wl-tx-desc-group">
+              <span class="wl-tx-desc-eng">${tx.descEng}</span>
+              <span class="wl-tx-desc-chs">${tx.descChs}</span>
+            </div>
+            <div class="wl-tx-amt-group">
+              <span class="wl-tx-amount ${amountClass}">${_fmtBalance(parseFloat(tx.amount))}</span>
+            </div>
+          </div>
+          <div class="wl-tx-bottom">
+            <span class="wl-tx-time">${tx.time}</span>
+            <span class="wl-tx-channel">CH: ${tx.channel}</span>
+          </div>
+        </div>
+      `;
+    });
+  }
+
+  // ── 下拉开关 ──
+  function toggleDropdown(e) {
+    e.stopPropagation();
+    document.getElementById('wl-dropdown-menu')?.classList.toggle('is-open');
+  }
+  function closeDropdown() {
+    document.getElementById('wl-dropdown-menu')?.classList.remove('is-open');
+  }
+
+  document.addEventListener('click', (e) => {
+    const wrap = document.getElementById('wl-dropdown-wrap');
+    if (wrap && !wrap.contains(e.target)) closeDropdown();
+  });
+
+  // ── 打开/关闭 ──
+  function openWallet() {
+    // 默认展示当前激活面具
+    _currentPersonaId = PersonaModule.getActiveId() || (PersonaModule.getAll()[0]?.id ?? null);
+    SlideViewHelper.open('view-wallet');
+    initDropdown();
+    renderData();
+  }
+
+  function closeWallet() {
+    SlideViewHelper.close('view-wallet');
+    closeDropdown();
+  }
+
+  return { openWallet, closeWallet, toggleDropdown, credit, debit };
+})();
+
+// ============================================================
 // ChatModule — 对话列表页面管理
 // 分组持久化到 DB groups store
 // { id, name, isPinned, members: [charId...], updatedAt }
@@ -6144,11 +6905,15 @@ const ChatModule = (() => {
   function closeDetail() {
     document.getElementById('ch-view-detail').classList.remove('active');
   }
-
-  // ── 切换视图 ──
+// ── 切换视图 ──
   function switchView(btn) {
     const targetId = btn.getAttribute('data-ch-target');
     closeDetail();
+
+    // ★ 新增：重置被 SlideViewHelper 推开的内联样式，防止界面卡死在透明状态
+    const userView = document.getElementById('ch-view-user');
+    if (userView) { userView.style.transform = ''; userView.style.opacity = ''; }
+
     document.querySelectorAll('#chat-screen .ch-nav-btn:not(.ch-back)').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
     document.querySelectorAll('#chat-screen .ch-view:not(#ch-view-detail)').forEach(v => v.classList.remove('active'));
@@ -6158,7 +6923,7 @@ const ChatModule = (() => {
     document.getElementById('chat-screen').classList.toggle('ch-collapsed', collapse);
     if (targetId === 'ch-view-user') PersonaModule.renderActive();
   }
-
+  
   // ── 侧边栏拉链开关 ──
   function toggleSidebar() {
     const screen = document.getElementById('chat-screen');
@@ -7385,6 +8150,107 @@ const EmoteModule = (() => {
 return { init, open, close, toggleDict, addDict, confirmAddDict, toggleGlobal, toggleCharBind, deleteDict, batchImport, getActiveEmotes, getUrlByKeyword, pick, toggleEditMode, toggleSelect, deleteSelected };
 })();
 
+
+// ============================================================
+// MemoryModule — 潜意识与记忆档案提炼（高密度压缩 - 编年史版）
+// ============================================================
+const MemoryModule = (() => {
+  function _key(charId) { return `char-memory-${charId}`; }
+
+  async function load(charId) {
+    try {
+      const d = await DB.settings.get(_key(charId));
+      return d || { summary: '', lastMsgId: 0, autoRounds: 30 };
+    } catch(e) { return { summary: '', lastMsgId: 0, autoRounds: 30 }; }
+  }
+
+  async function save(charId, data) {
+    await DB.settings.set(_key(charId), data);
+  }
+
+  // 增量提炼高密度编年史档案 (带绝对时间戳)
+  async function summarize(charId, api, charName, userName, allMsgs) {
+    const mem = await load(charId);
+
+    // 只过滤出 lastMsgId 之后的新消息
+    const newMsgs = allMsgs.filter(m =>
+      (m.id || 0) > (mem.lastMsgId || 0) &&
+      (m.role === 'user' || m.role === 'assistant') &&
+      !m.recalled
+    );
+    if (!newMsgs.length) return { skipped: true };
+
+    const msgText = newMsgs.map(m => {
+      const d = new Date(m.timestamp);
+      const timeStr = `${d.getFullYear()}年${d.getMonth()+1}月${d.getDate()}日 ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+      
+      const label = m.role === 'user' ? userName : charName;
+      const parts = m.parts?.length ? m.parts : [{ type: 'text', content: m.content || '' }];
+      const content = parts.map(p => {
+        if (p.type === 'text') return p.content || '';
+        if (p.type === 'audio') return `[语音:${p.transcript}]`;
+        if (p.type === 'image') return p.description ? `[图片:${p.description}]` : '[图片]';
+        return '';
+      }).filter(Boolean).join(' ');
+      
+      return content ? `[${timeStr}] ${label}：${content}` : null;
+    }).filter(Boolean).join('\n');
+
+    // 🎯 融合了朋友核心规则的新版 Prompt (编年史叙事流)
+   let prompt;
+    if (mem.summary) {
+      prompt = `执行"增量总结"。请将【新增对话】中的有效信息，无缝融合进【已有记忆档案】中，生成一份更新后的完整编年史与锚点记录。
+
+【已有记忆档案】：
+${mem.summary}
+
+【新增对话】（${charName} 与 ${userName}）：
+${msgText}
+
+【强制性排版与叙事规则】：
+1. **时间精确性**：必须在叙事中包含精确的年月日和感性时段。严禁使用模糊词汇如"某天"或"月初"。
+2. **禁止括号**：严禁使用"[]"、"【】"或"()"来包裹时间信息。
+3. **视觉排版**：每一段时间节点的开头，请将时间信息**加粗**（格式：**XXXX年X月X日 傍晚**）。如果同一天内检测到显著的时间跳跃（超过6小时），必须强制换行并在段落间留出空行。
+4. **去碎片化叙事**：将散乱的对话拼合为一段逻辑连贯的中文短文，记录下角色间的情感推移、暗流涌动的心思或未说破的默契。
+5. **设置独立锚点（核心）**：在所有时间线叙事结束后，必须在文末单独加上一个 [重要细节与锚点] 板块，条目式罗列特殊的物品、定下的约定、专属昵称等关键信息。
+6. **核心红线（绝对禁止编造）**：你只能基于提供的对话进行总结。严禁主观臆断、捏造不存在的事件、或添加任何对话中未提及的细节。
+7. **拒绝废话**：【绝对禁止】输出任何前言、后记或解释性文字（如“好的”、“档案归档中”）。你的输出必须直接以加粗的时间节点（如 **XXXX年X月X日**）开头！`;
+    } else {
+      prompt = `执行"首次总结"。请将以下对话提炼为一份高密度的编年史与锚点记录。
+
+对话双方：${charName}（角色）与 ${userName}（用户）
+【对话内容】：
+${msgText}
+
+【强制性排版与叙事规则】：
+1. **时间精确性**：必须在叙事中包含精确的年月日和感性时段。严禁使用模糊词汇如"某天"或"月初"。
+2. **禁止括号**：严禁使用"[]"、"【】"或"()"来包裹时间信息。
+3. **视觉排版**：每一段时间节点的开头，请将时间信息**加粗**（格式：**XXXX年X月X日 傍晚**）。如果同一天内检测到显著的时间跳跃（超过6小时），必须强制换行并在段落间留出空行。
+4. **去碎片化叙事**：将散乱的对话拼合为一段逻辑连贯的中文短文，记录下角色间的情感推移、暗流涌动的心思或未说破的默契。
+5. **设置独立锚点（核心）**：在所有时间线叙事结束后，必须在文末单独加上一个 [重要细节与锚点] 板块，条目式罗列特殊的物品、定下的约定、专属昵称等关键信息。
+6. **核心红线（绝对禁止编造）**：你只能基于提供的对话进行总结。严禁主观臆断、捏造不存在的事件、或添加任何对话中未提及的细节。
+7. **拒绝废话**：【绝对禁止】输出任何前言、后记或解释性文字（如“好的”、“档案归档中”）。你的输出必须直接以加粗的时间节点（如 **XXXX年X月X日**）开头！`;
+    }
+
+    const result = await ApiHelper.chatCompletion(api, [{ role: 'user', content: prompt }]);
+    
+    // 🎯 物理切除废话：因为新规则要求以 ** 加粗时间开头，如果大模型犯病，我们直接切到第一个 ** 处
+    let newSummary = (result || '').trim();
+    const firstBoldIndex = newSummary.indexOf('**');
+    if (firstBoldIndex !== -1 && firstBoldIndex < 100) {
+      newSummary = newSummary.substring(firstBoldIndex);
+    }
+
+    if (!newSummary) throw new Error('摘要生成为空');
+
+    const maxId = Math.max(...newMsgs.map(m => m.id || 0));
+    const updated = { ...mem, summary: newSummary, lastMsgId: maxId };
+    await save(charId, updated);
+    return { summary: newSummary, count: newMsgs.length };
+  }
+  return { load, save, summarize };
+})();
+
 // ============================================================
 // ConvModule — 聊天页核心
 // ============================================================
@@ -7397,7 +8263,7 @@ const ConvModule = (() => {
   let _persona   = null;
   let _offset    = 0;
   let _totalMsgs = 0;
-  let _isAiTyping = false;
+ const _typingChars = new Set(); // ✅ 新增：用 Set 来记录哪些角色正在打字
   let _charImgUrl = '';
   let _pendingImgs = []; //[{ file, objectUrl }]
   let _activeBubble = null;
@@ -7408,12 +8274,11 @@ const ConvModule = (() => {
   let _isMultiSelectMode = false;
   let _selectedMsgIds = new Set();
   
-  // ── 进入聊天 ──
+// ── 进入聊天 ──
   async function enter(charId, personaId) {
     _charId    = String(charId);
     _personaId = personaId;
     _offset    = 0;
-    _isAiTyping = false;
 
     const _cvScr = document.getElementById('conv-screen');
     if (_cvScr) _cvScr.dataset.cvCharId = String(charId);
@@ -7424,22 +8289,22 @@ const ConvModule = (() => {
     try {
       _char = await DB.characters.get(Number(charId));
       _charImgUrl = await Assets.getUrl(`char-avatar-${charId}`).catch(() => '') || '';
-      console.log(`[ConvModule] 角色加载成功 — name: ${_char?.name}, imgUrl: ${_charImgUrl ? '✓' : '✗'}`);
-    } catch(e) { _char = null; _charImgUrl = ''; console.warn('[ConvModule] 角色加载失败', e); }
+    } catch(e) { _char = null; _charImgUrl = ''; }
 
     // 加载面具
     const allPersonas = PersonaModule.getAll();
     _persona = allPersonas.find(p => String(p.id) === String(personaId)) || allPersonas[0] || null;
     await _loadPersonaAvatar();
-    console.log(`[ConvModule] 面具加载 — name: ${_persona?.name}, avatarUrl: ${_personaAvatarUrl ? '✓' : '✗'}`);
 
-    // 更新顶部栏
+    let useAlias = false;
+    try { useAlias = (await DB.settings.get(`alias-mode-${charId}`)) === true; } catch(e) {}
+    if (useAlias && (!_char || !_char.title || !_char.title.trim())) useAlias = false; 
+
     const nameEl   = document.getElementById('cv-header-name');
     const avatarEl = document.getElementById('cv-header-avatar');
-    if (nameEl)   nameEl.textContent = _char?.name || '—';
+    if (nameEl)   nameEl.textContent = useAlias ? _char.title : (_char?.name || '—');
     if (avatarEl) avatarEl.src       = _charImgUrl;
 
-   // 水印：英文名取首字母大写，非英文（如中文）统一用 C
     const wm = document.querySelector('#conv-screen .cv-watermark');
     if (wm) {
       const firstChar = (_char?.name || '').trim()[0] || 'C';
@@ -7451,29 +8316,38 @@ const ConvModule = (() => {
     _totalMsgs = await DB.messages.countByChar(_charId).catch(() => 0);
     const msgs = await DB.messages.getPage(_charId, 0, PAGE_SIZE).catch(() => []);
     _offset = msgs.length;
-    console.log(`[ConvModule] 消息加载 — 总数: ${_totalMsgs}, 本次渲染: ${msgs.length}`);
 
     const feed = document.getElementById('cv-feed');
-    // 清空除加载更多以外的内容
     Array.from(feed.children).forEach(el => { if (!el.id || el.id !== 'cv-load-more') el.remove(); });
 
-    // 显示/隐藏加载更多
     const loadMoreEl = document.getElementById('cv-load-more');
     if (loadMoreEl) loadMoreEl.style.display = _totalMsgs > PAGE_SIZE ? '' : 'none';
 
-    // 渲染消息（带时间分割线）
     _renderMsgList(msgs, false);
+    
+    // 【核心体验】：如果你切回来的时候，这个角色还在后台思考，马上恢复打字动画！
+    if (_typingChars.has(_charId)) {
+        const typingRow = document.createElement('div');
+        typingRow.id        = 'cv-typing-indicator';
+        typingRow.className = 'cv-msg-row ai typing';
+        typingRow.innerHTML = `
+          <div class="cv-avatar-wrap">
+            <img src="${_charImgUrl}" class="cv-msg-avatar" alt="">
+            <span class="cv-msg-time">- -</span>
+          </div>
+         <div class="cv-bubble typing-capsule">
+            <i class="ph-thin ph-asterisk cv-ticking"></i>
+            <span class="cv-typing-text">Synthesizing<span class="cv-cursor"></span></span>
+          </div>`;
+        feed.appendChild(typingRow);
+    }
+    
     _scrollToBottom();
-
-    // 初始化壁纸
     await _initWallpaper();
 
-    // 恢复翻译开关
-    try {
-      _translateEnabled = (await DB.settings.get(`translate-enabled-${_charId}`)) === true;
-    } catch(e) { _translateEnabled = false; }
+    try { _translateEnabled = (await DB.settings.get(`translate-enabled-${_charId}`)) === true; } catch(e) { _translateEnabled = false; }
+    try { const customCss = await DB.settings.get(`char-css-${_charId}`); _injectCustomCSS(customCss || ''); } catch(e) {}
 
-    // 绑定事件（只绑一次）
     _bindEvents();
   }
 
@@ -7959,9 +8833,25 @@ const ConvModule = (() => {
     document.querySelectorAll('#cv-feed .selected').forEach(el => el.classList.remove('selected'));
   }
 
-  // 收藏占位
-  function favoriteSelected() {
-    Toast.show('收藏功能待接入 ✦');
+  // 收藏选中的 AI 消息
+  async function favoriteSelected() {
+    if (_selectedMsgIds.size === 0) return;
+    try {
+      const msgs = [];
+      for (const id of _selectedMsgIds) {
+        const msg = await DB.messages.get(Number(id));
+        if (msg) msgs.push(msg);
+      }
+      const added = await VaultApp.addFragments(msgs, _charId, _char?.name || '');
+      if (added > 0) {
+        Toast.show(`已收藏 ${added} 条语录 ✦`);
+      } else {
+        Toast.show('仅支持收藏角色消息');
+      }
+    } catch(e) {
+      console.error('[ConvModule] favoriteSelected error', e);
+      Toast.show('收藏失败');
+    }
     cancelMultiSelect();
   }
 
@@ -8772,124 +9662,170 @@ const ConvModule = (() => {
     _scrollToBottom();
   }
 
-  // ── 触发 AI 回复 ──
+  // ── 触发 AI 回复入口 ──
   async function sendAndTriggerAI() {
-    if (_isAiTyping) return;
-    // 先把输入框内容上屏
+    if (_typingChars.has(_charId)) return; // 针对当前角色的锁
     const input = document.getElementById('cv-input');
     if (input?.value.trim()) await sendUserMsg();
     await _triggerAI();
   }
+// ── AI 核心调度逻辑 ──
+  async function _triggerAI(isReroll = false) {
+    const sessionCharId = _charId;
+    const sessionCharName = _char?.name || '角色';
+    const sessionPersonaId = _personaId;
+    const sessionPersonaName = _persona?.name || '用户';
+    const sessionCharImgUrl = _charImgUrl;
 
- async function _triggerAI(isReroll = false) {
-    if (_isAiTyping || !_charId || !_char) return;
-    _isAiTyping = true;
-    console.log(`[ConvModule] ✦ 触发 AI — char: ${_char.name}`);
+    // 【防重入】：如果这个角色已经在思考了，或者环境丢失，直接退回
+    if (_typingChars.has(sessionCharId) || !sessionCharId) return;
 
-    // 加载等待动画
-    const feed = document.getElementById('cv-feed');
-    const typingRow = document.createElement('div');
-    typingRow.id        = 'cv-typing-indicator';
-    typingRow.className = 'cv-msg-row ai typing';
-    typingRow.innerHTML = `
-      <div class="cv-avatar-wrap">
-        <img src="${_charImgUrl}" class="cv-msg-avatar" alt="">
-        <span class="cv-msg-time">- -</span>
-      </div>
-     <div class="cv-bubble typing-capsule">
-        <i class="ph-thin ph-asterisk cv-ticking"></i>
-        <span class="cv-typing-text">${isReroll ? 'Re-synthesizing' : 'Synthesizing'}<span class="cv-cursor"></span></span>
-      </div>`;
-    feed.appendChild(typingRow);
-    _scrollToBottom();
+    // 【加锁】：只锁这个角色！
+    _typingChars.add(sessionCharId);
+    console.log(`[ConvModule] ✦ 触发 AI — char: ${sessionCharName} (ID: ${sessionCharId})`);
+
+    // 加载等待动画 (仅在当前页面才加载)
+    if (_charId === sessionCharId) {
+      const feed = document.getElementById('cv-feed');
+      const typingRow = document.createElement('div');
+      typingRow.id        = 'cv-typing-indicator';
+      typingRow.className = 'cv-msg-row ai typing';
+      typingRow.innerHTML = `
+        <div class="cv-avatar-wrap">
+          <img src="${sessionCharImgUrl}" class="cv-msg-avatar" alt="">
+          <span class="cv-msg-time">- -</span>
+        </div>
+       <div class="cv-bubble typing-capsule">
+          <i class="ph-thin ph-asterisk cv-ticking"></i>
+          <span class="cv-typing-text">${isReroll ? 'Re-synthesizing' : 'Synthesizing'}<span class="cv-cursor"></span></span>
+        </div>`;
+      feed.appendChild(typingRow);
+      _scrollToBottom();
+    }
 
     try {
       const activeApi = await DB.api.getActive();
-      if (!activeApi) { Toast.show('请先在设置里配置 API'); _removeTyping(); _isAiTyping = false; return; }
-      console.log(`[ConvModule] API 配置 — name: ${activeApi.name}, model: ${activeApi.model}`);
+      if (!activeApi) { 
+        Toast.show('请先在设置里配置 API'); 
+        if (_charId === sessionCharId) _removeTyping(); 
+        _typingChars.delete(sessionCharId); // 释放锁
+        return; 
+      }
 
-     // 组装历史
-      const histMsgs    = await DB.messages.getPage(_charId, 0, 30).catch(() => []);
-      const currentRound = await _countAiReplies(); // <---【修复】改成调用全局统计函数
+      // ========= 后续所有的获取记忆、拼装 Prompt、发起网络请求等逻辑保持原样 =========
+      let maxRounds = 50;
+      try {
+        const savedRounds = await DB.settings.get(`memory-rounds-${sessionCharId}`);
+        if (savedRounds !== undefined && savedRounds !== null) maxRounds = parseInt(savedRounds, 10);
+      } catch(e) {}
+
+      const fetchLimit = Math.min(Math.max(maxRounds * 5, 50), 3000); 
+      const rawMsgs = await DB.messages.getPage(sessionCharId, 0, fetchLimit).catch(() => []);
+
+      let allRounds = [];
+      let _tempRound = [];
+      for (let i = 0; i < rawMsgs.length; i++) {
+        if (rawMsgs[i].role === 'user' && i > 0 && rawMsgs[i-1].role === 'assistant') {
+          if (_tempRound.length) allRounds.push(_tempRound);
+          _tempRound = [];
+        }
+        _tempRound.push(rawMsgs[i]);
+      }
+      if (_tempRound.length) allRounds.push(_tempRound);
+
+      const histMsgs = allRounds.slice(-maxRounds).flat();
+      const msgsForCount = await DB.messages.getPage(sessionCharId, 0, 500).catch(() => []);
+      const currentRound = msgsForCount.filter(m => m.role === 'assistant').length;
+
       let novelImgOnForPrompt = false;
-      try { novelImgOnForPrompt = (await DB.settings.get(`novel-toggle-${_charId}`)) === true; } catch (e) {}
+      try { novelImgOnForPrompt = (await DB.settings.get(`novel-toggle-${sessionCharId}`)) === true; } catch (e) {}
+      
+      let memorySummary = '';
+      try { const mem = await MemoryModule.load(sessionCharId); memorySummary = mem.summary || ''; } catch(e) {}
 
-    // ── 世界书关键词匹配注入 ──
       let worldBookBlock = '';
       try {
         if (typeof WBModule !== 'undefined') {
-          // 1. 将历史记录按“对话轮次”分组
-          // (只要 user 的消息紧跟在 assistant 后面，就算作新的一轮开始)
           let rounds = [];
-          let currentRound = [];
+          let tempR = [];
           for (let i = 0; i < histMsgs.length; i++) {
             if (histMsgs[i].role === 'user' && i > 0 && histMsgs[i-1].role === 'assistant') {
-              if (currentRound.length) rounds.push(currentRound);
-              currentRound = [];
+              if (tempR.length) rounds.push(tempR);
+              tempR = [];
             }
-            currentRound.push(histMsgs[i]);
+            tempR.push(histMsgs[i]);
           }
-          if (currentRound.length) rounds.push(currentRound);
+          if (tempR.length) rounds.push(tempR);
           
-          // 2. 精准截取最近的 5 轮对话，并重新展平为一维数组
           const recentMsgs = rounds.slice(-5).flat();
-
-          // 3. 将这 5 轮消息转为纯文本作为世界书的扫描源
-          const matchText = recentMsgs
-            .map(m => _formatMsgForAI(m))
-            .join(' ');
-            
-          const matched = WBModule.getMatchingEntries(matchText, String(_charId));
+          const matchText = recentMsgs.map(m => _formatMsgForAI(m)).join(' ');
+          const matched = WBModule.getMatchingEntries(matchText, String(sessionCharId));
           
-          // 👇 下面这几行是刚刚不小心漏掉的闭合代码
           if (matched.length) {
             worldBookBlock = matched.map(e => e.content.trim()).join('\n\n');
-            console.log(`[ConvModule] 世界书注入 ${matched.length} 条词条:`, matched.map(e => e.name));
           }
         }
-      } catch(wbErr) { console.warn('[ConvModule] WorldBook match error', wbErr); }
+      } catch(wbErr) {}
+      
+      let timePerceptionOn = true;
+      try {
+        const tpVal = await DB.settings.get(`time-perception-${sessionCharId}`);
+        if (tpVal !== undefined && tpVal !== null) timePerceptionOn = tpVal;
+      } catch(e) {}
 
-      const systemPrompt = _buildSystemPrompt(histMsgs, novelImgOnForPrompt, worldBookBlock);
+      let timeGapPrompt = '';
+      if (timePerceptionOn && histMsgs.length >= 2) {
+        const lastMsg = histMsgs[histMsgs.length - 1];
+        const prevMsg = histMsgs[histMsgs.length - 2];
+        const diffMs = lastMsg.timestamp - prevMsg.timestamp;
+        const diffHours = diffMs / (1000 * 60 * 60);
+
+        if (diffHours >= 3) {
+          timeGapPrompt = `\n【重要时间感知】：距离你们上一次说话已经过去了 ${Math.floor(diffHours)} 个小时。请像真人一样，**自然地适应这个时间跨度**。绝对不要生硬地接续几个小时前的闲聊细节。你可以根据当前的时间（如早、中、晚），地点，自然开启新话题，或者以符合角色性格的方式打个招呼（例如：“忙完了？”、“失踪这么久”等），展现出时间流逝的真实感。`;
+        } else if (diffHours >= 1) {
+          timeGapPrompt = `\n【提示】：距离上一句回复过去了 ${Math.floor(diffHours)} 个多小时。回复时请表现出自然的间断感，不要像秒回一样紧接着刚才的字眼聊。`;
+        }
+      }
+
+      const systemPrompt = _buildSystemPrompt(histMsgs, novelImgOnForPrompt, worldBookBlock, timePerceptionOn, timeGapPrompt, memorySummary);
       const apiMessages  = await _buildApiMessages(histMsgs, activeApi, currentRound);
-      console.log(`[ConvModule] 历史消息数: ${histMsgs.length}, AI轮数: ${currentRound}`);
-      // 打印每条 message 的 role 和 content 类型，方便 debug
-      console.log('[ConvModule] messages 结构:', apiMessages.map(m => ({
-        role: m.role,
-        contentType: Array.isArray(m.content) ? m.content.map(c => c.type).join('+') : 'text',
-        preview: Array.isArray(m.content) ? `[数组，${m.content.length}项]` : String(m.content).slice(0, 40)
-      })));
-      console.log(`[ConvModule] System Prompt:\n`, systemPrompt);
+      
+      // 🖨️ [DEBUG] 华丽折叠版：打印完整上下文与系统提示词
+      console.groupCollapsed(`[AI Payload] ✦ 发送给【${sessionCharName}】的完整上下文 ↴`);
+      console.log("%c【System Prompt 系统指令】", "color:#9c2b2b; font-weight:bold;", "\n" + systemPrompt);
+      console.log("%c【History Messages 历史消息】", "color:#2d6a4a; font-weight:bold;", JSON.parse(JSON.stringify(apiMessages)));
+      console.groupEnd();
 
+      // ===========================
+      // ⚠️ 网络请求挂起！此时你可以切去任何地方并发起请求！
+      // ===========================
       const response = await ApiHelper.chatCompletion(activeApi, [
         { role: 'system', content: systemPrompt },
         ...apiMessages
       ]);
-      console.log(`[ConvModule] AI 原始回复:\n`, response);
+      // ===========================
+      // ⚠️ 请求回来了！
+      // ===========================
 
-      _removeTyping();
+      if (_charId === sessionCharId) {
+        _removeTyping();
+      }
 
-      // 处理 ||| 气泡分割
       const rawBubbles = response.split('|||').map(s => s.trim()).filter(Boolean);
-      console.log(`[ConvModule] 气泡数量: ${rawBubbles.length}`);
-      
-      let isFirstBubble = true; // <--- 新增标记
+      let isFirstBubble = true;
 
       for (const rawContent of rawBubbles) {
         const { text: strippedText, prompts: novelPrompts } = _stripNovelImgTags(rawContent);
-        // 仅有 [NOVEL_IMG]、无其它正文：开启 Novel 时上屏交给配图；未开启时上屏中文画面描述（不展示标签内英文）
-        let src = strippedText || (novelPrompts.length
-          ? novelPrompts.map(p => String(p).trim()).filter(Boolean).join(' · ')
-          : '');
+        let src = strippedText || (novelPrompts.length ? novelPrompts.map(p => String(p).trim()).filter(Boolean).join(' · ') : '');
         if (!strippedText.trim() && novelPrompts.length > 0 && !novelImgOnForPrompt) {
           src = '发来了想象中的画面。';
         }
 
-        // ── 解析各类特殊 tag ──
         const isRecall      = src.startsWith('[RECALL]');
         const isAcceptXfer  = !isRecall && src.trim() === '[ACCEPT_TRANSFER]';
         const rejectXferMatch = !isRecall && !isAcceptXfer && src.match(/^\[REJECT_TRANSFER:(.+)\]$/);
         const audioMatch    = !isRecall && !isAcceptXfer && !rejectXferMatch && src.match(/^\[AUDIO:(\d+):(.+)\]$/s);
-       const xferMatch     = !isRecall && !isAcceptXfer && !rejectXferMatch && !audioMatch && src.match(/^\[TRANSFER:([0-9,，.]+):(.+)\]$/);
+        const xferMatch     = !isRecall && !isAcceptXfer && !rejectXferMatch && !audioMatch && src.match(/^\[TRANSFER:([0-9,，.]+):(.+)\]$/);
         const emoteMatch    = !isRecall && !isAcceptXfer && !rejectXferMatch && !audioMatch && !xferMatch && src.match(/^\[EMOTE:(.+)\]$/i);
         const quoteMatch    = !isRecall && !isAcceptXfer && !rejectXferMatch && !audioMatch && !xferMatch && !emoteMatch && src.match(/^\[QUOTE:(.{1,40}?)\]/);
 
@@ -8900,13 +9836,11 @@ const ConvModule = (() => {
         let msgParts       = [];
 
         if (isAcceptXfer || rejectXferMatch) {
-          // ── 处理用户转账的接受/拒绝 ──
           const action = isAcceptXfer ? 'accepted' : 'rejected';
           const reason = rejectXferMatch ? rejectXferMatch[1].trim() : '';
 
-          // 找到最新的 pending user_transfer 消息
-          const allMsgs = await DB.messages.getPage(_charId, 0, 30).catch(() => []);
-          const pendingXfer = [...allMsgs].reverse().find(m =>
+          const allMsgsXfer = await DB.messages.getPage(sessionCharId, 0, 30).catch(() => []);
+          const pendingXfer = [...allMsgsXfer].reverse().find(m =>
             m.role === 'user' && m.parts?.some(p => p.type === 'user_transfer' && p.status === 'pending')
           );
 
@@ -8915,47 +9849,51 @@ const ConvModule = (() => {
             xferPart.status = action;
             await DB.messages.put(pendingXfer);
 
-            // 更新 UI 卡片样式
-            const card = document.querySelector(`[data-user-xfer="${pendingXfer.id}"]`);
-            if (card) {
-              card.className = `cv-transfer ${action}`;
-              const ribbon = card.querySelector('.cv-transfer-ribbon');
-              if (ribbon) ribbon.textContent = action === 'accepted' ? 'Accepted' : 'Declined';
+            if (_charId === sessionCharId) {
+              const card = document.querySelector(`[data-user-xfer="${pendingXfer.id}"]`);
+              if (card) {
+                card.className = `cv-transfer ${action}`;
+                const ribbon = card.querySelector('.cv-transfer-ribbon');
+                if (ribbon) ribbon.textContent = action === 'accepted' ? 'Accepted' : 'Declined';
+              }
             }
 
-            // 持久化系统票据
             const ref = _fmtTime(new Date()).replace(':', '');
             const ticketMsg = {
-              charId:    _charId,
+              charId:    sessionCharId, 
               role:      'system_ticket',
               parts:     [{ type: 'system_ticket', action, amount: xferPart.amount, ref, reason }],
               content:   action === 'accepted' ? `对方接受了转账 ¥${xferPart.amount}` : `对方拒绝了转账 ¥${xferPart.amount}`,
               timestamp: Date.now()
             };
+
+            if (action === 'accepted') {
+              try { await WalletApp.debit(xferPart.amount, xferPart.memo || '向角色转账', sessionCharName, sessionPersonaId); } catch(we) {}
+            }
+            
             const ticketId = await DB.messages.add(ticketMsg);
             ticketMsg.id = ticketId;
-            _totalMsgs++;
-            _offset++;
-            const feed = document.getElementById('cv-feed');
-            const ticketEl = _buildBubble(ticketMsg);
-            ticketEl.classList.add('reveal');
-            feed?.appendChild(ticketEl);
-            _scrollToBottom();
+            
+            if (_charId === sessionCharId) {
+              _totalMsgs++;
+              _offset++;
+              const feedTarget = document.getElementById('cv-feed');
+              const ticketEl = _buildBubble(ticketMsg);
+              ticketEl.classList.add('reveal');
+              feedTarget?.appendChild(ticketEl);
+              _scrollToBottom();
+            }
           }
-          // 这个 bubble 不产生 AI 聊天消息，直接 continue
           continue;
         } else if (audioMatch) {
-          // 语音条
           msgParts = [{ type: 'audio', duration: parseInt(audioMatch[1]), transcript: audioMatch[2].trim() }];
           displayContent = `[语音消息 ${_fmtDuration(parseInt(audioMatch[1]))}]`;
-       } else if (xferMatch) {
-          // 转账
+        } else if (xferMatch) {
           msgParts = [{ type: 'transfer', amount: xferMatch[1].trim(), memo: xferMatch[2].trim(), status: 'pending' }];
           displayContent = `[转账 ¥${xferMatch[1].trim()}]`;
         } else if (emoteMatch) {
-          // 角色发表情包
           const keyword = emoteMatch[1].trim();
-          const url = EmoteModule.getUrlByKeyword(keyword, _charId);
+          const url = EmoteModule.getUrlByKeyword(keyword, sessionCharId);
           if (url) {
             msgParts = [{ type: 'image', url: url, description: `[表情包:${keyword}]` }];
             displayContent = `[表情包]`;
@@ -8973,9 +9911,7 @@ const ConvModule = (() => {
             const afterThought = withoutTag.slice(thoughtIdx + 9);
             if (newMsgIdx !== -1) {
               const newMsgRelIdx = afterThought.indexOf('[NEWMSG]');
-              recallThought = newMsgRelIdx !== -1
-                ? afterThought.slice(0, newMsgRelIdx).trim()
-                : afterThought.trim();
+              recallThought = newMsgRelIdx !== -1 ? afterThought.slice(0, newMsgRelIdx).trim() : afterThought.trim();
               recallNewMsg = withoutTag.slice(newMsgIdx + 8).trim();
             } else {
               recallThought = afterThought.trim();
@@ -8988,9 +9924,7 @@ const ConvModule = (() => {
           }
           displayContent = recallContent;
           msgParts = [{ type: 'text', content: recallContent }];
-          console.log(`[ConvModule] 撤回消息解析 — 原话: "${recallContent.slice(0,20)}", 内心: "${recallThought.slice(0,20)}", 新消息: "${recallNewMsg.slice(0,20)}"`);
         } else {
-          // 普通文本（可能带 QUOTE）
           let textContent = src;
           let quoteRef    = null;
           if (quoteMatch) {
@@ -9001,40 +9935,31 @@ const ConvModule = (() => {
           msgParts = [{ type: 'text', content: textContent, ...(quoteRef ? { quoteRef } : {}) }];
         }
 
-        // 仅有 [NOVEL_IMG]… 无其它正文：开启 Novel 时不单独上屏英文提示词，只生成配图；未开启则上屏中文（见上文 src）
-        const novelOnly = novelPrompts.length > 0 && !strippedText.trim() &&
-          msgParts.length === 1 && msgParts[0].type === 'text' &&
-          !isRecall && !audioMatch && !xferMatch;
+        const novelOnly = novelPrompts.length > 0 && !strippedText.trim() && msgParts.length === 1 && msgParts[0].type === 'text' && !isRecall && !audioMatch && !xferMatch;
 
         if (novelOnly) {
           if (!novelImgOnForPrompt) {
-            /* fall through：气泡已为中文画面描述 */
           } else {
-          const charPos = await _getNovelPrefix();
-          const charNeg = await _getNovelNegative();
-          NovelModule.attachImagesForChar(_charId, novelPrompts, charPos, charNeg).catch(err => console.error('[ConvModule] Novel attach', err));
-          if (isFirstBubble) {
-            const convScreen = document.getElementById('conv-screen');
-            const isConvActive = convScreen.classList.contains('active');
-            const isQuickReply = convScreen.classList.contains('qr-active');
-            if (!isConvActive && !isQuickReply) {
-              NotificationModule.show({
-                charId: _charId,
-                personaId: _personaId,
-                name: _char.name,
-                msg: '[配图]',
-                avatar: _charImgUrl
-              });
+            const charPos = await _getNovelPrefix();
+            const charNeg = await _getNovelNegative();
+            NovelModule.attachImagesForChar(sessionCharId, novelPrompts, charPos, charNeg).catch(err => console.error('[ConvModule] Novel attach', err));
+            
+            if (isFirstBubble) {
+              const convScreen = document.getElementById('conv-screen');
+              const isConvActive = convScreen.classList.contains('active');
+              const isQuickReply = convScreen.classList.contains('qr-active');
+              if ((!isConvActive && !isQuickReply) || _charId !== sessionCharId) {
+                NotificationModule.show({ charId: sessionCharId, personaId: sessionPersonaId, name: sessionCharName, msg: '[发来了一张图片]', avatar: sessionCharImgUrl });
+              }
+              isFirstBubble = false;
             }
-            isFirstBubble = false;
-          }
-          if (rawBubbles.length > 1) await _sleep(400);
-          continue;
+            if (rawBubbles.length > 1) await _sleep(400);
+            continue;
           }
         }
 
         const msg = {
-          charId:        _charId,
+          charId:        sessionCharId, 
           role:          'assistant',
           parts:         msgParts,
           content:       displayContent,
@@ -9047,44 +9972,54 @@ const ConvModule = (() => {
         };
         const id = await DB.messages.add(msg);
         msg.id = id;
-        _totalMsgs++;
-        _offset++;
-        _appendBubble(msg);
-        _scrollToBottom();
+        
+        if (_charId === sessionCharId) {
+          _totalMsgs++;
+          _offset++;
+          _appendBubble(msg);
+          _scrollToBottom();
+        }
 
         if (novelPrompts.length) {
           const charPos = await _getNovelPrefix();
           const charNeg = await _getNovelNegative();
-          NovelModule.attachImagesForChar(_charId, novelPrompts, charPos, charNeg, { mergeIntoMsgId: msg.id }).catch(err => console.error('[ConvModule] Novel attach', err));
+          NovelModule.attachImagesForChar(sessionCharId, novelPrompts, charPos, charNeg, { mergeIntoMsgId: msg.id }).catch(err => console.error('[ConvModule] Novel attach', err));
         }
         
-          // 【新增】：判断当前是否在聊天页，如果不在，触发全局横幅！
         if (isFirstBubble) {
           const convScreen = document.getElementById('conv-screen');
           const isConvActive = convScreen.classList.contains('active');
           const isQuickReply = convScreen.classList.contains('qr-active');
           
-          if (!isConvActive && !isQuickReply) {
+          if ((!isConvActive && !isQuickReply) || _charId !== sessionCharId) {
             NotificationModule.show({
-              charId: _charId,
-              personaId: _personaId,
-              name: _char.name,
+              charId: sessionCharId,
+              personaId: sessionPersonaId,
+              name: sessionCharName,
               msg: displayContent,
-              avatar: _charImgUrl
+              avatar: sessionCharImgUrl
             });
           }
           isFirstBubble = false;
         }
 
-        // 撤回逻辑：延迟 2-4 秒后撤回，再延迟 1 秒发新消息
         if (isRecall) {
           const delay = 2000 + Math.random() * 2000;
           setTimeout(async () => {
-            await _recallMsg(msg.id);
+            const msgsForRecall = await DB.messages.getPage(sessionCharId, 0, 9999);
+            const rMsg  = msgsForRecall.find(m => m.id === msg.id);
+            if (rMsg) {
+                await DB.messages.put({ ...rMsg, recalled: true });
+                if (_charId === sessionCharId) {
+                    const row = document.querySelector(`[data-msg-id="${msg.id}"]`);
+                    if (row) row.replaceWith(_buildBubble({ ...rMsg, recalled: true }));
+                }
+            }
+
             if (recallNewMsg) {
               await _sleep(800 + Math.random() * 600);
               const newMsg = {
-                charId:       _charId,
+                charId:       sessionCharId,
                 role:         'assistant',
                 parts:        [{ type: 'text', content: recallNewMsg }],
                 content:      recallNewMsg,
@@ -9097,10 +10032,13 @@ const ConvModule = (() => {
               };
               const newId = await DB.messages.add(newMsg);
               newMsg.id = newId;
-              _totalMsgs++;
-              _offset++;
-              _appendBubble(newMsg);
-              _scrollToBottom();
+              
+              if (_charId === sessionCharId) {
+                _totalMsgs++;
+                _offset++;
+                _appendBubble(newMsg);
+                _scrollToBottom();
+              }
             }
           }, delay);
         }
@@ -9108,13 +10046,32 @@ const ConvModule = (() => {
         if (rawBubbles.length > 1) await _sleep(400);
       }
     } catch(e) {
-      _removeTyping();
-      Toast.show('发送失败：' + (e.message || '未知错误'));
+      if (_charId === sessionCharId) {
+          _removeTyping();
+          Toast.show('发送失败：' + (e.message || '未知错误'));
+      }
       console.error('AI error', e);
+    } finally {
+      // ✅ 无论发生什么（报错、成功），最后一定要把当前角色的锁解开！
+      _typingChars.delete(sessionCharId);
     }
-    _isAiTyping = false;
+    
+    // 静默记忆提炼（独立在后台运行）
+    setTimeout(async () => {
+      try {
+        const mem = await MemoryModule.load(sessionCharId);
+        const autoRounds = mem.autoRounds ?? 30;
+        if (autoRounds > 0) {
+          const allMsgs = await DB.messages.getPage(sessionCharId, 0, 9999).catch(() => []);
+          const newMsgs = allMsgs.filter(m => (m.id || 0) > (mem.lastMsgId || 0) && m.role === 'user');
+          if (newMsgs.length >= autoRounds) {
+            const activeApi = await DB.api.getActive();
+            MemoryModule.summarize(sessionCharId, activeApi, sessionCharName, sessionPersonaName, allMsgs);
+          }
+        }
+      } catch(e) {}
+    }, 1000);
   }
-
   function _removeTyping() {
     document.getElementById('cv-typing-indicator')?.remove();
   }
@@ -9187,14 +10144,21 @@ const ConvModule = (() => {
   }
 
   // ── 组装 System Prompt ──
-  function _buildSystemPrompt(histMsgs, novelImgOn = false, worldBookBlock = '') {
-    const now = new Date();
-    const timeCtx = `现在是 ${now.getFullYear()}年${now.getMonth()+1}月${now.getDate()}日 ${_weekDay(now)} ${_fmtTime(now)}`;
+ function _buildSystemPrompt(histMsgs, novelImgOn = false, worldBookBlock = '', timePerceptionOn = true, timeGapPrompt = '', memorySummary = '') {
+    
+    let timeCtx = '';
+    if (timePerceptionOn) {
+       const now = new Date();
+       timeCtx = `# 时间感知\n现在是 ${now.getFullYear()}年${now.getMonth()+1}月${now.getDate()}日 ${_weekDay(now)} ${_fmtTime(now)}。${timeGapPrompt}\n`;
+    }
 
     const charName = _char?.name || '角色';
     const charPersona = _char?.persona || '';
     const charMbti   = _char?.mbti ? `MBTI：${_char.mbti}` : '';
    const userBg = _persona ? `我的名字是${_persona.name}${_persona.bio ? '，个人简介/签名：' + _persona.bio : ''}${_persona.backstory ? '\n背景：' + _persona.backstory : ''}` : '';
+   const memorySummarySection = memorySummary
+      ? `\n# 潜意识记忆 (Recent Subconscious Memory)\n以下是你们近期互动的关键事件和心理状态档案。请将其作为你脑海中已经发生过的既定事实，自然地融入当前对话中，绝对不要生硬复述它：\n\n${memorySummary}\n`
+      : '';
 
    const histSection = histMsgs.length > 0
       ? histMsgs.map(m => {
@@ -9257,16 +10221,14 @@ const emotes = typeof EmoteModule !== 'undefined' ? EmoteModule.getActiveEmotes(
      - 你尊重我的每一个决定，即便它与你的判断或期待不同。
      - 在你看来，爱不是赢过对方或让对方让步，而是让彼此在关系中始终感到被平等对待、被信任，并保有完整的自主权。
 
-# 时间感知
 ${timeCtx}
-
 # 角色核心档案
 ${charPersona}
 ${charMbti}
 ${worldLoreSection}
 # 关于我
 ${userBg}
-
+${memorySummarySection}
 # 我们的对话记忆
 ${histSection}
 
@@ -9542,6 +10504,7 @@ ${emoteBlock}
 
   // ── 返回 ──
 function back() {
+    _removeCustomCSS();
     // 如果当前是在半屏模式里按了聊天页面左上角的返回箭头，就只收起半屏
     if (document.getElementById('conv-screen').classList.contains('quick-reply-mode')) {
       closeQuickReply();
@@ -9693,6 +10656,11 @@ function back() {
     _loadNovelNegative();
     _syncNovelCharPromptsVisibility();
     _loadTranslateToggle();
+    _loadMemoryRounds();
+    _loadTimePerception();
+    _loadAliasToggle();
+    _loadCustomCSS();
+    _loadMemorySettings();
     document.getElementById('cv-settings-panel')?.classList.add('active');
   }
 
@@ -9701,7 +10669,232 @@ function back() {
     _saveVoiceId();
     _saveNovelPrefix();
     _saveNovelNegative();
+    _saveMemoryRounds();
+    _saveTimePerception();
+    _saveMemorySettings();
     document.getElementById('cv-settings-panel')?.classList.remove('active');
+  }
+  
+  // ── 对话轮数记忆管理 ──
+  function _memoryRoundsKey() { return `memory-rounds-${_charId}`; }
+
+  async function _loadMemoryRounds() {
+    try {
+      let val = await DB.settings.get(_memoryRoundsKey());
+      if (val === undefined || val === null) val = 50; // 默认 50 轮
+      const slider = document.getElementById('cv-memory-slider');
+      const display = document.getElementById('cv-memory-val');
+      if (slider) slider.value = val;
+      if (display) display.textContent = val;
+    } catch(e) {}
+  }
+
+  async function _saveMemoryRounds() {
+    try {
+      const slider = document.getElementById('cv-memory-slider');
+      if (slider) {
+        const val = parseInt(slider.value, 10) || 50;
+        await DB.settings.set(_memoryRoundsKey(), val);
+      }
+    } catch(e) {}
+  }
+  
+ // ── 自定义 CSS 界面美化引擎 ──
+  function _cssKey() { return `char-css-${_charId}`; }
+  function _cssPresetsKey() { return `css-presets-global`; }
+
+  const DEFAULT_CSS_TEMPLATE = `/* 聊天页背景 */
+#conv-screen { background: #EFECE7; }
+
+/* 顶部栏 */
+#conv-screen .cv-header { background: rgba(239,236,231,0.7); backdrop-filter: blur(24px); border: 1px solid rgba(255,255,255,0.4); border-radius: 28px; }
+/* 顶部返回与更多按钮 */
+#conv-screen .cv-icon-btn { background: #fff; color: #121212; border: 1px solid rgba(18,18,18,0.05); }
+
+/* 底部栏面板 */
+#conv-screen .cv-footer { background: rgba(239,236,231,0.85); backdrop-filter: blur(24px); border: 1px solid rgba(255,255,255,0.4); border-radius: 36px; }
+/* 底部 + 号按钮 */
+#conv-screen .cv-func-btn { background: #fff; color: #121212; border: 1px solid rgba(18,18,18,0.05); }
+/* 底部 ↑ 强制上屏按钮 */
+#conv-screen .cv-btn-user { background: transparent; color: #fff; }
+/* 底部 ✦ AI 生成按钮 */
+#conv-screen .cv-btn-ai { background: #fff; color: #121212; }
+
+/* AI 气泡 */
+#conv-screen .cv-msg-row.ai .cv-bubble { background: #121212; color: #fff; border: 0.5px solid #121212; border-radius: 14px; }
+/* 用户气泡 */
+#conv-screen .cv-msg-row.user .cv-bubble { background: #fff; color: #121212; border: 0.5px solid #121212; border-radius: 14px; }
+
+/* 引用块 */
+#conv-screen .cv-quote-ref { border-bottom: 0.3px solid rgba(255,255,255,0.2); }
+#conv-screen .cv-msg-row.user .cv-quote-ref { border-bottom: 0.3px solid rgba(0,0,0,0.12); }
+
+/* 转账卡片 */
+#conv-screen .cv-transfer { background: #fbfaf8; border: 1px solid #e0e0e0; border-radius: 6px; }
+/* 转账绶带 (Pending / Success) */
+#conv-screen .cv-transfer-ribbon { background: #121212; color: #fff; }
+
+/* 语音条 */
+#conv-screen .cv-audio-bubble { background: #121212 !important; color: #fff !important; border-radius: 14px !important; }
+
+/* 翻译展开区 */
+#conv-screen .cv-translate-divider { background: rgba(255,255,255,0.18); }
+#conv-screen .cv-translate-label { color: rgba(255,255,255,0.5); }
+#conv-screen .cv-translate-text { color: rgba(255,255,255,0.85); }`;
+
+  function _injectCustomCSS(cssStr) {
+    let styleEl = document.getElementById('cv-dynamic-char-css');
+    if (!styleEl) {
+      styleEl = document.createElement('style');
+      styleEl.id = 'cv-dynamic-char-css';
+      document.head.appendChild(styleEl);
+    }
+    styleEl.textContent = cssStr || '';
+  }
+
+  function _removeCustomCSS() {
+    document.getElementById('cv-dynamic-char-css')?.remove();
+  }
+
+  async function _loadCustomCSS() {
+    try {
+      const css = await DB.settings.get(_cssKey());
+      const ta = document.getElementById('cv-custom-css-input');
+      if (ta) ta.value = css || '';
+    } catch(e) {}
+    _renderCssPresets();
+  }
+
+  function copyDefaultCSS() {
+    if (navigator.clipboard && window.isSecureContext) {
+      navigator.clipboard.writeText(DEFAULT_CSS_TEMPLATE).catch(()=>{});
+      Toast.show('已复制默认源码，去粘贴修改吧 ✦');
+    } else {
+      Toast.show('浏览器不支持剪贴板，请手动选取');
+    }
+  }
+
+  async function applyAndSaveCSS() {
+    const ta = document.getElementById('cv-custom-css-input');
+    const cssStr = ta ? ta.value.trim() : '';
+    _injectCustomCSS(cssStr);
+    try { 
+      await DB.settings.set(_cssKey(), cssStr); 
+      Toast.show('已预览并应用专属样式'); 
+    } catch(e){}
+  }
+
+  async function clearCustomCSS() {
+    const ta = document.getElementById('cv-custom-css-input');
+    if (ta) ta.value = '';
+    _injectCustomCSS('');
+    try { 
+      await DB.settings.del(_cssKey()); 
+      Toast.show('已清除，恢复默认样式'); 
+    } catch(e){}
+  }
+
+  async function _renderCssPresets() {
+    const list = document.getElementById('cv-css-presets-list');
+    if (!list) return;
+    let presets = [];
+    try { presets = await DB.settings.get(_cssPresetsKey()) || []; } catch(e){}
+    if (!presets.length) {
+      list.innerHTML = '<div style="font-size:0.65rem;color:#999;padding:4px 0;">暂无保存的预设</div>';
+      return;
+    }
+    list.innerHTML = presets.map(p => `
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:0.5px solid rgba(0,0,0,0.05);">
+        <span style="font-size:0.8rem;color:#121212;font-family:'Space Mono',monospace;max-width:180px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${_escHtml(p.name)}</span>
+        <div style="display:flex;gap:8px;">
+          <button onclick="event.stopPropagation(); ConvModule.applyCssPreset('${p.id}')" style="background:transparent;border:1px solid #121212;border-radius:4px;padding:2px 8px;font-size:0.6rem;cursor:pointer;">使用</button>
+          <button onclick="event.stopPropagation(); ConvModule.deleteCssPreset('${p.id}')" style="background:transparent;border:none;color:#D93A3A;font-size:0.8rem;cursor:pointer;"><i class="ph ph-trash"></i></button>
+        </div>
+      </div>
+    `).join('');
+  }
+  
+  // 触发打开命名弹窗
+  function saveCssPreset() {
+    const ta = document.getElementById('cv-custom-css-input');
+    const cssStr = ta ? ta.value.trim() : '';
+    if (!cssStr) { Toast.show('输入框为空，先写点代码吧'); return; }
+
+    // 弃用 window.prompt，改用自定义弹窗
+    const input = document.getElementById('cv-css-preset-name');
+    if (input) input.value = '专属模式'; // 默认名字
+    document.getElementById('cv-css-prompt-overlay').classList.add('active');
+    setTimeout(() => input?.focus(), 300);
+  }
+
+  // 弹窗点击 Save 后真正执行保存逻辑
+  async function confirmSaveCssPreset() {
+    const ta = document.getElementById('cv-custom-css-input');
+    const cssStr = ta ? ta.value.trim() : '';
+    
+    const input = document.getElementById('cv-css-preset-name');
+    const name = input ? input.value.trim() : '';
+    if (!name) { Toast.show('名字不能为空'); return; }
+
+    try {
+      let presets = await DB.settings.get(_cssPresetsKey()) || [];
+      // 容错处理：如果数据库坏了读出来不是数组，强制重置为数组，防止 push 报错
+      if (!Array.isArray(presets)) presets = []; 
+
+      presets.push({ id: 'css_' + Date.now(), name: name, css: cssStr });
+      await DB.settings.set(_cssPresetsKey(), presets);
+      
+      _renderCssPresets();
+      document.getElementById('cv-css-prompt-overlay').classList.remove('active');
+      Toast.show('已保存到角色专属预设');
+    } catch(e) {
+      console.error('[ConvModule] saveCssPreset Error:', e);
+      Toast.show('保存失败，请检查控制台');
+    }
+  }
+
+  async function applyCssPreset(id) {
+    try {
+      const presets = await DB.settings.get(_cssPresetsKey()) || [];
+      const p = presets.find(x => x.id === id);
+      if (p) {
+        const ta = document.getElementById('cv-custom-css-input');
+        if (ta) ta.value = p.css;
+        applyAndSaveCSS();
+      }
+    } catch(e){}
+  }
+
+  async function deleteCssPreset(id) {
+    if (!confirm('确定删除这套专属预设吗？')) return;
+    try {
+      let presets = await DB.settings.get(_cssPresetsKey()) || [];
+      presets = presets.filter(x => x.id !== id);
+      await DB.settings.set(_cssPresetsKey(), presets);
+      _renderCssPresets();
+    } catch(e){}
+  }
+  
+  // ── 时间感知状态管理 ──
+  function _timePerceptionKey() { return `time-perception-${_charId}`; }
+
+  async function _loadTimePerception() {
+    try {
+      let val = await DB.settings.get(_timePerceptionKey());
+      if (val === undefined || val === null) val = true; // 默认开启
+      const toggle = document.getElementById('cv-time-perception-toggle');
+      if (toggle) toggle.classList.toggle('on', val);
+    } catch(e) {}
+  }
+
+  async function _saveTimePerception() {
+    try {
+      const toggle = document.getElementById('cv-time-perception-toggle');
+      if (toggle) {
+        const val = toggle.classList.contains('on');
+        await DB.settings.set(_timePerceptionKey(), val);
+      }
+    } catch(e) {}
   }
 
   // voice ID 存储 key：每个角色独立
@@ -9785,17 +10978,41 @@ function back() {
     clone.querySelector('.cv-quote-ref')?.remove();
     const rawText = (clone.textContent || '').trim();
 
-    try {
-      const activeApi = await DB.api.getActive();
-      if (!activeApi) throw new Error('no api');
+try {
+      let translated = '';
+      const llmPrompt = `把下面这段话翻译成中文，要口语化、有活人感，不要加任何解释，直接给译文：\n\n${rawText}`;
 
-      const result = await ApiHelper.chatCompletion(activeApi, [{
-        role: 'user',
-        content: `把下面这段话翻译成中文，要口语化有活人感，不要加任何解释，直接给译文：\n\n${rawText}`
-      }]);
+      try {
+        // 1. 优先尝试：你注册的免费 LLM API (实现“活人感”)
+        const freeApi = {
+          url:   'https://api.siliconflow.cn/v1/chat/completions',
+          key:   'sk-huydslnoteyrzmyqhgepoljtytyqsbdnvvzyqcncroygsbsp', // ⚠️ 已为你填入你的硅基流动密钥
+          model: 'Qwen/Qwen2.5-7B-Instruct',
+          temp:  0.5
+        };
+        
+        if (freeApi.key.startsWith('在此填入') || !freeApi.key) {
+          throw new Error('内置免费翻译API未配置，降级处理...');
+        }
 
-      const translated = (result || '').trim();
-      if (!translated) throw new Error('empty');
+        console.log('[Translate] 正在调用内置免费LLM API...');
+        const result = await ApiHelper.chatCompletion(freeApi, [{ role: 'user', content: llmPrompt }]);
+        translated = (result || '').trim();
+        if (!translated) throw new Error('内置免费LLM返回为空');
+
+      } catch (freeErr) {
+        console.warn('[Translate] 内置免费LLM失败，降级至用户主API:', freeErr.message);
+        
+        // 2. 失败降级：走用户当前在设置里激活的主力大模型 API
+        const activeApi = await DB.api.getActive();
+        if (!activeApi) throw new Error('免费翻译失败，且用户未激活任何有效API');
+
+        console.log('[Translate] 正在调用用户激活的主力 API...');
+        const llmResult = await ApiHelper.chatCompletion(activeApi, [{ role: 'user', content: llmPrompt }]);
+        translated = (llmResult || '').trim();
+      }
+
+      if (!translated) throw new Error('所有翻译尝试均返回空结果');
 
       textEl.textContent = translated;
       labelEl.classList.remove('loading');
@@ -9804,7 +11021,7 @@ function back() {
       labelEl.classList.remove('loading');
       textEl.textContent = '翻译失败，点击重试';
       bubble.dataset.translated = '';
-      console.warn('[Translate]', err);
+      console.error('[Translate] 所有翻译层级均失败', err);
     }
   }
 
@@ -9857,6 +11074,49 @@ function back() {
       btn
     );
     if (btn) { btn.disabled = false; }
+  }
+  
+  // ── 开启昵称 (Alias Mode) 逻辑 ──
+  function _aliasKey() { return `alias-mode-${_charId}`; }
+
+  async function _loadAliasToggle() {
+    let isOn = false;
+    try {
+      isOn = (await DB.settings.get(_aliasKey())) === true;
+    } catch(e) {}
+    
+    // 如果角色档案里把昵称删了，自动降级为关闭状态
+    if (isOn && (!_char || !_char.title || !_char.title.trim())) {
+      isOn = false;
+    }
+    
+    const toggle = document.getElementById('cv-alias-toggle');
+    if (toggle) toggle.classList.toggle('on', isOn);
+  }
+
+  async function _toggleAlias(el) {
+    const isTurningOn = !el.classList.contains('on'); // 判断用户的意图是要开启还是关闭
+
+    // 拦截：如果想开启，但没写昵称
+    if (isTurningOn && (!_char || !_char.title || !_char.title.trim())) {
+      Toast.show('档案中未设置昵称，请先去角色档案补充 ✦');
+      return; // 直接返回，不改变开关的 UI 状态，也不存数据库
+    }
+
+    // 允许切换 UI 状态
+    el.classList.toggle('on');
+    const isOn = el.classList.contains('on');
+
+    // 存入数据库
+    try { await DB.settings.set(_aliasKey(), isOn); } catch(e) {}
+
+    // 实时同步更新聊天页头部的名字
+    const nameEl = document.getElementById('cv-header-name');
+    if (nameEl && _char) {
+      nameEl.textContent = isOn ? _char.title : _char.name;
+    }
+
+    Toast.show(isOn ? '已开启昵称显示' : '已恢复原名显示');
   }
 
   function _renderPersonaList() {
@@ -9941,12 +11201,192 @@ function back() {
     if (slider) { slider.value = 0; document.getElementById('cv-blur-val').textContent = '0px'; }
     Toast.show('壁纸已清除');
   }
-// ── 清空聊天记录 ──
+
+// ── 1. 清空记录 (支持开启新篇章) ──
   async function clearHistory() {
+    const keepMemory = document.getElementById('cv-keep-memory-toggle')?.classList.contains('on');
     document.getElementById('cv-modal-clear')?.classList.remove('active');
+    
     if (!_charId) return;
     try {
-      // 【修复】在删除消息文本前，先遍历所有消息，找出带有图片的 part 并从 assets 数据库清理
+      const msgs = await DB.messages.getPage(_charId, 0, 999999).catch(() =>[]);
+      for (const msg of msgs) {
+        if (msg.parts) {
+          for (const part of msg.parts) {
+            if (part.type === 'image' && part.assetKey) await Assets.remove(part.assetKey).catch(() => {});
+          }
+        }
+      }
+
+      await DB.messages.delByChar(_charId);
+      _totalMsgs = 0;
+      _offset    = 0;
+
+      // 处理潜意识
+      const mem = await MemoryModule.load(_charId);
+      if (keepMemory) {
+        await MemoryModule.save(_charId, { ...mem, lastMsgId: 0 }); // 保留内容，游标归零
+      } else {
+        await MemoryModule.save(_charId, { summary: '', lastMsgId: 0, autoRounds: mem.autoRounds ?? 30 }); // 彻底清空
+        const summaryEl = document.getElementById('cv-mem-summary-preview');
+        if (summaryEl) summaryEl.textContent = '（暂无潜意识档案）';
+      }
+
+      const feed = document.getElementById('cv-feed');
+      Array.from(feed.children).forEach(el => {
+        if (el.id !== 'cv-load-more') el.remove();
+      });
+      document.getElementById('cv-load-more').style.display = 'none';
+
+      Toast.show(keepMemory ? '往事已清空，但潜意识依然留存 ✦' : '记忆与对话已彻底抹除');
+      closeSettings(); 
+    } catch(e) {
+      Toast.show('清空失败：' + e.message);
+    }
+  }
+
+  // ── 2. 加载与保存UI设置 ──
+  async function _loadMemorySettings() {
+    const mem = await MemoryModule.load(_charId);
+    const autoSlider = document.getElementById('cv-mem-auto-slider');
+    const autoVal    = document.getElementById('cv-mem-auto-val');
+    const summaryEl  = document.getElementById('cv-mem-summary-preview');
+    if (autoSlider) autoSlider.value = mem.autoRounds ?? 30;
+    if (autoVal)    autoVal.textContent = mem.autoRounds == 0 ? '关闭' : mem.autoRounds;
+    if (summaryEl)  summaryEl.textContent = mem.summary || '（暂无潜意识档案）';
+  }
+
+  async function _saveMemorySettings() {
+    try {
+      const val = parseInt(document.getElementById('cv-mem-auto-slider')?.value || '30', 10);
+      const mem = await MemoryModule.load(_charId);
+      await MemoryModule.save(_charId, { ...mem, autoRounds: val });
+    } catch(e) {}
+  }
+
+  // ── 3. 手动提炼 (支持指定轮数) ──
+  async function manualSummarize() {
+    if (!_charId) return;
+    const activeApi = await DB.api.getActive().catch(() => null);
+    if (!activeApi) { Toast.show('请先配置并激活 API'); return; }
+
+    const btn = document.getElementById('cv-mem-manual-btn');
+    if (btn) { btn.disabled = true; btn.textContent = '提炼中…'; }
+
+    try {
+      let msgs = await DB.messages.getPage(_charId, 0, 9999).catch(() => []);
+      
+      // 🎯 新增逻辑：检查是否填写了指定轮数
+      const customRounds = parseInt(document.getElementById('cv-mem-manual-rounds')?.value, 10);
+      if (customRounds && customRounds > 0) {
+        // 只取包含 user 和 assistant 的真实对话
+        const filtered = msgs.filter(m => m.role === 'user' || m.role === 'assistant');
+        let rounds = 0; 
+        let cutIdx = filtered.length;
+        
+        // 从后往前数 N 轮
+        for (let i = filtered.length - 1; i >= 1; i--) {
+          if (filtered[i].role === 'user' && filtered[i-1].role === 'assistant') rounds++;
+          if (rounds >= customRounds) { cutIdx = i; break; }
+        }
+        const sliced = filtered.slice(cutIdx);
+        
+        // 临时把 lastMsgId 设为这段第一条之前，让 summarize 认为这段都是全新的
+        const mem = await MemoryModule.load(_charId);
+        await MemoryModule.save(_charId, { ...mem, lastMsgId: (sliced[0]?.id || 1) - 1 });
+        msgs = sliced;
+      }
+
+      const result = await MemoryModule.summarize(_charId, activeApi, _char?.name||'角色', _persona?.name||'用户', msgs);
+      
+      if (result.skipped) { Toast.show('没有新内容需要提炼'); }
+      else {
+        Toast.show(`潜意识更新完成 ✦ 浓缩了 ${result.count} 条记录`);
+        document.getElementById('cv-mem-summary-preview').textContent = result.summary;
+      }
+    } catch(e) { 
+      Toast.show('提炼失败'); console.error(e);
+    } finally { 
+      if (btn) { btn.disabled = false; btn.textContent = '提炼更新'; } 
+    }
+  }
+
+  async function clearMemory() {
+    if (!_charId) return;
+    const mem = await MemoryModule.load(_charId);
+    await MemoryModule.save(_charId, { summary: '', lastMsgId: 0, autoRounds: mem.autoRounds });
+    document.getElementById('cv-mem-summary-preview').textContent = '（暂无潜意识档案）';
+    Toast.show('潜意识已抹除');
+  }
+
+  // ── 4. 封存入世界书 ──
+  let _tempArchiveSummary = '';
+
+  async function archiveToWorldBook() {
+    if (!_charId) return;
+    const activeApi = await DB.api.getActive().catch(() => null);
+    if (!activeApi) { Toast.show('请先配置 API'); return; }
+
+    const btn = document.getElementById('cv-mem-archive-btn');
+    if (btn) { btn.disabled = true; btn.textContent = '压缩中…'; }
+
+    try {
+      const msgs = await DB.messages.getPage(_charId, 0, 9999).catch(() => []);
+      const result = await MemoryModule.summarize(_charId, activeApi, _char?.name||'角色', _persona?.name||'用户', msgs);
+      
+      const currentPreview = document.getElementById('cv-mem-summary-preview').textContent.trim();
+      if (result.skipped && (!currentPreview || currentPreview === '（暂无潜意识档案）')) {
+        Toast.show('记忆空白，无法封存');
+        return;
+      }
+
+      _tempArchiveSummary = result.skipped ? currentPreview : result.summary;
+
+      // 弹出世界书命名框
+      document.getElementById('cv-archive-modal').classList.add('active');
+      document.getElementById('cv-archive-name').value = '';
+      document.getElementById('cv-archive-regex').value = '/(关键词1|关键词2)/i';
+    } catch(e) { Toast.show('提炼失败'); } 
+    finally { if (btn) { btn.disabled = false; btn.textContent = '封存世界书'; } }
+  }
+
+  async function confirmArchive() {
+    const name = document.getElementById('cv-archive-name').value.trim();
+    const regex = document.getElementById('cv-archive-regex').value.trim();
+    if (!name || !regex) { Toast.show('名称和关键词必填'); return; }
+
+    try {
+      // 存入世界书
+      await DB.worldInfo.add({
+        name: name,
+        keyword: regex,
+        content: _tempArchiveSummary,
+        isRegex: true,
+        isAlwaysOn: false,
+        enabled: true,
+        weight: 8,
+        categoryId: 'default',
+        characterIds: [_charId],
+        scope: ['chat']
+      });
+
+      // 封存成功后抹除潜意识，腾出空间
+      const mem = await MemoryModule.load(_charId);
+      await MemoryModule.save(_charId, { summary: '', lastMsgId: 0, autoRounds: mem.autoRounds });
+      document.getElementById('cv-mem-summary-preview').textContent = '（暂无潜意识档案）';
+
+      document.getElementById('cv-archive-modal').classList.remove('active');
+      Toast.show(`《${name}》已永久封存入世界书 ✦`);
+    } catch(e) { Toast.show('封存失败'); }
+  }
+  
+  // ── 彻底删除对话 (解绑并清理所有专属设置) ──
+  async function deleteChat() {
+    document.getElementById('cv-modal-delete')?.classList.remove('active');
+    if (!_charId) return;
+
+    try {
+      // 1. 清理聊天记录和图片资产 (复用 clearHistory 的逻辑)
       const msgs = await DB.messages.getPage(_charId, 0, 999999).catch(() =>[]);
       for (const msg of msgs) {
         if (msg.parts) {
@@ -9957,24 +11397,58 @@ function back() {
           }
         }
       }
-
       await DB.messages.delByChar(_charId);
+
+      // 2. 清理该角色专属的所有偏好设置
+      const keysToDel = [
+        `memory-rounds-${_charId}`,
+        `time-perception-${_charId}`,
+        `voice-id-${_charId}`,
+        `novel-prefix-${_charId}`,
+        `novel-negative-${_charId}`,
+        `novel-toggle-${_charId}`,
+        `translate-enabled-${_charId}`,
+        `alias-mode-${_charId}`,
+        `char-css-${_charId}`,
+       `css-presets-${_charId}` 
+      ];
+      for (const k of keysToDel) {
+        await DB.settings.del(k).catch(()=>{});
+      }
+
+      // 3. 清理专属壁纸图片与背景
+      await Assets.remove(`conv-wallpaper-${_charId}`).catch(() => {});
+      const wl = document.querySelector('#conv-screen .cv-wallpaper');
+      if (wl) wl.style.backgroundImage = 'none';
+      _removeCustomCSS();
+
+      // 4. 从数据库解除面具绑定
+      await DB.bindings.del(String(_charId)).catch(()=>{});
+
+      // 5. 内存状态重置
       _totalMsgs = 0;
       _offset    = 0;
-      // 清空 feed
       const feed = document.getElementById('cv-feed');
-      Array.from(feed.children).forEach(el => {
-        if (el.id !== 'cv-load-more') el.remove();
-      });
-      document.getElementById('cv-load-more').style.display = 'none';
-      console.log(`[ConvModule] 聊天记录及图片已清空 — charId: ${_charId}`);
-      Toast.show('对话记录已清空');
-      closeSettings(); // 清空后立即关闭设置面板，回到聊天页
+      if (feed) {
+        Array.from(feed.children).forEach(el => {
+          if (el.id !== 'cv-load-more') el.remove();
+        });
+      }
+
+      console.log(`[ConvModule] 对话及专属设置已彻底销毁 — charId: ${_charId}`);
+      Toast.show('对话已彻底删除');
+
+      // 6. 关闭设置面板，并返回对话列表，刷新角色的活跃时间排序
+      closeSettings();
+      Router.go('chat');
+      if (typeof NotifModule !== 'undefined') NotifModule.refresh();
+
     } catch(e) {
-      Toast.show('清空失败：' + e.message);
-      console.error('[ConvModule] clearHistory error', e);
+      Toast.show('删除失败：' + e.message);
+      console.error('[ConvModule] deleteChat error', e);
     }
   }
+  
   // ── 功能面板（由 _bindEvents 处理，此处保留兼容）──
   function openFuncPanel() {}
 
@@ -10143,6 +11617,12 @@ function back() {
         if (ribbon) ribbon.textContent = 'Success';
         card.onclick = null;
       }
+
+      // ── 更新钱包余额 ──
+      try {
+        const charName = _char?.name || '';
+        await WalletApp.credit(part.amount, part.memo || '角色转账收款', charName, _personaId);
+      } catch(we) { console.warn('[Wallet] credit failed', we); }
 
       // 生成 REF 并持久化系统票据到 DB
       const ref = _fmtTime(new Date()).replace(':', '');
@@ -10432,7 +11912,7 @@ function back() {
     closeMenu();
   }
   
-  return { enter, back, openQuickReply, closeQuickReply,openSettings, closeSettings, openFuncPanel, loadMore, sendUserMsg, sendAndTriggerAI, fetchModels, closeApiModal, confirmApi, openRecallModal, closeRecallModal, collectTransfer, sendUserTransfer, sendImgMsg, closeMenu,handleMenuAction,cancelQuote, updateMultiSelectUI, cancelMultiSelect, favoriteSelected, deleteSelected,addEmoteToPreview,_openImgViewer, _openImgViewerFromEl, _viewerDownloadImage, _regenerateNovelFromViewer, toggleAudio, clearWallpaper, clearHistory, _toggleAccordion, _selectRadio, _selectPersona,_removePendingImg,playAudio, previewVoice, _toggleTTS, _toggleNovel, _toggleTranslate, _appendNovelImageMessage, _replaceMessageBubble, _showNovelPending, _hideNovelPending };
+  return { enter, back, openQuickReply, closeQuickReply,openSettings, closeSettings, openFuncPanel, loadMore, sendUserMsg, sendAndTriggerAI, fetchModels, closeApiModal, confirmApi, openRecallModal, closeRecallModal, collectTransfer, sendUserTransfer, sendImgMsg, closeMenu,handleMenuAction,cancelQuote, updateMultiSelectUI, cancelMultiSelect, favoriteSelected, deleteSelected,addEmoteToPreview,_openImgViewer, _openImgViewerFromEl, _viewerDownloadImage, _regenerateNovelFromViewer, toggleAudio, clearWallpaper, clearHistory, deleteChat, _toggleAccordion, _selectRadio, _selectPersona,_removePendingImg,playAudio, previewVoice, _toggleTTS, _toggleNovel, _toggleTranslate, _appendNovelImageMessage, _replaceMessageBubble, _showNovelPending, _hideNovelPending, _toggleAlias,copyDefaultCSS, applyAndSaveCSS, clearCustomCSS, saveCssPreset, confirmSaveCssPreset, applyCssPreset, deleteCssPreset,manualSummarize, clearMemory, archiveToWorldBook, confirmArchive };
 })();
 /** 供 NovelModule 等脚本用 window 访问；const 不会自动挂到 window */
 window.ConvModule = ConvModule;
