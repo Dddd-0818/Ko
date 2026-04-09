@@ -15,6 +15,11 @@
 <script src="https://unpkg.com/mammoth@1.6.0/mammoth.browser.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script src="music.js"></script>
+<script src="https://unpkg.com/vconsole@latest/dist/vconsole.min.js"></script>
+<script>
+  // 初始化 VConsole
+  var vConsole = new VConsole();
+</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Noto+Sans+SC:wght@300;400;500;700&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400;1,700&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Inter:wght@300;400;500;700;900&family=Cinzel:wght@500;700&family=Noto+Serif+SC:wght@500;700;900&family=Libre+Barcode+39+Text&display=swap" rel="stylesheet">
@@ -2238,6 +2243,153 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg-body);display:flex;jus
 .vt-c-del { background:none; border:none; font-size:0.9rem; color:#ccc; cursor:pointer; padding:0; line-height:1; transition:color 0.2s; }
 .vt-c-del:active { color:#9c2b2b; }
 .vt-empty { text-align:center; padding:6rem 2rem; color:#A0A0A0; font-family:'Space Mono',monospace; font-size:0.6rem; letter-spacing:3px; text-transform:uppercase; }
+
+/* ============================================================
+   LIVE LINK (视频通话模块)
+   ============================================================ */
+.cv-call-layer {
+  position: absolute; inset: 0; z-index: 450;
+  display: flex; flex-direction: column; background: #050505;
+  transform: translateY(100%); opacity: 0; pointer-events: none;
+  transition: transform 0.5s cubic-bezier(0.19, 1, 0.22, 1), opacity 0.4s ease;
+  overflow: hidden;
+}
+.cv-call-layer.active { transform: translateY(0); opacity: 1; pointer-events: auto; }
+
+/* 底层视频流与滤镜 */
+.cv-call-video-bg { position: absolute; inset: 0; z-index: 0; }
+.cv-call-video-bg img { width: 100%; height: 100%; object-fit: cover; filter: grayscale(20%) contrast(1.1) brightness(0.85); transition: filter 1s ease; }
+.cv-call-noise { position: absolute; inset: 0; z-index: 1; pointer-events: none; background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.05'/%3E%3C/svg%3E"); }
+.cv-call-gradient { position: absolute; bottom: 0; left: 0; width: 100%; height: 60%; background: linear-gradient(to top, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.6) 40%, transparent 100%); z-index: 2; pointer-events: none; }
+
+/* 等待接通动画 */
+.cv-call-connecting {
+  position: absolute; inset: 0; z-index: 20; 
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  background: rgba(0, 0, 0, 0.4); backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px);
+  opacity: 0; pointer-events: none; transition: opacity 0.5s ease;
+}
+.cv-call-layer.is-connecting .cv-call-connecting { opacity: 1; pointer-events: auto; }
+.cv-call-layer.is-connecting .cv-call-ui { opacity: 0; pointer-events: none; }
+.cv-call-layer.is-connecting .cv-call-video-bg img { filter: grayscale(100%) brightness(0.2); }
+
+.cv-conn-scanner { width: 60px; height: 2px; background: rgba(255,255,255,0.1); position: relative; overflow: hidden; margin-bottom: 20px; }
+.cv-conn-scanner::after { content:''; position: absolute; top:0; left:0; height:100%; width: 20px; background: #fff; animation: cv-scan-wide 1s infinite ease-in-out; box-shadow: 0 0 10px #fff;}
+@keyframes cv-scan-wide { 0% { transform: translateX(-20px); } 100% { transform: translateX(60px); } }
+.cv-conn-text { font-family: 'Space Mono', monospace; font-size: 0.75rem; letter-spacing: 4px; color: rgba(255,255,255,0.8); animation: cv-pulse-text 1.5s infinite; }
+@keyframes cv-pulse-text { 0%,100%{opacity:0.4;} 50%{opacity:1;} }
+
+/* 顶栏信息 */
+.cv-call-ui { position: absolute; inset: 0; z-index: 30; display: flex; flex-direction: column; transition: opacity 0.5s ease; }
+.cv-call-top { padding: max(env(safe-area-inset-top, 20px), 20px) 20px 0; display: flex; justify-content: space-between; align-items: flex-start; }
+.cv-call-live-badge { display: flex; align-items: center; gap: 8px; font-family: 'Space Mono', monospace; font-size: 0.6rem; letter-spacing: 2px; background: rgba(0,0,0,0.4); padding: 6px 12px; border-radius: 100px; backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.1); color: #fff; }
+.cv-call-live-badge .dot { width: 6px; height: 6px; background: #D93A3A; border-radius: 50%; animation: cv-pulse-text 1.5s infinite; }
+.cv-call-timer { font-family: 'Space Mono', monospace; font-size: 0.9rem; font-weight: 700; color: #fff; text-shadow: 0 2px 4px rgba(0,0,0,0.8); margin-right: 12px; }
+.cv-call-minimize { width: 32px; height: 32px; border-radius: 50%; background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.2); color: #fff; display: flex; justify-content: center; align-items: center; cursor: pointer; transition: 0.2s; }
+.cv-call-minimize:active { transform: scale(0.9); }
+
+/* 用户小窗 */
+.cv-call-user-cam { position: absolute; top: 60px; right: 20px; width: 90px; height: 130px; border: 1px solid rgba(255,255,255,0.3); padding: 4px; border-radius: 8px; background: rgba(0,0,0,0.2); backdrop-filter: blur(4px); z-index: 35; }
+.cv-call-user-cam img { width: 100%; height: 100%; object-fit: cover; border-radius: 4px; filter: contrast(1.1) brightness(0.9); }
+.cv-cam-cross { position: absolute; color: rgba(255,255,255,0.5); font-size: 8px; line-height: 1; }
+.cv-cam-cross.tl { top: -2px; left: -2px; } .cv-cam-cross.tr { top: -2px; right: -2px; }
+.cv-cam-cross.bl { bottom: -2px; left: -2px; } .cv-cam-cross.br { bottom: -2px; right: -2px; }
+
+/* 聊天流 */
+.cv-call-stream { flex: 1; display: flex; flex-direction: column; justify-content: flex-end; padding: 20px 16px 20px; overflow-y: auto; scrollbar-width: none; mask-image: linear-gradient(to bottom, transparent 0%, black 15%, black 100%); -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 15%, black 100%); }
+.cv-call-stream::-webkit-scrollbar { display: none; }
+
+.cv-c-row { display: flex; flex-direction: column; width: 100%; margin-bottom: 20px; animation: cv-fade-up 0.4s ease forwards; }
+.cv-c-env { align-self: center; font-family: 'DM Sans', 'Noto Sans SC', sans-serif; font-size: 0.75rem; font-weight: 500; color: rgba(255,255,255,0.8); background: rgba(255,255,255,0.1); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); padding: 6px 14px; border-radius: 4px; border: 0.5px solid rgba(255,255,255,0.15); max-width: 85%; text-align: center; letter-spacing: 0.5px; line-height: 1.4; box-shadow: 0 4px 12px rgba(0,0,0,0.2); }
+.cv-c-ai { align-self: flex-start; max-width: 75%; margin-top: 8px; background: rgba(20,20,20,0.65); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border: 0.5px solid rgba(255,255,255,0.15); color: #fff; padding: 10px 14px; border-radius: 12px 12px 12px 2px; font-size: 0.9rem; line-height: 1.5; box-shadow: 0 4px 15px rgba(0,0,0,0.3); word-break: break-word; }
+.cv-c-user { align-self: flex-end; max-width: 75%; margin-top: 8px; background: rgba(240,240,240,0.9); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); color: #121212; padding: 10px 14px; border-radius: 12px 12px 2px 12px; font-size: 0.9rem; line-height: 1.5; font-weight: 500; box-shadow: 0 4px 15px rgba(0,0,0,0.3); word-break: break-word; }
+
+/* 底部操作台 */
+.cv-call-footer { padding: 10px 16px calc(env(safe-area-inset-bottom, 20px) + 16px); background: transparent; z-index: 40; }
+.cv-call-input-bar { display: flex; align-items: flex-end; gap: 10px; background: rgba(10,10,10,0.8); backdrop-filter: blur(20px); border: 0.5px solid rgba(255,255,255,0.15); padding: 8px; border-radius: 24px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+.cv-c-btn-reroll { width: 36px; height: 36px; border-radius: 50%; background: transparent; border: 0.5px solid rgba(255,255,255,0.2); color: #fff; display: flex; justify-content: center; align-items: center; font-size: 1.2rem; cursor: pointer; flex-shrink: 0; transition: 0.2s; }
+.cv-c-btn-reroll:active { transform: scale(0.9) rotate(-45deg); }
+.cv-c-input { flex: 1; background: transparent; border: none; color: #fff; font-family: 'DM Sans', 'Noto Sans SC', sans-serif; font-size: 0.9rem; resize: none; max-height: 80px; padding: 8px 4px; outline: none; line-height: 1.4; }
+.cv-c-input::placeholder { color: rgba(255,255,255,0.3); font-style: italic; font-family: 'Cormorant Garamond', serif; font-size: 1rem; }
+.cv-c-btn-send { width: 36px; height: 36px; border-radius: 50%; background: #fff; color: #000; border: none; display: flex; justify-content: center; align-items: center; font-size: 1.2rem; cursor: pointer; flex-shrink: 0; transition: 0.2s; }
+.cv-c-btn-send:active { transform: scale(0.9); }
+.cv-c-btn-hangup { width: 36px; height: 36px; border-radius: 50%; background: rgba(217, 58, 58, 0.1); border: 1px solid #D93A3A; color: #D93A3A; display: flex; justify-content: center; align-items: center; font-size: 1.2rem; cursor: pointer; flex-shrink: 0; transition: 0.2s; box-shadow: 0 0 15px rgba(217, 58, 58, 0.2); }
+.cv-c-btn-hangup:active { background: #D93A3A; color: #fff; transform: scale(0.9); }
+
+/* 悬浮小窗 PiP */
+.cv-pip {
+  position: absolute; width: 100px; height: 140px; top: max(env(safe-area-inset-top, 20px), 60px); right: 20px;
+  border-radius: 12px; overflow: hidden; z-index: 480; 
+  box-shadow: 0 15px 30px rgba(0,0,0,0.8), 0 0 0 1px rgba(255,255,255,0.15);
+  display: none; cursor: grab; touch-action: none; 
+  opacity: 0; transform: scale(0.8); transition: opacity 0.3s ease, transform 0.3s ease;
+}
+.cv-pip.active { display: block; opacity: 1; transform: scale(1); }
+.cv-pip:active { cursor: grabbing; }
+.cv-pip-bg { position: absolute; inset: 0; background-size: cover; background-position: center; pointer-events: none; filter: grayscale(20%) contrast(1.1) brightness(0.85); }
+.cv-pip-timer { position: absolute; bottom: 8px; left: 50%; transform: translateX(-50%); font-family: 'Space Mono', monospace; font-size: 0.6rem; font-weight: 700; background: rgba(0,0,0,0.6); padding: 3px 8px; border-radius: 12px; color: #fff; backdrop-filter: blur(4px); border: 0.5px solid rgba(255,255,255,0.1); display: flex; align-items: center; gap: 4px; pointer-events: none; }
+.cv-pip-timer .dot { width: 4px; height: 4px; background: #D93A3A; border-radius: 50%; animation: cv-pulse-text 1.5s infinite; }
+.cv-pip-overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.3); display: flex; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.2s; pointer-events: none; }
+.cv-pip:hover .cv-pip-overlay { opacity: 1; }
+
+/* AI 正在打字的过场特效 */
+.cv-c-cinematic-typing { align-self: flex-start; display: flex; align-items: center; gap: 10px; margin-top: 8px; margin-bottom: 20px; padding: 0 4px; animation: cv-fade-up 0.4s ease forwards;}
+.cv-c-typing-text { font-family: 'Space Mono', monospace; font-size: 0.65rem; color: rgba(255,255,255,0.6); letter-spacing: 3px; animation: cv-pulse-text 1.5s infinite; }
+
+/* 视讯记录查看浮窗基础容器 */
+#cv-call-record-overlay .cv-mag-modal {
+  padding: 24px; max-height: 85vh; display: flex; flex-direction: column;
+}
+#cv-call-record-overlay .cv-cr-content {
+  flex: 1; overflow-y: auto; scrollbar-width: none; margin: 16px 0 24px; padding-right: 4px;
+}
+#cv-call-record-overlay .cv-cr-content::-webkit-scrollbar { display: none; }
+#cv-call-record-overlay .cv-cr-item { margin-bottom: 16px; display: flex; flex-direction: column; }
+#cv-call-record-overlay .cv-cr-item.me { align-items: flex-end; }
+#cv-call-record-overlay .cv-cr-item.ai { align-items: flex-start; }
+#cv-call-record-overlay .cv-cr-name {
+  font-family: 'Space Mono', monospace; font-size: 0.6rem; letter-spacing: 1px; color: #999; margin-bottom: 4px; text-transform: uppercase;
+}
+
+/* 🌟 核心修复：AI 气泡恢复浅灰底黑字，User 气泡保留黑底白字 */
+#cv-call-record-overlay .cv-cr-bubble {
+  background: rgba(0,0,0,0.04); /* 浅灰底 */
+  color: #121212; /* 黑字 */
+  padding: 10px 14px;
+  border-radius: 12px 12px 12px 2px;
+  font-size: 0.85rem;
+  line-height: 1.5;
+  max-width: 90%;
+  word-break: break-word;
+}
+#cv-call-record-overlay .cv-cr-item.me .cv-cr-bubble {
+  background: #121212; /* 用户黑底 */
+  color: #fff; /* 用户白字 */
+  border-radius: 12px 12px 2px 12px;
+}
+
+/* --- 剥离符号后的剧本旁白美化 --- */
+#cv-call-record-overlay .cv-cr-env {
+  font-size: 0.75rem; font-style: italic; margin: 6px 0; opacity: 0.8; display: block;
+}
+#cv-call-record-overlay .cv-cr-item.ai .cv-cr-env { color: #666; } /* 浅灰底上的深灰旁白 */
+#cv-call-record-overlay .cv-cr-item.me .cv-cr-env { color: rgba(255,255,255,0.7); } /* 黑底上的浅色旁白 */
+
+/* 🌟 核心修复：纯动作褪去底色，变成高级虚线框 */
+#cv-call-record-overlay .cv-cr-bubble.pure-env {
+  background: transparent !important;
+  border: 1px dashed rgba(18,18,18,0.2); /* AI 的灰色虚线 */
+  padding: 8px 12px;
+}
+#cv-call-record-overlay .cv-cr-item.me .cv-cr-bubble.pure-env {
+  border: 1px dashed rgba(18,18,18,0.4); /* User 的黑色虚线 */
+}
+/* 变成透明虚线框时，User 的字体颜色要从白色变回黑色 */
+#cv-call-record-overlay .cv-cr-item.me .cv-cr-bubble.pure-env .cv-cr-env {
+  color: #121212; 
+}
+#cv-call-record-overlay .cv-cr-bubble.pure-env .cv-cr-env { margin: 0; opacity: 0.9; }
+
 </style>
 <body>
 <div class="device">
@@ -3308,10 +3460,10 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg-body);display:flex;jus
             <div class="cv-pc-top"><span class="cv-pc-idx">N°.04</span><i class="ph-thin ph-waveform"></i></div>
             <div class="cv-pc-bottom"><span class="cv-pc-en">Audio</span><span class="cv-pc-cn">声纹特征</span></div>
           </div>
-          <div class="cv-panel-card cv-pc-sq">
-            <div class="cv-pc-top"><span class="cv-pc-idx">N°.05</span><i class="ph-thin ph-video-camera"></i></div>
-            <div class="cv-pc-bottom"><span class="cv-pc-en">Live</span><span class="cv-pc-cn">视讯链路</span></div>
-          </div>
+         <div class="cv-panel-card cv-pc-sq" id="cv-btn-live">
+  <div class="cv-pc-top"><span class="cv-pc-idx">N°.05</span><i class="ph-thin ph-video-camera"></i></div>
+  <div class="cv-pc-bottom"><span class="cv-pc-en">Live</span><span class="cv-pc-cn">视讯链路</span></div>
+</div>
          <div class="cv-panel-card cv-pc-wide" id="cv-btn-transfer">
             <div class="cv-pc-top"><span class="cv-pc-idx">N°.06</span><i class="ph-thin ph-wallet"></i></div>
             <div class="cv-pc-bottom"><span class="cv-pc-en">Ledger</span><span class="cv-pc-cn">资产流转</span></div>
@@ -3489,6 +3641,25 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg-body);display:flex;jus
           <textarea id="cv-edit-textarea" placeholder="修改档案内容..." style="width:100%; height:160px; padding:16px; background:rgba(0,0,0,0.02); border:0.5px solid rgba(18,18,18,0.1); border-radius:12px; font-family:'Inter','Noto Sans SC',sans-serif; font-size:0.95rem; color:#121212; resize:none; line-height:1.5; outline:none; box-shadow:inset 0 2px 4px rgba(0,0,0,0.02);"></textarea>
         </div>
         <button class="cv-btn-confirm" id="cv-edit-confirm">Save Changes</button>
+      </div>
+    </div>
+    <!-- Call Record Modal (视讯归档查看浮窗) -->
+    <div class="cv-modal-overlay" id="cv-call-record-overlay">
+      <div class="cv-mag-modal" style="text-align: left;">
+        <div class="cv-modal-bg-letter">V</div>
+        <div class="cv-modal-header" style="margin-bottom: 0;">
+          <div>
+            <div class="cv-mh-title">Live Link Archive</div>
+            <div class="cv-mh-sub">视讯通话完整记录</div>
+          </div>
+          <button class="cv-btn-close" onclick="ConvModule.closeCallRecordModal()"><i class="ph ph-x"></i></button>
+        </div>
+        
+        <div class="cv-cr-content" id="cv-cr-list">
+          <!-- 动态渲染聊天记录 -->
+        </div>
+
+        <button class="cv-btn-confirm" onclick="ConvModule.closeCallRecordModal()">Close Archive</button>
       </div>
     </div>
     <!-- 自定义新建字典弹窗 -->
@@ -3927,6 +4098,59 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg-body);display:flex;jus
       <div class="cv-eth-item" onclick="ConvModule.handleMenuAction('select')"><span class="cv-idx">05</span><span class="cv-en">Select</span><span class="cv-spacer"></span><span class="cv-cn">多选</span></div>
       <div class="cv-eth-item" onclick="ConvModule.handleMenuAction('reroll')"><span class="cv-idx">06</span><span class="cv-en">Reroll</span><span class="cv-spacer"></span><span class="cv-cn">重roll</span></div>
     </div>
+    
+    <!-- ==================== LIVE LINK (视讯链路全屏层) ==================== -->
+    <div class="cv-call-layer" id="cv-call-layer">
+      <!-- 视频底层 -->
+      <div class="cv-call-video-bg"><img id="cv-call-bg-img" src="" alt=""></div>
+      <div class="cv-call-noise"></div>
+      <div class="cv-call-gradient"></div>
+
+      <!-- 等待接通动画 -->
+      <div class="cv-call-connecting">
+        <div class="cv-conn-scanner"></div>
+        <div class="cv-conn-text">ESTABLISHING SECURE LINK...</div>
+      </div>
+
+      <!-- 通话 UI 层 -->
+      <div class="cv-call-ui">
+        <!-- 顶栏 -->
+        <div class="cv-call-top">
+          <div class="cv-call-live-badge"><div class="dot"></div> LIVE LINK</div>
+          <div style="display:flex; align-items:center;">
+            <div class="cv-call-timer" id="cv-call-timer">00:00</div>
+            <button class="cv-call-minimize" onclick="CallModule.minimize()"><i class="ph-bold ph-arrows-in-simple"></i></button>
+          </div>
+        </div>
+
+        <!-- 自己的小窗 -->
+        <div class="cv-call-user-cam">
+          <div class="cv-cam-cross tl">+</div><div class="cv-cam-cross tr">+</div>
+          <div class="cv-cam-cross bl">+</div><div class="cv-cam-cross br">+</div>
+          <img id="cv-call-user-img" src="" alt="Me">
+        </div>
+
+        <!-- 聊天流 -->
+        <div class="cv-call-stream" id="cv-call-stream"></div>
+
+        <!-- 底部控制台 -->
+        <div class="cv-call-footer">
+          <div class="cv-call-input-bar">
+            <button class="cv-c-btn-reroll" onclick="CallModule.reroll()"><i class="ph-thin ph-arrows-clockwise"></i></button>
+            <textarea class="cv-c-input" id="cv-call-input" rows="1" placeholder="Action (*...*) or dialogue..."></textarea>
+            <button class="cv-c-btn-send" onclick="CallModule.triggerAI()"><i class="ph-bold ph-arrow-up"></i></button>
+            <button class="cv-c-btn-hangup" onclick="CallModule.endCall()"><i class="ph-fill ph-phone-disconnect"></i></button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 悬浮小窗 (PiP) -->
+    <div class="cv-pip" id="cv-pip">
+      <div class="cv-pip-bg" id="cv-pip-bg"></div>
+      <div class="cv-pip-timer"><div class="dot"></div> <span id="cv-pip-timer-text">00:00</span></div>
+      <div class="cv-pip-overlay"><i class="ph-bold ph-arrows-out-simple" style="color:#fff; font-size:24px;"></i></div>
+    </div>
 
   </div><!-- #conv-screen -->
   
@@ -4089,21 +4313,10 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg-body);display:flex;jus
           <div class="wb-scope-item">
             <div>
               <div class="wb-scope-label">聊天注入 CHAT</div>
-              <div class="wb-scope-sub">关键词触发，注入对话上下文</div>
+              <div class="wb-scope-sub">关键词触发，注入对话上下文；遇见仅读取此项</div>
             </div>
             <label class="wb-toggle">
               <input type="checkbox" id="wb-scope-chat" checked>
-              <div class="wb-track"></div>
-              <div class="wb-thumb"></div>
-            </label>
-          </div>
-          <div class="wb-scope-item">
-            <div>
-              <div class="wb-scope-label">世界生成 SOCIAL</div>
-              <div class="wb-scope-sub">参与陌生人社交背景（预留）</div>
-            </div>
-            <label class="wb-toggle">
-              <input type="checkbox" id="wb-scope-social">
               <div class="wb-track"></div>
               <div class="wb-thumb"></div>
             </label>
@@ -5232,10 +5445,7 @@ function closePanel() { document.getElementById('overlay').classList.remove('act
 // 设置图标
 document.getElementById('icon-settings').addEventListener('click', () => Router.go('settings'));
 document.getElementById('dock-character').addEventListener('click', () => Router.go('character'));
-// 遇见 · 子页面 chill-match.html（与主壳同目录的 css/chill-match.css、js/chill-match.js）
-document.querySelector('[data-icon-id="0"]')?.addEventListener('click', () => {
-  window.location.href = 'chill-match.html';
-});
+// 遇见：由页面底部 chill-meet-bundle.js 绑定 data-icon-id="0" → ChillMeet.open()（内联 iframe，勿再跳转 chill-match.html）
 
 // Profile 编辑
 document.getElementById('avatar-wrap').addEventListener('click', () => document.getElementById('file-avatar').click());
@@ -5466,7 +5676,6 @@ const WBModule = (() => {
       document.getElementById('wb-weight-val').textContent = 'W.5';
       document.getElementById('wb-regex-hint').classList.remove('show');
       document.getElementById('wb-scope-chat').checked   = true;
-      document.getElementById('wb-scope-social').checked = false;
       _editorCatId   = 'default';
       _editorCharIds = [];
     } else {
@@ -5483,7 +5692,6 @@ const WBModule = (() => {
       document.getElementById('wb-regex-hint').classList.toggle('show', !!e.isRegex);
       const scope = e.scope || ['chat'];
       document.getElementById('wb-scope-chat').checked   = scope.includes('chat');
-      document.getElementById('wb-scope-social').checked = scope.includes('social');
       _editorCatId   = e.categoryId || 'default';
       _editorCharIds = Array.isArray(e.characterIds) ? [...e.characterIds] : [];
     }
@@ -5509,8 +5717,7 @@ const WBModule = (() => {
     if (!content) { _showAlert('内容不能为空'); return; }
 
     const scope = [];
-    if (document.getElementById('wb-scope-chat').checked)   scope.push('chat');
-    if (document.getElementById('wb-scope-social').checked) scope.push('social');
+    if (document.getElementById('wb-scope-chat').checked) scope.push('chat');
 
     const data = {
       name,
@@ -8250,7 +8457,432 @@ ${msgText}
   }
   return { load, save, summarize };
 })();
+// ============================================================
+// CallModule — 视讯链路 (Live Link) 模块 (完整人设+时间戳版)
+// ============================================================
+const CallModule = (() => {
+  let _isActive = false;
+  let _callId = null;
+  let _seconds = 0;
+  let _timer = null;
+  let _msgs = []; // { role, text, timestamp }
+  let _isTyping = false;
+  
+  // ── 获取当前角色精确绑定的面具 ──
+ async function _getBoundPersona() {
+    const charId = document.getElementById('conv-screen').dataset.cvCharId;
+    const binding = await DB.bindings.get(String(charId)).catch(() => null);
+    const personaId = binding ? binding.personaId : PersonaModule.getActiveId();
+    
+    const allPersonas = PersonaModule.getAll();
+    // 🌟 核心修复：强制用 String 转换后对比，防止 Number 和 String 不匹配导致找不到面具
+    return allPersonas.find(p => String(p.id) === String(personaId)) || allPersonas[0] || {};
+  }
 
+  // ── 时间格式化 ──
+  function _formatFullTime(ts) {
+    const d = new Date(ts);
+    const pad = n => String(n).padStart(2, '0');
+    return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+  }
+  function _formatTimeMinSec(sec) {
+    const m = Math.floor(sec / 60);
+    const s = sec % 60;
+    return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+  }
+
+  function _parseInput(text) {
+    const regex = /([\(\[【（\*].+?[\)\]】）\*])/g;
+    let parts = []; let lastIndex = 0; let match;
+    while ((match = regex.exec(text)) !== null) {
+      if (match.index > lastIndex) {
+        let diag = text.substring(lastIndex, match.index).trim();
+        if (diag) parts.push({ type: 'dialogue', text: diag });
+      }
+      parts.push({ type: 'env', text: match[0].replace(/[\(\[【（\*\)\]】）]/g, '') });
+      lastIndex = regex.lastIndex;
+    }
+    if (lastIndex < text.length) {
+      let diag = text.substring(lastIndex).trim();
+      if (diag) parts.push({ type: 'dialogue', text: diag });
+    }
+    if (parts.length === 0) parts.push({ type: 'dialogue', text });
+    return parts;
+  }
+
+  function _parseAIOutput(text) {
+    const regex = /\[ENV\](.*?)\[\/ENV\]/g;
+    let parts = []; let lastIndex = 0; let match;
+    while ((match = regex.exec(text)) !== null) {
+      if (match.index > lastIndex) {
+        let diag = text.substring(lastIndex, match.index).trim();
+        if (diag) parts.push({ type: 'dialogue', text: diag });
+      }
+      parts.push({ type: 'env', text: match[1].trim() });
+      lastIndex = regex.lastIndex;
+    }
+    if (lastIndex < text.length) {
+      let diag = text.substring(lastIndex).trim();
+      if (diag) parts.push({ type: 'dialogue', text: diag });
+    }
+    if (parts.length === 0) parts.push({ type: 'dialogue', text });
+    return parts;
+  }
+
+  function _renderParts(parts, role) {
+    const stream = document.getElementById('cv-call-stream');
+    const row = document.createElement('div');
+    row.className = 'cv-c-row';
+    if (role === 'assistant') row.classList.add('is-ai-row'); 
+    parts.forEach(p => {
+      if (p.type === 'env') {
+        const envEl = document.createElement('div');
+        envEl.className = 'cv-c-env';
+        envEl.textContent = p.text;
+        row.appendChild(envEl);
+      } else if (p.type === 'dialogue') {
+        const dEl = document.createElement('div');
+        dEl.className = role === 'user' ? 'cv-c-user' : 'cv-c-ai';
+        dEl.textContent = p.text;
+        row.appendChild(dEl);
+      }
+    });
+    stream.appendChild(row);
+    _scrollToBottom();
+  }
+
+  function _scrollToBottom() {
+    const stream = document.getElementById('cv-call-stream');
+    if (stream) requestAnimationFrame(() => stream.scrollTo({ top: stream.scrollHeight, behavior: 'smooth' }));
+  }
+
+ async function openCall() {
+    if (_isActive) return;
+    _isActive = true;
+    _callId = `call_${Date.now()}`;
+    _msgs = [];
+    _seconds = 0;
+
+    const charAvatar = document.getElementById('cv-header-avatar')?.src || '';
+    
+    const userPersona = await _getBoundPersona();
+    let userUrl = userPersona.imgKey ? await Assets.getUrl(userPersona.imgKey).catch(()=>'') : '';
+    
+    // 🌟 双重兜底：如果你的面具真的没传头像，借用首页的全局头像，绝不用网图
+    if (!userUrl) {
+      userUrl = document.getElementById('profile-avatar')?.src || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&q=80';
+    }
+
+    document.getElementById('cv-call-bg-img').src = charAvatar;
+    document.getElementById('cv-call-user-img').src = userUrl;
+    document.getElementById('cv-pip-bg').style.backgroundImage = `url(${charAvatar})`;
+
+    const layer = document.getElementById('cv-call-layer');
+    layer.classList.add('active');
+    layer.classList.add('is-connecting');
+    document.getElementById('cv-call-stream').innerHTML = ''; 
+
+    setTimeout(() => {
+      if (!_isActive) return; 
+      layer.classList.remove('is-connecting');
+      _startTimer();
+      triggerAI(true); // 接通后AI主动打招呼
+    }, 1500);
+
+    _initPiPDrag();
+  }
+
+  function _startTimer() {
+    clearInterval(_timer);
+    const tEl = document.getElementById('cv-call-timer');
+    const pEl = document.getElementById('cv-pip-timer-text');
+    tEl.textContent = "00:00"; pEl.textContent = "00:00";
+    _timer = setInterval(() => {
+      _seconds++;
+      const t = _formatTimeMinSec(_seconds);
+      tEl.textContent = t; pEl.textContent = t;
+    }, 1000);
+  }
+
+  function handleUserInput(e) {
+    const input = e.target;
+    input.style.height = '20px';
+    if (input.scrollHeight > 20) input.style.height = Math.min(input.scrollHeight, 80) + 'px';
+    if (!input.value) input.style.height = '20px';
+
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      const text = input.value.trim();
+      if (!text || _isTyping) return;
+
+      // 记录时间戳
+      _msgs.push({ role: 'user', text, timestamp: Date.now() });
+      _renderParts(_parseInput(text), 'user');
+
+      input.value = '';
+      input.style.height = '20px';
+    }
+  }
+
+  async function triggerAI(isGreeting = false) {
+    if (_isTyping || (!isGreeting && _msgs.length === 0)) return; 
+    
+    const input = document.getElementById('cv-call-input');
+    if (input.value.trim()) {
+      _msgs.push({ role: 'user', text: input.value.trim(), timestamp: Date.now() });
+      _renderParts(_parseInput(input.value.trim()), 'user');
+      input.value = ''; input.style.height = '20px';
+    }
+
+    _isTyping = true;
+    const stream = document.getElementById('cv-call-stream');
+    const typingRow = document.createElement('div');
+    typingRow.className = 'cv-c-cinematic-typing';
+    typingRow.id = 'cv-c-typing';
+    typingRow.innerHTML = `<div class="cv-conn-scanner" style="width:40px; margin-bottom:0;"></div><span class="cv-c-typing-text">RECEIVING...</span>`;
+    stream.appendChild(typingRow);
+    _scrollToBottom();
+
+    try {
+      const activeApi = await DB.api.getActive();
+      if (!activeApi) throw new Error('API未配置');
+
+      const charId = document.getElementById('conv-screen').dataset.cvCharId;
+      const char = await DB.characters.get(Number(charId)).catch(()=>null);
+     const charName = char?.name || '角色';
+
+      // 🌟 使用刚才新增的函数获取精确绑定的面具
+      const userPersona = await _getBoundPersona();
+
+      // 获取最近的文字聊天历史，作为参考记忆
+      const recentMsgs = await DB.messages.getPage(String(charId), 0, 20).catch(()=>[]);
+      const historyText = recentMsgs.reverse().map(m => {
+        const role = m.role === 'user' ? (userPersona.name || '我') : charName;
+        const txt = m.parts?.map(p => p.content || p.text || '').join('') || m.content;
+        return `[${role}]: ${txt}`;
+      }).join('\n');
+
+      // 组装完整系统提示词
+      const systemPrompt = `你正在与我进行一场实时的视频通话。你的名字是【${charName}】。
+      
+【你的角色核心档案】：
+${char?.persona || '无'}
+${char?.mbti ? 'MBTI: ' + char.mbti : ''}
+
+【关于我(用户)】：
+名字：${userPersona.name || '用户'}
+简介：${userPersona.bio || '无'}
+背景：${userPersona.backstory || '无'}
+
+【我们近期的文字聊天记录(作为你记忆的参考)】：
+${historyText || '暂无文字记录'}
+
+【视频通话核心规则】：
+1. 这是视频聊天，你需要对画面环境和你的肢体动作进行描写。
+2. 动作与环境描写**必须使用** \`[ENV]动作描写[/ENV]\` 的格式包裹，并且**必须使用第三人称**（例如：[ENV]他凑近了镜头，眼底闪过一丝笑意。[/ENV]）。
+3. 你直接说出的话，不需要任何符号包裹。
+4. 回复应当像真实的视频聊天一样，简短、自然、有互动感。绝对不要长篇大论。
+5. **你可以使用 \`|||\` 来分隔多段话，这会将你的回复拆分成多个气泡发出。**
+
+${isGreeting ? '【当前情境】：视频刚刚接通，请你主动开口跟我打个招呼。' : '请根据我们视频通话的上下文给出你的回应。'}`;
+
+      const apiMessages = _msgs.map(m => ({
+        role: m.role,
+        content: m.role === 'user' 
+          ? `(用户画面动作/说话内容): ${m.text}` 
+          : m.text 
+      }));
+
+      const response = await ApiHelper.chatCompletion(activeApi, [
+        { role: 'system', content: systemPrompt },
+        ...apiMessages
+      ]);
+
+      document.getElementById('cv-c-typing')?.remove();
+      
+      const rawBubbles = response.split('|||').map(s => s.trim()).filter(Boolean);
+      for (const bubbleText of rawBubbles) {
+        // AI 回复记录时间戳
+        _msgs.push({ role: 'assistant', text: bubbleText, timestamp: Date.now() });
+        _renderParts(_parseAIOutput(bubbleText), 'assistant');
+        if (rawBubbles.length > 1) {
+          await new Promise(r => setTimeout(r, 600)); 
+        }
+      }
+
+    } catch(e) {
+      document.getElementById('cv-c-typing')?.remove();
+      Toast.show('视频通讯受阻: ' + e.message);
+    } finally {
+      _isTyping = false;
+    }
+  }
+
+  function reroll() {
+    if (_isTyping || _msgs.length === 0) return;
+    const lastMsgIndex = _msgs.map(m => m.role).lastIndexOf('assistant');
+    if (lastMsgIndex === -1) {
+      Toast.show('当前没有可重置的回复'); return;
+    }
+    _msgs.splice(lastMsgIndex, 1);
+    const stream = document.getElementById('cv-call-stream');
+    const aiRows = stream.querySelectorAll('.is-ai-row');
+    if (aiRows.length > 0) {
+      aiRows[aiRows.length - 1].remove();
+    }
+    triggerAI();
+  }
+
+  function minimize() {
+    document.getElementById('cv-call-layer').classList.remove('active');
+    document.getElementById('cv-pip').classList.add('active');
+  }
+
+  function _initPiPDrag() {
+    const pip = document.getElementById('cv-pip');
+    if (pip._dragBound) return;
+    pip._dragBound = true;
+    let isDragging = false;
+    let dragHasMoved = false;
+    let startX, startY, initialLeft, initialTop;
+    function handleDragStart(e) {
+      if (!pip.classList.contains('active')) return;
+      isDragging = true; dragHasMoved = false;
+      const clientX = e.type.includes('mouse') ? e.clientX : e.touches[0].clientX;
+      const clientY = e.type.includes('mouse') ? e.clientY : e.touches[0].clientY;
+      initialLeft = pip.offsetLeft;
+      initialTop = pip.offsetTop;
+      startX = clientX; startY = clientY;
+    }
+    function handleDragMove(e) {
+      if (!isDragging) return;
+      const clientX = e.type.includes('mouse') ? e.clientX : e.touches[0].clientX;
+      const clientY = e.type.includes('mouse') ? e.clientY : e.touches[0].clientY;
+      if (Math.abs(clientX - startX) > 5 || Math.abs(clientY - startY) > 5) dragHasMoved = true;
+      let newX = initialLeft + (clientX - startX);
+      let newY = initialTop + (clientY - startY);
+      const deviceWidth = document.body.offsetWidth > 400 ? 390 : document.body.offsetWidth;
+      const deviceHeight = document.body.offsetHeight > 900 ? 844 : document.body.offsetHeight;
+      const maxX = deviceWidth - pip.offsetWidth - 16;
+      const maxY = deviceHeight - pip.offsetHeight - 16;
+      newX = Math.max(16, Math.min(newX, maxX));
+      newY = Math.max(16, Math.min(newY, maxY));
+      pip.style.left = newX + 'px';
+      pip.style.top = newY + 'px';
+      pip.style.right = 'auto'; 
+    }
+    function handleDragEnd() {
+      if (!isDragging) return;
+      isDragging = false;
+      if (!dragHasMoved) {
+        pip.classList.remove('active');
+        document.getElementById('cv-call-layer').classList.add('active');
+      }
+    }
+    pip.addEventListener('mousedown', handleDragStart);
+    pip.addEventListener('touchstart', handleDragStart, { passive: true });
+    document.addEventListener('mousemove', handleDragMove);
+    document.addEventListener('touchmove', handleDragMove, { passive: false });
+    document.addEventListener('mouseup', handleDragEnd);
+    document.addEventListener('touchend', handleDragEnd);
+  }
+
+  async function endCall() {
+    clearInterval(_timer);
+    _isActive = false;
+
+    document.getElementById('cv-call-layer').classList.remove('active');
+    document.getElementById('cv-pip').classList.remove('active');
+
+    if (_msgs.length > 0) {
+      const charId = document.getElementById('conv-screen').dataset.cvCharId;
+      
+      // 携带时间戳存入上下文
+      const callContext = _msgs.map(m => `[${m.role}] [${_formatFullTime(m.timestamp)}] ${m.text}`).join('\n');
+      console.log("[CallModule] 视频通话归档数据：\n", callContext); // 方便在控制台查看记录
+
+      const ticketMsg = {
+        charId: String(charId),
+        role: 'system_ticket',
+        parts: [{ 
+          type: 'system_ticket', 
+          action: 'call_record', 
+          duration: _formatTimeMinSec(_seconds),
+          callContext: callContext
+        }],
+        content: `[视讯影像归档 | ${_formatTimeMinSec(_seconds)}]`,
+        timestamp: Date.now()
+      };
+
+      const newId = await DB.messages.add(ticketMsg);
+      ticketMsg.id = newId;
+      
+      if (window.ConvModule && typeof window.ConvModule._appendNovelImageMessage === 'function') {
+         await ConvModule._appendNovelImageMessage(ticketMsg);
+      }
+
+      // 后台转世界书
+      archiveCallToWorldBook(charId, _msgs);
+    }
+  }
+
+  async function archiveCallToWorldBook(charId, msgLog) {
+    try {
+      const activeApi = await DB.api.getActive();
+      if (!activeApi) return; 
+
+      const char = await DB.characters.get(Number(charId)).catch(()=>null);
+      const charName = char?.name || '角色';
+      const rawText = msgLog.map(m => `${m.role === 'user' ? '我' : charName}：${m.text}`).join('\n');
+
+      const prompt = `这是一段刚刚发生的视频通话记录。请将它提炼成一份长期潜意识记忆档案，并提取触发该记忆的核心关键词。
+【原始通话记录】：
+${rawText}
+
+【输出格式要求】：
+严格按照以下 JSON 格式返回，绝对不要包含任何其它文字或解释：
+{
+  "summary": "用第一人称（我的视角）总结这段视频通话。描述当时的情景、对方的动作、关键对话，以及当时的情感流露。100字左右。",
+  "regex": "/(关键词1|关键词2|关键词3)/i"
+}
+注意：regex 必须是正则表达式格式，提取这段通话中最具代表性的 3-5 个名词或特定事件，用于日后别人提到时触发记忆。`;
+
+      const response = await ApiHelper.chatCompletion(activeApi, [{ role: 'user', content: prompt }]);
+      const cleaned = response.replace(/```json|```/g, '').trim();
+      const start = cleaned.indexOf('{');
+      const end = cleaned.lastIndexOf('}');
+      if (start === -1 || end === -1) throw new Error('无法解析视频提炼的 JSON');
+      
+      const data = JSON.parse(cleaned.substring(start, end + 1));
+      if (data.summary && data.regex) {
+        await DB.worldInfo.add({
+          name: `视讯碎片 · ${new Date().getMonth()+1}月${new Date().getDate()}日`,
+          keyword: data.regex,
+          content: `[潜意识回溯：那天视频通话的记忆] ${data.summary}`,
+          isRegex: true,
+          isAlwaysOn: false,
+          enabled: true,
+          weight: 6, 
+          categoryId: 'default',
+          characterIds: [String(charId)],
+          scope: ['chat']
+        });
+      }
+    } catch(e) {}
+  }
+
+  setTimeout(() => {
+    document.getElementById('cv-call-input')?.addEventListener('keydown', handleUserInput);
+    document.getElementById('cv-btn-live')?.addEventListener('click', (e) => {
+      e.stopPropagation();
+      document.getElementById('cv-footer')?.classList.remove('expanded');
+      openCall();
+    });
+  }, 1000);
+
+  return { openCall, endCall, minimize, reroll, triggerAI };
+})();
+window.CallModule = CallModule;
 // ============================================================
 // ConvModule — 聊天页核心
 // ============================================================
@@ -8515,13 +9147,18 @@ const ConvModule = (() => {
       });
     }
 
-   // 占位卡片 (排除掉已实现的 API、Audio、Transfer、Lens、Emote 卡片)
-    document.querySelectorAll('#cv-footer .cv-panel-card:not(#cv-btn-api-node):not(#cv-btn-audio):not(#cv-btn-transfer):not(#cv-btn-lens):not(#cv-btn-emote)').forEach(card => {
-      card.addEventListener('click', e => {
+  // Live (视讯链路) 卡片
+    const btnLive = document.getElementById('cv-btn-live');
+    if (btnLive) {
+      btnLive.addEventListener('click', e => {
         e.stopPropagation();
-        Toast.show('功能即将上线 ✦');
+        footer.classList.remove('expanded');
+        // 延迟200ms等面板收起动画完成后，展开视频通话层
+        setTimeout(() => {
+          if (typeof CallModule !== 'undefined') CallModule.openCall();
+        }, 200);
       });
-    });
+    }
 
     document.getElementById('cv-api-overlay').addEventListener('click', e => {
       if (e.target === document.getElementById('cv-api-overlay')) closeApiModal();
@@ -8663,6 +9300,115 @@ const ConvModule = (() => {
         }
       }, true); // 注意这里的 true，事件捕获优先执行
     }
+  }
+  
+ // ── 打开/关闭视讯记录浮窗 ──
+  async function openCallRecordModal(msgId) {
+    try {
+      const msg = await DB.messages.get(Number(msgId));
+      if (!msg || !msg.parts || !msg.parts[0].callContext) {
+        Toast.show('档案损坏，无法读取视讯记录');
+        return;
+      }
+      
+      const contextStr = msg.parts[0].callContext;
+      const lines = contextStr.split('\n');
+      const listEl = document.getElementById('cv-cr-list');
+      listEl.innerHTML = '';
+      
+      lines.forEach(line => {
+        if (!line.trim()) return;
+        
+        const match = line.match(/^\[(user|assistant)\](?:\s*\[(.*?)\])?\s*(.*)$/);
+        if (!match) return; 
+        
+        const role = match[1];
+        const time = match[2] || ''; 
+        let text = match[3];
+        const isUser = role === 'user';
+        
+        // 1. 处理时间显示
+        let timeDisplay = '';
+        if (time) {
+          const timeParts = time.split(' ');
+          if (timeParts.length === 2) timeDisplay = timeParts[1].substring(0, 5); 
+        }
+
+        // 2. 🌟 核心修复：切分动作和对话，各自独立成块
+        let parts = [];
+        if (!isUser) {
+          // AI 使用 [ENV]...[/ENV]
+          const regex = /\[ENV\]([\s\S]*?)\[\/ENV\]/g;
+          let lastIndex = 0; let m;
+          while ((m = regex.exec(text)) !== null) {
+            if (m.index > lastIndex) {
+              let diag = text.substring(lastIndex, m.index).trim();
+              if (diag) parts.push({ type: 'dialogue', text: diag });
+            }
+            parts.push({ type: 'env', text: m[1].trim() });
+            lastIndex = regex.lastIndex;
+          }
+          if (lastIndex < text.length) {
+            let diag = text.substring(lastIndex).trim();
+            if (diag) parts.push({ type: 'dialogue', text: diag });
+          }
+        } else {
+          // 用户使用各种括号或星号
+          const regex = /([(\[【（*])([\s\S]*?)([)\]】）*])/g;
+          let lastIndex = 0; let m;
+          while ((m = regex.exec(text)) !== null) {
+            if (m.index > lastIndex) {
+              let diag = text.substring(lastIndex, m.index).trim();
+              if (diag) parts.push({ type: 'dialogue', text: diag });
+            }
+            parts.push({ type: 'env', text: m[2].trim() });
+            lastIndex = regex.lastIndex;
+          }
+          if (lastIndex < text.length) {
+            let diag = text.substring(lastIndex).trim();
+            if (diag) parts.push({ type: 'dialogue', text: diag });
+          }
+        }
+
+        // 兜底：如果没有匹配到动作，就全是对话
+        if (parts.length === 0 && text.trim()) {
+          parts.push({ type: 'dialogue', text: text.trim() });
+        }
+
+        // 3. 拼装独立的 HTML 气泡
+        const bubblesHtml = parts.map(p => {
+          let safeText = _escHtml(p.text);
+          if (p.type === 'env') {
+            return `<div class="cv-cr-bubble pure-env"><span class="cv-cr-env">${safeText}</span></div>`;
+          } else {
+            return `<div class="cv-cr-bubble">${safeText}</div>`;
+          }
+        }).join('');
+
+        // 4. 插入到列表中
+        const item = document.createElement('div');
+        item.className = `cv-cr-item ${isUser ? 'me' : 'ai'}`;
+        item.innerHTML = `
+          <div class="cv-cr-name">
+            ${isUser ? 'ME' : (_char?.name || 'AI').toUpperCase()} 
+            <span style="opacity:0.4; margin-left:6px; font-weight:normal; letter-spacing:0;">${timeDisplay}</span>
+          </div>
+          ${bubblesHtml}
+        `;
+        listEl.appendChild(item);
+      });
+      
+      document.getElementById('cv-call-record-overlay').classList.add('active');
+      setTimeout(() => { listEl.scrollTop = 0; }, 50);
+
+    } catch (e) {
+      console.error(e);
+      Toast.show('无法读取视讯记录');
+    }
+  }
+
+  function closeCallRecordModal() {
+    document.getElementById('cv-call-record-overlay').classList.remove('active');
   }
     
     // ── 打开编辑浮窗并读取 DB ──
@@ -9348,6 +10094,18 @@ const ConvModule = (() => {
           </div>
           <div class="cv-ticket-meta">
             <span>${_escHtml(p.reason || 'Declined')}</span>
+            <span class="cv-ticket-barcode"></span>
+          </div>`;
+      } else if (act === 'call_record') { // 🌟 修改：视频通话归档票根 (支持点击)
+        el.style.cursor = 'pointer';
+        el.setAttribute('onclick', `ConvModule.openCallRecordModal(${msg.id})`);
+        el.innerHTML = `
+          <div class="cv-ticket-row">
+            <span class="cv-ticket-label">Live Link Archived</span>
+            <span class="cv-ticket-val" style="font-family: 'Space Mono', monospace;">${_escHtml(String(p.duration))}</span>
+          </div>
+          <div class="cv-ticket-meta">
+            <span>🎥 影像已封存 · 点击查看记录</span>
             <span class="cv-ticket-barcode"></span>
           </div>`;
       }
@@ -10113,12 +10871,20 @@ const ConvModule = (() => {
   }
   
   // ── 格式化 AI 眼中的消息 ──
- function _formatMsgForAI(m) {
+function _formatMsgForAI(m) {
     if (m.recalled) {
       // 用户的撤回透传上面包装好的系统提示给 AI；AI 的撤回仅告诉 AI 它自己撤回了
       return m.role === 'user' ? m.content : '[此消息已被撤回]';
     }
-    if (m.role === 'system_ticket') return ''; // 系统票据不送入上下文
+    
+    // 🌟 修改：让 AI 读取视频通话的潜藏记录
+    if (m.role === 'system_ticket') {
+       const p = m.parts?.[0] || {};
+       if (p.action === 'call_record' && p.callContext) {
+           return `\n[系统记忆：刚才你们通了一次视频电话，以下是视频里的完整记录：]\n${p.callContext}\n[视频通话结束]\n`;
+       }
+       return ''; // 普通的转账票根依然忽略，不送入上下文
+    }
     const parts = m.parts?.length ? m.parts : [{ type: 'text', content: m.content || '' }];
     return parts.map(p => {
       if (p.type === 'audio')         return `[语音消息(${_fmtDuration(p.duration)}): ${p.transcript}]`;
@@ -11912,7 +12678,7 @@ try {
     closeMenu();
   }
   
-  return { enter, back, openQuickReply, closeQuickReply,openSettings, closeSettings, openFuncPanel, loadMore, sendUserMsg, sendAndTriggerAI, fetchModels, closeApiModal, confirmApi, openRecallModal, closeRecallModal, collectTransfer, sendUserTransfer, sendImgMsg, closeMenu,handleMenuAction,cancelQuote, updateMultiSelectUI, cancelMultiSelect, favoriteSelected, deleteSelected,addEmoteToPreview,_openImgViewer, _openImgViewerFromEl, _viewerDownloadImage, _regenerateNovelFromViewer, toggleAudio, clearWallpaper, clearHistory, deleteChat, _toggleAccordion, _selectRadio, _selectPersona,_removePendingImg,playAudio, previewVoice, _toggleTTS, _toggleNovel, _toggleTranslate, _appendNovelImageMessage, _replaceMessageBubble, _showNovelPending, _hideNovelPending, _toggleAlias,copyDefaultCSS, applyAndSaveCSS, clearCustomCSS, saveCssPreset, confirmSaveCssPreset, applyCssPreset, deleteCssPreset,manualSummarize, clearMemory, archiveToWorldBook, confirmArchive };
+  return { enter, back, openQuickReply, closeQuickReply,openSettings, closeSettings, openFuncPanel, loadMore, sendUserMsg, sendAndTriggerAI, fetchModels, closeApiModal, confirmApi, openRecallModal, closeRecallModal, collectTransfer, sendUserTransfer, sendImgMsg, closeMenu,handleMenuAction,cancelQuote, updateMultiSelectUI, cancelMultiSelect, favoriteSelected, deleteSelected,addEmoteToPreview,_openImgViewer, _openImgViewerFromEl, _viewerDownloadImage, _regenerateNovelFromViewer, toggleAudio, clearWallpaper, clearHistory, deleteChat, _toggleAccordion, _selectRadio, _selectPersona,_removePendingImg,playAudio, previewVoice, _toggleTTS, _toggleNovel, _toggleTranslate, _appendNovelImageMessage, _replaceMessageBubble, _showNovelPending, _hideNovelPending, _toggleAlias,copyDefaultCSS, applyAndSaveCSS, clearCustomCSS, saveCssPreset, confirmSaveCssPreset, applyCssPreset, deleteCssPreset,manualSummarize, clearMemory, archiveToWorldBook, confirmArchive,openCallRecordModal, closeCallRecordModal };
 })();
 /** 供 NovelModule 等脚本用 window 访问；const 不会自动挂到 window */
 window.ConvModule = ConvModule;
@@ -12226,5 +12992,6 @@ async function init() {
 
 init();
 </script>
+<script src="chill-meet-bundle.js"></script>
 </body>
 </html>
